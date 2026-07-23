@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026-07-23] — M1-T1: Project Setup Complete
+
+Completed the initial setup of the Flutter project targeting Android and Linux platforms.
+
+### Added
+- Boilerplate Flutter structure (`lib/main.dart`, `android/`, `linux/`, `test/`)
+- Custom static analysis configuration (`analysis_options.yaml`) enforcing strict casts, inferences, raw-types, and key lints
+- Updated project `.gitignore` for local database caching, secrets/env, and system files
+
+### Changed
+- Restored original, highly detailed `README.md` from Phase 1 documentation
+
+### Next
+- M1-T2: Flutter Configuration (configuring build targets and base packages/dependencies)
+
 ## [2026-07-23] — Initial Project Documentation
 
 This marks the official kickoff of PocketDesk. No production code has been written yet.

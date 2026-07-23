@@ -3,14 +3,14 @@
 Legend: ☐ Pending | ✓ Complete | ⚠ Blocked | 🔄 In Progress
 
 Current Milestone: Milestone 1 — Foundation
-Current Task: M1-T1 — Project Setup
+Current Task: M1-T2 — Flutter Configuration
 
 ## Milestone 1 — Foundation
-- [ ] M1-T1 — Project Setup
-  - [ ] Initialize Flutter project
-  - [ ] Set up linting rules
-  - [ ] Configure `.gitignore`
-  - [ ] Initialize Git repository
+- [x] M1-T1 — Project Setup
+  - [x] Initialize Flutter project
+  - [x] Set up linting rules
+  - [x] Configure `.gitignore`
+  - [x] Initialize Git repository
 - [ ] M1-T2 — Flutter Configuration
   - [ ] Set up environment variables
   - [ ] Configure build targets

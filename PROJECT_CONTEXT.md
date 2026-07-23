@@ -1,7 +1,7 @@
 # PocketDesk — Project Context
 ## Last Updated: 2026-07-23
 ## Current Milestone: Milestone 1 — Foundation
-## Current Task: M1-T1 — Project Setup (NEXT)
+## Current Task: M1-T2 — Flutter Configuration (NEXT)
 
 ## Project Summary
 [Brief description of PocketDesk]
@@ -37,12 +37,12 @@
 - [x] TEST_PLAN.md created
 - [x] PROJECT_CONTEXT.md created
 - [x] CHANGELOG.md created
+- [x] M1-T1: Initialize Flutter project, configure linting, .gitignore, and Git repository
 
 ## Pending Work
 - Phase 2: Architecture review and approval
-- Phase 3: Implementation starting with Milestone 1 (Foundation)
-  - Flutter project creation
-  - Clean Architecture folder structure
+- Phase 3: Implementation of Milestone 1 (Foundation)
+  - Clean Architecture folder structure setup
   - Design System & AppTheme setup
   - GoRouter configuration
   - Error handling infrastructure
@@ -62,14 +62,12 @@ None yet.
 - App uses dark-mode friendly Material 3 theming
 - PocketDesk color palette: deep indigo primary, rich accent, soft backgrounds — premium feel
 
-## Next Steps (in order)
-1. Await architecture review/approval from user
-2. Begin M1-T1: Create Flutter project
-3. Set up Clean Architecture folder structure
-4. Configure pubspec.yaml with all dependencies
-5. Create AppTheme design system
-6. Set up GoRouter
-7. Create core utilities
+1. Begin M1-T2: Configure pubspec.yaml with all external dependencies (Riverpod, GoRouter, Isar, etc.)
+2. Configure build targets & environment configurations
+3. Set up Clean Architecture folder structure (M1-T3/T4)
+4. Create AppTheme design system
+5. Set up GoRouter
+6. Create core utilities
 
 ## Notes for Agent
 - Always read this file before any task

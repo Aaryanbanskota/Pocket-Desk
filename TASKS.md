@@ -119,22 +119,22 @@ Current Task: M4-T15 — Drag & Drop (Desktop) [Deferred]
 - [x] Multi-device Testing
 
 ## Milestone 9 — Website
-- [ ] Website Project Setup
-- [ ] Design System (web)
-- [ ] Home Page
-- [ ] Features Page
-- [ ] Downloads Page
-- [ ] Screenshots Page
-- [ ] Documentation Page
-- [ ] Release Notes
-- [ ] FAQ
-- [ ] Privacy Policy
-- [ ] About
-- [ ] Contact
-- [ ] OS Auto-detection
-- [ ] SEO
-- [ ] Dark Mode
-- [ ] Responsive Testing
+- [x] Website Project Setup
+- [x] Design System (web)
+- [x] Home Page
+- [x] Features Page
+- [x] Downloads Page
+- [x] Screenshots Page
+- [x] Documentation Page
+- [x] Release Notes
+- [x] FAQ
+- [x] Privacy Policy
+- [x] About
+- [x] Contact
+- [x] OS Auto-detection
+- [x] SEO
+- [x] Dark Mode
+- [x] Responsive Testing
 
 ## Milestone 10 — Polish & Release
 - [ ] Performance Audit

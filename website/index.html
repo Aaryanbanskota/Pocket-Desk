@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PocketDesk — The Ultimate Offline-First Privacy Organizer</title>
+  <meta name="description" content="Manage your calendars, tasks, and notes with end-to-end sync, zero cloud footprint, and complete local privacy. PocketDesk keeps your life organized, locally.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="light-mode">
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo">
+        <span class="logo-icon">🚀</span>
+        <span class="logo-text">PocketDesk</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#screenshots">Screenshots</a>
+        <a href="#faq">FAQ</a>
+        <a href="#docs">Docs</a>
+        <a href="#download" class="btn-primary">Download</a>
+      </nav>
+      <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark mode">
+        <span class="sun-icon">☀️</span>
+        <span class="moon-icon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-content">
+        <h1 class="hero-title">Your Life. <br><span class="gradient-text">Fully Offline.</span></h1>
+        <p class="hero-subtitle">PocketDesk is the ultimate offline-first workspace. Control your calendar, tasks, notes, and records without sending a single byte of personal data to the cloud.</p>
+        <div class="hero-actions">
+          <a href="#download" id="hero-download-btn" class="btn-hero">Download for Linux</a>
+          <a href="#features" class="btn-secondary">Learn More &rarr;</a>
+        </div>
+        <p class="detected-os" id="os-detector">Detected OS: Linux</p>
+      </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section id="features" class="features">
+      <h2 class="section-title">Why PocketDesk?</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3>Privacy First</h3>
+          <p>Zero servers. All database records (Isar) stay locally on your device with biometric authentication & encrypted storage.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>Local P2P Sync</h3>
+          <p>Instantly sync calendars, tasks, and notes with other devices via secure local WebSocket pairing using cryptographic keys.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📅</div>
+          <h3>Integrated Workspace</h3>
+          <p>A central dashboard matching clean layouts, beautiful recurrence engines, interactive boards, and notification schedules.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screenshots Carousel -->
+    <section id="screenshots" class="screenshots">
+      <h2 class="section-title">Beautiful Dashboard Layout</h2>
+      <div class="carousel-container">
+        <div class="screenshot-showcase">
+          <div class="browser-mockup">
+            <div class="mockup-header">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="mockup-body">
+              <p class="mockup-placeholder">💻 PocketDesk UI Showcase — Multi-platform Flutter Application</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="faq">
+      <h2 class="section-title">Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <div class="faq-item">
+          <h3>Does PocketDesk require an internet connection?</h3>
+          <p>No. PocketDesk is designed to be 100% functional offline. Synchronization happens on your local Wi-Fi network directly peer-to-peer.</p>
+        </div>
+        <div class="faq-item">
+          <h3>How is the data secured?</h3>
+          <p>We use Isar database running secure local storage, local credentials hashed with Argon2, and syncing encrypted with AES-GCM-128.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Docs Section -->
+    <section id="docs" class="docs">
+      <h2 class="section-title">Documentation & Setup</h2>
+      <div class="docs-box">
+        <h3>Setting up Local Sync</h3>
+        <p>1. Open PocketDesk on both devices.</p>
+        <p>2. Go to Settings &rarr; Devices &rarr; Pair New Device.</p>
+        <p>3. Scan the QR code shown on the host device using the guest device camera. The P2P network handshakes automatically!</p>
+      </div>
+    </section>
+
+    <!-- Download Section -->
+    <section id="download" class="download-section">
+      <h2 class="section-title">Get PocketDesk today</h2>
+      <div class="download-grid">
+        <div class="download-card">
+          <h3>Linux</h3>
+          <p>AppImage bundle containing clean standalone packages.</p>
+          <a href="#" class="btn-download">Download .AppImage</a>
+        </div>
+        <div class="download-card">
+          <h3>Android</h3>
+          <p>Standalone Android Package (APK).</p>
+          <a href="#" class="btn-download">Download APK</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p>&copy; 2026 PocketDesk. Built offline-first for privacy.</p>
+      <div class="footer-links">
+        <a href="#privacy">Privacy Policy</a>
+        <a href="#terms">Terms</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JS -->
+  <script src="app.js"></script>
+</body>
+</html>

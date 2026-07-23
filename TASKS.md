@@ -137,12 +137,12 @@ Current Task: M4-T15 — Drag & Drop (Desktop) [Deferred]
 - [x] Responsive Testing
 
 ## Milestone 10 — Polish & Release
-- [ ] Performance Audit
-- [ ] Golden Tests
-- [ ] Integration Tests
-- [ ] Security Audit
-- [ ] Accessibility Audit
-- [ ] Documentation Review
-- [ ] Final Lint & Analyze
-- [ ] Release Build (Android APK, Ubuntu AppImage)
-- [ ] Version Tagging
+- [x] Performance Audit
+- [x] Golden Tests
+- [x] Integration Tests
+- [x] Security Audit
+- [x] Accessibility Audit
+- [x] Documentation Review
+- [x] Final Lint & Analyze
+- [x] Release Build (Android APK, Ubuntu AppImage)
+- [x] Version Tagging

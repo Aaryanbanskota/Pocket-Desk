@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:go_router/go_router.dart';
+import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_spacing.dart';
 
 class NotesWidget extends StatelessWidget {
@@ -47,7 +48,7 @@ class NotesWidget extends StatelessWidget {
                   ),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => context.push(AppRoutes.notes),
                   child: const Text('View All'),
                 ),
               ],

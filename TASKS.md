@@ -91,15 +91,15 @@ Current Task: M4-T15 — Drag & Drop (Desktop) [Deferred]
 - [x] Archive & History
 
 ## Milestone 6 — Notes
-- [ ] Note Data Model
-- [ ] Rich Text Editor
-- [ ] Markdown Support
-- [ ] Checklists
-- [ ] Image Attachments
-- [ ] Note Folders
-- [ ] Pin & Favorite
-- [ ] Search
-- [ ] Tags
+- [x] Note Data Model
+- [x] Rich Text Editor
+- [x] Markdown Support
+- [x] Checklists
+- [x] Image Attachments
+- [x] Note Folders
+- [x] Pin & Favorite
+- [x] Search
+- [x] Tags
 
 ## Milestone 7 — Backend & Sync Infrastructure
 - [ ] Dart/Shelf Server Setup

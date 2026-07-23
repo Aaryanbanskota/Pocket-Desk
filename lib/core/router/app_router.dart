@@ -10,6 +10,7 @@ import '../../features/auth/presentation/providers/auth_notifier.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/calendar/presentation/pages/calendar_dashboard_view.dart';
 import '../../features/tasks/presentation/pages/tasks_dashboard_view.dart';
+import '../../features/notes/presentation/pages/notes_dashboard_view.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -98,6 +99,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.tasks,
         builder: (context, state) => const TasksDashboardView(),
+      ),
+      GoRoute(
+        path: AppRoutes.notes,
+        builder: (context, state) => const NotesDashboardView(),
       ),
       GoRoute(
         path: AppRoutes.settingsProfile,

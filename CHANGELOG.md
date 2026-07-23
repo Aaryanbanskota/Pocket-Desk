@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.0] — 2026-07-24 — Release Build
+
+### Release Artifacts
+- **Android APK**: `build/app/outputs/flutter-apk/app-release.apk` (77.8 MB)
+- **Android AAB**: `build/app/outputs/bundle/release/app-release.aab` (35.8 MB)
+- **Linux x64 Bundle**: `build/pocketdesk-linux-x64.tar.gz` (15 MB, self-contained)
+- **Website**: `website/` (static HTML/CSS/JS, production-ready)
+
+### Verification
+- `flutter analyze` → No issues found ✅
+- `flutter test` → All 11 tests passed ✅
+- Android release build → ✅ (Gradle assembleRelease)
+- Linux release build → ✅ (CMake + Clang, manually bundled)
+
+### Build Environment
+- Flutter: 3.22.2 stable
+- Dart: bundled
+- Java: OpenJDK 17.0.19
+- CMake: 3.28.3, Clang: 18.1.3, Ninja: 1.11.1
+
 ## [2026-07-24] — M4 Start: Calendar Models, Repository, & Views
 
 ### Added

@@ -1,7 +1,7 @@
 # PocketDesk — Project Context
 ## Last Updated: 2026-07-24
 ## Current Milestone: Milestone 4 — Calendar
-## Current Task: M4-T8 — Event Creation/Edit/Delete
+## Current Task: M4-T10 — Reminders & Notifications
 
 ## Project Summary
 Offline-first productivity ecosystem combining Calendar, Task Manager, Notes, Schedule Planner, Device Synchronization, and a Web Landing Page.
@@ -31,9 +31,11 @@ Offline-first productivity ecosystem combining Calendar, Task Manager, Notes, Sc
 - [x] M4-T1: Calendar Data Model (Isar)
 - [x] M4-T2: Calendar Repository (CRUD operations with Isar)
 - [x] M4-T3 to M4-T7: Day, Week, Month, Year, and Agenda views implementation
+- [x] M4-T8: Full EventFormSheet — color picker, date/time pickers, recurrence type, reminder chips, category chips, location, all-day toggle, delete
+- [x] M4-T9: Recurring Events Engine (Offline recurrence expander supporting Daily, Weekly, Monthly, Yearly, and Custom patterns with full unit test coverage)
 
 ## Pending Work
-- [ ] M4-T8 to M4-T17: Implement full Offline Calendar capabilities (Event Creation/Edit/Delete, Recurrence Engine, Reminders/Notifications, Time Zones, ICS Import/Export, and UI filters)
+- [ ] M4-T10 to M4-T15: Reminders/Notifications, Multiple Calendars, ICS Import/Export, Search/Filters, Time Zone Support
 - [ ] Milestone 5: Task Manager
 - [ ] Milestone 6: Notes
 - [ ] Milestone 7: Backend & Sync Infrastructure

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/date_time_utils.dart';
 import '../../data/models/calendar_event_model.dart';
+import '../../data/models/recurrence_engine.dart';
 import '../providers/calendar_events_notifier.dart';
 import '../widgets/event_form_sheet.dart';
 import '../widgets/agenda_view_widget.dart';
@@ -100,23 +101,55 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, _) => Center(child: Text('Error: $err')),
               data: (events) {
+                // Determine range for expansion based on current view type
+                late DateTime startRange;
+                late DateTime endRange;
+
+                switch (_currentView) {
+                  case CalendarViewType.day:
+                    startRange = DateTimeUtils.startOfDay(_focusedDay);
+                    endRange = DateTimeUtils.endOfDay(_focusedDay);
+                    break;
+                  case CalendarViewType.week:
+                    final startOfWeek = DateTimeUtils.startOfWeek(_focusedDay);
+                    startRange = DateTimeUtils.startOfDay(startOfWeek);
+                    endRange = DateTimeUtils.endOfDay(startOfWeek.add(const Duration(days: 6)));
+                    break;
+                  case CalendarViewType.month:
+                    final startOfMonth = DateTime(_focusedDay.year, _focusedDay.month, 1);
+                    startRange = DateTimeUtils.startOfDay(startOfMonth.subtract(const Duration(days: 7)));
+                    final endOfMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 0);
+                    endRange = DateTimeUtils.endOfDay(endOfMonth.add(const Duration(days: 7)));
+                    break;
+                  case CalendarViewType.year:
+                    startRange = DateTime(_focusedDay.year, 1, 1);
+                    endRange = DateTime(_focusedDay.year, 12, 31, 23, 59, 59);
+                    break;
+                  case CalendarViewType.agenda:
+                    startRange = DateTimeUtils.startOfDay(_focusedDay.subtract(const Duration(days: 30)));
+                    endRange = DateTimeUtils.endOfDay(_focusedDay.add(const Duration(days: 365)));
+                    break;
+                }
+
+                final expandedEvents = RecurrenceEngine.expandEvents(events, startRange, endRange);
+
                 switch (_currentView) {
                   case CalendarViewType.day:
                     return DayViewWidget(
                       focusedDay: _focusedDay,
-                      events: events,
+                      events: expandedEvents,
                       onEventTap: (ev) => _showAddEventDialog(context, editingEvent: ev),
                     );
                   case CalendarViewType.week:
                     return WeekViewWidget(
                       focusedDay: _focusedDay,
-                      events: events,
+                      events: expandedEvents,
                       onEventTap: (ev) => _showAddEventDialog(context, editingEvent: ev),
                     );
                   case CalendarViewType.month:
                     return MonthViewWidget(
                       focusedDay: _focusedDay,
-                      events: events,
+                      events: expandedEvents,
                       onDayTap: (date) => setState(() {
                         _focusedDay = date;
                       }),
@@ -132,7 +165,7 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
                     );
                   case CalendarViewType.agenda:
                     return AgendaViewWidget(
-                      events: events,
+                      events: expandedEvents,
                       onEventTap: (ev) => _showAddEventDialog(context, editingEvent: ev),
                     );
                 }

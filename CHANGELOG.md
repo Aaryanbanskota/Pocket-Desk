@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2026-07-24] — M4 Start: Calendar Models, Repository, & Views
 
 ### Added
+- **M4-T9 Recurring Events Engine**: Designed and implemented an offline recurrence expansion system (`RecurrenceEngine`) supporting:
+  - Daily, Weekly, Monthly, Yearly, and Custom recurrence patterns.
+  - RFC 5545 recurrence rule processing (e.g. `FREQ`, `INTERVAL`, `BYDAY`).
+  - Virtual instance cloning to display recurring instances in day, week, month, and agenda views.
+- **M4-T9 Recurrence Engine Unit Tests**: Created comprehensive unit tests validating correct instance generation, custom rule logic, and date boundaries.
 - **M4-T3 to M4-T7 Calendar Views**: Developed responsive, modular UI view widgets for calendar interactions:
   - **Day View**: Horizontal time block rendering mapping hourly ranges.
   - **Week View**: Responsive 7-column layout displaying parallel columns.

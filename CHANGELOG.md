@@ -5,7 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2026-07-24] — M4 Start: Calendar Models & Repository
+## [2026-07-24] — M4 Start: Calendar Models, Repository, & Views
+
+### Added
+- **M4-T3 to M4-T7 Calendar Views**: Developed responsive, modular UI view widgets for calendar interactions:
+  - **Day View**: Horizontal time block rendering mapping hourly ranges.
+  - **Week View**: Responsive 7-column layout displaying parallel columns.
+  - **Month View**: Complete month-grid cell mapping with event card previews.
+  - **Year View**: Annual 12 mini months grid.
+  - **Agenda View**: Chronological scrolling view grouping all scheduled events by date.
+- Integrated a premium SegmentedButton calendar view controller within `CalendarDashboardView`.
 
 ### Added
 - **M4-T1 Calendar Data Model**: Created `CalendarEventModel` schema for Isar, with indexes, recurrence types, and sync attributes. Registered the schema globally in `isarProvider`.

@@ -3,7 +3,7 @@
 Legend: ☐ Pending | ✓ Complete | ⚠ Blocked | 🔄 In Progress
 
 Current Milestone: Milestone 4 — Calendar
-Current Task: M4-T3 — Day View
+Current Task: M4-T8 — Event Creation/Edit/Delete
 
 ## Milestone 1 — Foundation
 - [x] M1-T1 — Project Setup
@@ -60,11 +60,11 @@ Current Task: M4-T3 — Day View
 ## Milestone 4 — Calendar
 - [x] Calendar Data Model (Isar)
 - [x] Calendar Repository
-- [ ] Day View
-- [ ] Week View
-- [ ] Month View
-- [ ] Year View
-- [ ] Agenda View
+- [x] Day View
+- [x] Week View
+- [x] Month View
+- [x] Year View
+- [x] Agenda View
 - [ ] Event Creation/Edit/Delete
 - [ ] Recurring Events Engine
 - [ ] Reminders & Notifications

@@ -3,7 +3,9 @@
 Legend: ☐ Pending | ✓ Complete | ⚠ Blocked | 🔄 In Progress
 
 Current Milestone: Milestone 4 — Calendar
-Current Task: M4-T11 — Multiple Calendars
+Current Task: M4-T15 — Drag & Drop (Desktop) [Deferred]
+
+> Note: Drag & Drop is deferred to Polish milestone as it requires platform-specific event bus not yet scaffolded.
 
 ## Milestone 1 — Foundation
 - [x] M1-T1 — Project Setup
@@ -68,12 +70,12 @@ Current Task: M4-T11 — Multiple Calendars
 - [x] Event Creation/Edit/Delete
 - [x] Recurring Events Engine
 - [x] Reminders & Notifications
-- [ ] Multiple Calendars
-- [ ] ICS Import
-- [ ] ICS Export
-- [ ] Drag & Drop (Desktop)
-- [ ] Search, Filters & Categories
-- [ ] Time Zone Support
+- [x] Multiple Calendars
+- [x] ICS Import
+- [x] ICS Export
+- [ ] Drag & Drop (Desktop) [Deferred to M10]
+- [x] Search, Filters & Categories
+- [x] Time Zone Support
 
 ## Milestone 5 — Task Manager
 - [ ] Task Data Model

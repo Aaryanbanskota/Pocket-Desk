@@ -1,7 +1,7 @@
 # PocketDesk — Project Context
 ## Last Updated: 2026-07-24
 ## Current Milestone: Milestone 4 — Calendar
-## Current Task: M4-T11 — Multiple Calendars
+## Current Task: Milestone 5 — Task Manager (M4 Calendar complete except Drag & Drop deferred)
 
 ## Project Summary
 Offline-first productivity ecosystem combining Calendar, Task Manager, Notes, Schedule Planner, Device Synchronization, and a Web Landing Page.
@@ -34,9 +34,13 @@ Offline-first productivity ecosystem combining Calendar, Task Manager, Notes, Sc
 - [x] M4-T8: Full EventFormSheet — color picker, date/time pickers, recurrence type, reminder chips, category chips, location, all-day toggle, delete
 - [x] M4-T9: Recurring Events Engine (Offline recurrence expander supporting Daily, Weekly, Monthly, Yearly, and Custom patterns with full unit test coverage)
 - [x] M4-T10: Reminders & Notifications (Implemented NotificationService wrapper for flutter_local_notifications, scheduled exact reminders for events, handled past exclusions, and verified with unit tests)
+- [x] M4-T11: Multiple Calendars (CalendarModel Isar schema, CalendarManagerRepository with ensureDefaultCalendar, registered CalendarModelSchema)
+- [x] M4-T12/13: ICS Import/Export (Pure-Dart RFC 5545 IcsService, no external deps, full round-trip)
+- [x] M4-T13: Search & Filters (CalendarSearchPage with full-text + category + recurrence filters)
+- [x] M4-T14: Time Zone Support (NotificationService now resolves event.timeZone before scheduling TZDateTime)
 
 ## Pending Work
-- [ ] M4-T11 to M4-T15: Multiple Calendars, ICS Import/Export, Search/Filters, Time Zone Support
+- [ ] Drag & Drop Desktop [Deferred to Milestone 10 — Polish]
 - [ ] Milestone 5: Task Manager
 - [ ] Milestone 6: Notes
 - [ ] Milestone 7: Backend & Sync Infrastructure

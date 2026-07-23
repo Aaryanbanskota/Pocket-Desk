@@ -101,7 +101,15 @@ class NotificationService {
           continue;
         }
 
-        final tzReminderTime = tz.TZDateTime.from(reminderTime, tz.local);
+        // Resolve event's timezone, fallback to local
+        tz.Location location;
+        try {
+          location = tz.getLocation(event.timeZone.isEmpty ? 'UTC' : event.timeZone);
+        } catch (_) {
+          location = tz.local;
+        }
+
+        final tzReminderTime = tz.TZDateTime.from(reminderTime, location);
         final notificationId = _generateNotificationId(event.id, i);
 
         final label = minutesBefore == 0

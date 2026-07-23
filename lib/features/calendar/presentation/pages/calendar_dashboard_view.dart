@@ -12,6 +12,7 @@ import '../widgets/day_view_widget.dart';
 import '../widgets/month_view_widget.dart';
 import '../widgets/week_view_widget.dart';
 import '../widgets/year_view_widget.dart';
+import 'calendar_search_page.dart';
 
 enum CalendarViewType { day, week, month, year, agenda }
 
@@ -35,6 +36,14 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
       appBar: AppBar(
         title: const Text('Calendar'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search_rounded),
+            tooltip: 'Search Events',
+            onPressed: () => Navigator.push<void>(
+              context,
+              MaterialPageRoute(builder: (_) => const CalendarSearchPage()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.today_rounded),
             tooltip: 'Go to Today',

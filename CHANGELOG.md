@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Integrated notification scheduling inside `CalendarEventsNotifier` for event creations and updates.
   - Automatically cancels pre-existing reminders on event deletion or modifications.
   - Created `NotificationService` unit tests validating initialization, cancellation, and scheduling robustness.
+- **M4-T11 Multiple Calendars**: Added `CalendarModel` Isar schema + `CalendarManagerRepository` (save/delete/ensureDefault). Registered schema in Isar provider.
+- **M4-T12/13 ICS Import/Export**: Built pure-Dart `IcsService` (RFC 5545) — zero external deps, full round-trip serialize/deserialize for all event fields including recurrence, all-day, reminders.
+- **M4-T13 Search & Filters**: Built `CalendarSearchPage` with full-text search + category + recurrence type filters. Accessible from Calendar AppBar search icon.
+- **M4-T14 Time Zone Support**: `NotificationService` now resolves each event's stored `timeZone` field into a `TZDateTime` location, with graceful fallback to local time.
 - **M4-T3 to M4-T7 Calendar Views**: Developed responsive, modular UI view widgets for calendar interactions:
   - **Day View**: Horizontal time block rendering mapping hourly ranges.
   - **Week View**: Responsive 7-column layout displaying parallel columns.

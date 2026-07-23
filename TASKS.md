@@ -111,12 +111,12 @@ Current Task: M4-T15 — Drag & Drop (Desktop) [Deferred]
 - [x] Delta Sync Engine
 
 ## Milestone 8 — Synchronization
-- [ ] Offline Queue
-- [ ] Conflict Resolution Engine
-- [ ] Encrypted WebSocket Client
-- [ ] Heartbeat & Reconnect
-- [ ] Background Sync
-- [ ] Multi-device Testing
+- [x] Offline Queue
+- [x] Conflict Resolution Engine
+- [x] Encrypted WebSocket Client
+- [x] Heartbeat & Reconnect
+- [x] Background Sync
+- [x] Multi-device Testing
 
 ## Milestone 9 — Website
 - [ ] Website Project Setup

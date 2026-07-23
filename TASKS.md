@@ -78,17 +78,17 @@ Current Task: M4-T15 — Drag & Drop (Desktop) [Deferred]
 - [x] Time Zone Support
 
 ## Milestone 5 — Task Manager
-- [ ] Task Data Model
-- [ ] Task Repository
-- [ ] Task Lists
-- [ ] Folders & Categories
-- [ ] Priority System
-- [ ] Subtasks
-- [ ] Recurring Tasks
+- [x] Task Data Model
+- [x] Task Repository
+- [x] Task Lists
+- [x] Folders & Categories
+- [x] Priority System
+- [x] Subtasks
+- [x] Recurring Tasks
 - [ ] Reminders
 - [ ] Attachments
-- [ ] Search & Filter
-- [ ] Archive & History
+- [x] Search & Filter
+- [x] Archive & History
 
 ## Milestone 6 — Notes
 - [ ] Note Data Model

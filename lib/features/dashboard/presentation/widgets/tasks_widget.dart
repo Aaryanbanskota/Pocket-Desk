@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:go_router/go_router.dart';
+import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_spacing.dart';
 
 class TasksWidget extends StatelessWidget {
@@ -40,7 +41,7 @@ class TasksWidget extends StatelessWidget {
                   ),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => context.push(AppRoutes.tasks),
                   child: const Text('View All'),
                 ),
               ],

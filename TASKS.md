@@ -3,7 +3,7 @@
 Legend: ☐ Pending | ✓ Complete | ⚠ Blocked | 🔄 In Progress
 
 Current Milestone: Milestone 1 — Foundation
-Current Task: M1-T2 — Flutter Configuration
+Current Task: M1-T3 — Design System & Theme
 
 ## Milestone 1 — Foundation
 - [x] M1-T1 — Project Setup
@@ -11,11 +11,11 @@ Current Task: M1-T2 — Flutter Configuration
   - [x] Set up linting rules
   - [x] Configure `.gitignore`
   - [x] Initialize Git repository
-- [ ] M1-T2 — Flutter Configuration
-  - [ ] Set up environment variables
-  - [ ] Configure build targets
-  - [ ] Add base dependencies
-  - [ ] Setup flavored builds
+- [x] M1-T2 — Flutter Configuration
+  - [x] Set up environment variables
+  - [x] Configure build targets
+  - [x] Add base dependencies
+  - [x] Setup flavored builds
 - [ ] M1-T3 — Design System & Theme
   - [ ] Define color palette
   - [ ] Define typography

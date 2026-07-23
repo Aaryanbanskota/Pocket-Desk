@@ -2,8 +2,8 @@
 
 Legend: ☐ Pending | ✓ Complete | ⚠ Blocked | 🔄 In Progress
 
-Current Milestone: Milestone 3 — Dashboard
-Current Task: M3-T1 — Dashboard Layout
+Current Milestone: Milestone 4 — Calendar
+Current Task: M4-T1 — Calendar Data Model (Isar)
 
 ## Milestone 1 — Foundation
 - [x] M1-T1 — Project Setup
@@ -47,15 +47,15 @@ Current Task: M3-T1 — Dashboard Layout
 - [x] Profile Screen
 
 ## Milestone 3 — Dashboard
-- [ ] Dashboard Layout
-- [ ] Today Schedule Widget
-- [ ] Calendar Mini Widget
-- [ ] Tasks Widget
-- [ ] Notes Widget
-- [ ] Statistics Widget
-- [ ] Quick Actions
-- [ ] Pinned Widgets
-- [ ] Responsive Layout
+- [x] Dashboard Layout
+- [x] Today Schedule Widget
+- [x] Calendar Mini Widget
+- [x] Tasks Widget
+- [x] Notes Widget
+- [x] Statistics Widget
+- [x] Quick Actions
+- [x] Pinned Widgets
+- [x] Responsive Layout
 
 ## Milestone 4 — Calendar
 - [ ] Calendar Data Model (Isar)

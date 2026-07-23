@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026-07-23] — M3 Complete: Interactive Dashboard
+
+### Added
+- **M3-T1 Dashboard Layout**: Created responsive page layout displaying schedules, tasks, stats, and widgets matching viewport width.
+- **M3-T2 Today Schedule Widget**: Built a structured list visualizer for mock schedule events.
+- **M3-T3 Calendar Mini Widget**: Implemented a weekly strip calendar control indicating the current date.
+- **M3-T4/M3-T5 Tasks & Notes Widgets**: Developed quick overview panels for user tasks and markdown notes.
+- **M3-T6 Statistics Widget**: Introduced statistics summary displaying completed task count metrics.
+- **M3-T7 Quick Actions**: Created an icon-based button panel for fast navigation to event creation and task creation dialogs.
+- **M3-T8 Pinned Widgets**: Added a flexible, persistent alert cards panel.
+- **M3-T9 Responsive Layout**: Managed cross-platform layouts displaying column configurations customized for Desktop, Tablet, and Mobile views.
+
+### Verified
+- `flutter analyze` -> Clean
+- `flutter test` -> All unit and widget tests pass ✅
+
 ## [2026-07-23] — M2 Complete: Local Authentication & User Profiles
 
 ### Added

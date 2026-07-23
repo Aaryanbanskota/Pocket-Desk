@@ -1,7 +1,7 @@
 # PocketDesk — Project Context
 ## Last Updated: 2026-07-23
-## Current Milestone: Milestone 2 — Authentication
-## Current Task: M2-T7 — Profile Screen (Complete)
+## Current Milestone: Milestone 3 — Dashboard
+## Current Task: M3-T9 — Responsive Layout (Complete)
 
 ## Project Summary
 [Brief description of PocketDesk]
@@ -50,6 +50,15 @@
 - [x] M2-T5: Auth State Notifier using Riverpod
 - [x] M2-T6: Secure Auth Storage key-value persistence
 - [x] M2-T7: Profile Screen with display name editing, password changes, and sign-out
+- [x] M3-T1: Dashboard Layout framework setup
+- [x] M3-T2: Today Schedule Widget displaying scheduled events
+- [x] M3-T3: Calendar Mini Widget week-strip panel
+- [x] M3-T4: Tasks Widget checklist
+- [x] M3-T5: Notes Widget markdown snippet previews
+- [x] M3-T6: Statistics Widget weekly metrics overview
+- [x] M3-T7: Quick Actions panel for shortcut task execution
+- [x] M3-T8: Pinned Widgets configuration alerts
+- [x] M3-T9: Responsive Layout structures for Desktop, Tablet, and Mobile viewports
 - [x] M1-T2: Configure build targets (minSdk 24, targetSdk 34), add dependencies (Riverpod, Isar, GoRouter), and set up flavored environments (main_dev, main_prod, .env.development.json, .env.production.json)
 
 ## Pending Work

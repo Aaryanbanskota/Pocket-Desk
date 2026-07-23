@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026-07-24] — M4 Start: Calendar Models & Repository
+
+### Added
+- **M4-T1 Calendar Data Model**: Created `CalendarEventModel` schema for Isar, with indexes, recurrence types, and sync attributes. Registered the schema globally in `isarProvider`.
+- **M4-T2 Calendar Repository**: Implemented database operations (`saveEvent`, `deleteEvent`, `getEventsForUser`, `getEventsForRange`, `searchEvents`) using Isar transactions.
+- Corrected imports and type annotations across the newly integrated calendar presentation pages and state providers.
+
+### Verified
+- `flutter analyze` -> Clean
+- `flutter test` -> All unit and widget tests pass ✅
+
 ## [2026-07-23] — M3 Complete: Interactive Dashboard
 
 ### Added

@@ -3,6 +3,7 @@ import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../features/auth/data/models/user_model.dart';
+import '../../features/calendar/data/models/calendar_event_model.dart';
 
 /// Provides an initialized [Isar] instance to the whole app.
 ///
@@ -10,7 +11,10 @@ import '../../features/auth/data/models/user_model.dart';
 final isarProvider = FutureProvider<Isar>((ref) async {
   final dir = await getApplicationDocumentsDirectory();
   return Isar.open(
-    [UserModelSchema],
+    [
+      UserModelSchema,
+      CalendarEventModelSchema,
+    ],
     directory: dir.path,
     name: 'pocketdesk',
     inspector: false,

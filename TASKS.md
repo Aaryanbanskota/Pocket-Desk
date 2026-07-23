@@ -3,7 +3,7 @@
 Legend: ☐ Pending | ✓ Complete | ⚠ Blocked | 🔄 In Progress
 
 Current Milestone: Milestone 4 — Calendar
-Current Task: M4-T1 — Calendar Data Model (Isar)
+Current Task: M4-T3 — Day View
 
 ## Milestone 1 — Foundation
 - [x] M1-T1 — Project Setup
@@ -58,8 +58,8 @@ Current Task: M4-T1 — Calendar Data Model (Isar)
 - [x] Responsive Layout
 
 ## Milestone 4 — Calendar
-- [ ] Calendar Data Model (Isar)
-- [ ] Calendar Repository
+- [x] Calendar Data Model (Isar)
+- [x] Calendar Repository
 - [ ] Day View
 - [ ] Week View
 - [ ] Month View

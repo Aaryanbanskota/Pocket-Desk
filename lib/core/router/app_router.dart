@@ -7,6 +7,8 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/profile_page.dart';
 import '../../features/auth/presentation/providers/auth_notifier.dart';
+import '../../features/dashboard/presentation/pages/dashboard_page.dart';
+import '../../features/calendar/presentation/pages/calendar_dashboard_view.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -23,19 +25,7 @@ class _SplashPage extends StatelessWidget {
       );
 }
 
-class _DashboardPage extends StatelessWidget {
-  const _DashboardPage();
-  @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Dashboard')),
-        body: Center(
-          child: Text(
-            'Dashboard — Coming in Milestone 3',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-        ),
-      );
-}
+
 
 class _NotFoundPage extends StatelessWidget {
   const _NotFoundPage();
@@ -98,7 +88,11 @@ GoRouter appRouter(Ref ref) {
       ),
       GoRoute(
         path: AppRoutes.dashboard,
-        builder: (context, state) => const _DashboardPage(),
+        builder: (context, state) => const DashboardPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.calendar,
+        builder: (context, state) => const CalendarDashboardView(),
       ),
       GoRoute(
         path: AppRoutes.settingsProfile,

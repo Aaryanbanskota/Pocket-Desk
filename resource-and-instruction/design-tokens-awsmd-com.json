@@ -1,0 +1,568 @@
+{
+  "url": "https://awsmd.com/?utm_source=Pinterest&utm_medium=organic",
+  "title": "Creative Design and Development Agency",
+  "description": "Using data-science and best UX design and product design practices we deliver measurable business results and solutions that meet user needs and company goals",
+  "scrapedAt": "2026-07-23T15:19:18.771Z",
+  "colors": {
+    "bg": "#ffffff",
+    "bgSecondary": "#4858e4",
+    "text": "#000000",
+    "textSecondary": "#404040",
+    "primary": "#5f8cfe",
+    "secondary": "#4858e4",
+    "border": "#f4f4f4",
+    "palette": [
+      {
+        "hex": "#5f8cfe",
+        "role": "section",
+        "count": 1,
+        "area": 1380672,
+        "contrast": "dark"
+      },
+      {
+        "hex": "#4858e4",
+        "role": "section",
+        "count": 1,
+        "area": 843150,
+        "contrast": "light"
+      },
+      {
+        "hex": "#ffffff",
+        "role": "button",
+        "count": 1,
+        "area": 592100,
+        "contrast": "dark"
+      },
+      {
+        "hex": "#f4f4f4",
+        "role": "section",
+        "count": 1,
+        "area": 459531,
+        "contrast": "dark"
+      },
+      {
+        "hex": "#e4e3df",
+        "role": "section",
+        "count": 1,
+        "area": 306966,
+        "contrast": "dark"
+      },
+      {
+        "hex": "#f1ae86",
+        "role": "section",
+        "count": 1,
+        "area": 306966,
+        "contrast": "dark"
+      },
+      {
+        "hex": "#90a6d0",
+        "role": "section",
+        "count": 1,
+        "area": 306966,
+        "contrast": "dark"
+      },
+      {
+        "hex": "#d9d9d9",
+        "role": "button",
+        "count": 1,
+        "area": 16224,
+        "contrast": "dark"
+      },
+      {
+        "hex": "#404040",
+        "role": "button",
+        "count": 1,
+        "area": 4111,
+        "contrast": "light"
+      }
+    ]
+  },
+  "typography": {
+    "headingFont": {
+      "family": "\"Freigeist Con\"",
+      "cleanFamily": "Freigeist Con",
+      "weights": [
+        "400"
+      ],
+      "usedFor": "heading",
+      "fallback": "sans-serif",
+      "realUrl": "https://awsmd.com/fonts/Fontspring-DEMO-freigeist-conregular.woff2"
+    },
+    "bodyFont": {
+      "family": "\"Times New Roman\"",
+      "cleanFamily": "Times New Roman",
+      "weights": [
+        "400"
+      ],
+      "usedFor": "body",
+      "fallback": "sans-serif"
+    },
+    "fontSizes": [
+      231,
+      211,
+      173,
+      162,
+      145.8,
+      108,
+      87,
+      70,
+      60,
+      58
+    ],
+    "lineHeights": [],
+    "details": [
+      {
+        "role": "H1",
+        "size": 162,
+        "weight": "400",
+        "lineHeight": "145.8px",
+        "letterSpacing": "normal",
+        "font": "Freigeist Con"
+      },
+      {
+        "role": "H2",
+        "size": 48,
+        "weight": "500",
+        "lineHeight": "57.6px",
+        "letterSpacing": "-0.48px",
+        "font": "Plus Jakarta Sans"
+      },
+      {
+        "role": "H3",
+        "size": 18,
+        "weight": "500",
+        "lineHeight": "18.9px",
+        "letterSpacing": "normal",
+        "font": "Inter"
+      },
+      {
+        "role": "Body",
+        "size": 162,
+        "weight": "700",
+        "lineHeight": "145.8px",
+        "letterSpacing": "-6.48px",
+        "font": "Freigeist Con"
+      }
+    ]
+  },
+  "spacing": {
+    "base": 2,
+    "common": [
+      {
+        "value": 2,
+        "count": 13,
+        "role": "element"
+      },
+      {
+        "value": 12,
+        "count": 8,
+        "role": "element"
+      },
+      {
+        "value": 5,
+        "count": 6,
+        "role": "element"
+      },
+      {
+        "value": 19,
+        "count": 6,
+        "role": "element"
+      },
+      {
+        "value": 20,
+        "count": 5,
+        "role": "element"
+      },
+      {
+        "value": 4.5,
+        "count": 5,
+        "role": "element"
+      },
+      {
+        "value": 18,
+        "count": 4,
+        "role": "element"
+      },
+      {
+        "value": 25,
+        "count": 4,
+        "role": "card"
+      }
+    ]
+  },
+  "borderRadius": [
+    {
+      "value": 44,
+      "count": 45,
+      "role": "card"
+    },
+    {
+      "value": 50,
+      "count": 34,
+      "role": "card"
+    },
+    {
+      "value": 25,
+      "count": 16,
+      "role": "card"
+    },
+    {
+      "value": 40,
+      "count": 15,
+      "role": "card"
+    },
+    {
+      "value": 33,
+      "count": 13,
+      "role": "card"
+    },
+    {
+      "value": 30,
+      "count": 10,
+      "role": "card"
+    }
+  ],
+  "shadows": [
+    {
+      "value": "rgb(36, 36, 36) 0px 0px 0px 1px inset",
+      "count": 1,
+      "level": "low"
+    }
+  ],
+  "components": {
+    "primaryButton": {
+      "bg": "#f1f1f1",
+      "border": "",
+      "borderRadius": 21,
+      "color": "#000000",
+      "fontSize": 16,
+      "fontWeight": "400",
+      "paddingH": 17,
+      "paddingV": 12,
+      "variant": "filled"
+    },
+    "secondaryButton": {
+      "bg": "#ffffff",
+      "border": "",
+      "borderRadius": 50,
+      "color": "#000000",
+      "fontSize": 13.3333,
+      "fontWeight": "400",
+      "paddingH": 0,
+      "paddingV": 0,
+      "variant": "filled"
+    },
+    "buttons": [
+      {
+        "bg": "#f1f1f1",
+        "border": "",
+        "borderRadius": 21,
+        "color": "#000000",
+        "fontSize": 16,
+        "fontWeight": "400",
+        "paddingH": 17,
+        "paddingV": 12,
+        "variant": "filled"
+      },
+      {
+        "bg": "transparent",
+        "border": "1px solid rgba(255, 255, 255, 0.4)",
+        "borderRadius": 16,
+        "color": "#ffffff",
+        "fontSize": 16,
+        "fontWeight": "400",
+        "paddingH": 17.5,
+        "paddingV": 12.5,
+        "variant": "outline"
+      },
+      {
+        "bg": "#ffffff",
+        "border": "",
+        "borderRadius": 50,
+        "color": "#000000",
+        "fontSize": 13.3333,
+        "fontWeight": "400",
+        "paddingH": 0,
+        "paddingV": 0,
+        "variant": "filled"
+      },
+      {
+        "bg": "transparent",
+        "border": "",
+        "borderRadius": 0,
+        "color": "#000000",
+        "fontSize": 13.3333,
+        "fontWeight": "400",
+        "paddingH": 0,
+        "paddingV": 0,
+        "variant": "ghost"
+      },
+      {
+        "bg": "transparent",
+        "border": "",
+        "borderRadius": 0,
+        "color": "#2e2f30",
+        "fontSize": 15,
+        "fontWeight": "600",
+        "paddingH": 20,
+        "paddingV": 18,
+        "variant": "ghost"
+      },
+      {
+        "bg": "#f1f1f1",
+        "border": "",
+        "borderRadius": 21,
+        "color": "#242424",
+        "fontSize": 16,
+        "fontWeight": "500",
+        "paddingH": 29,
+        "paddingV": 12,
+        "variant": "filled"
+      }
+    ],
+    "card": {
+      "bg": "#f2f0f0",
+      "borderRadius": 30,
+      "padding": 12,
+      "shadow": "none"
+    }
+  },
+  "fontFaces": [
+    {
+      "family": "Plus Jakarta Sans",
+      "src": "https://awsmd.com/fonts/PlusJakartaSans-Regular.woff2",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "Plus Jakarta Sans",
+      "src": "https://awsmd.com/fonts/PlusJakartaSans-Medium.woff2",
+      "style": "normal",
+      "weight": "500"
+    },
+    {
+      "family": "Plus Jakarta Sans",
+      "src": "https://awsmd.com/fonts/PlusJakartaSans-SemiBold.woff2",
+      "style": "normal",
+      "weight": "600"
+    },
+    {
+      "family": "Plus Jakarta Sans",
+      "src": "https://awsmd.com/fonts/PlusJakartaSans-Bold.woff2",
+      "style": "normal",
+      "weight": "700"
+    },
+    {
+      "family": "Helvetica Neue",
+      "src": "https://awsmd.com/fonts/HelveticaNeueCyr-Light.woff2",
+      "style": "normal",
+      "weight": "300"
+    },
+    {
+      "family": "Helvetica Neue",
+      "src": "https://awsmd.com/fonts/HelveticaNeueCyr-Medium.woff2",
+      "style": "normal",
+      "weight": "500"
+    },
+    {
+      "family": "HeliosExtC",
+      "src": "https://awsmd.com/fonts/HeliosExtC.woff2",
+      "style": "normal",
+      "weight": "700"
+    },
+    {
+      "family": "Inter",
+      "src": "https://awsmd.com/fonts/Inter-Regular.woff2",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "Inter",
+      "src": "https://awsmd.com/fonts/Inter-Medium.woff2",
+      "style": "normal",
+      "weight": "500"
+    },
+    {
+      "family": "Inter",
+      "src": "https://awsmd.com/fonts/Inter-SemiBold.woff2",
+      "style": "normal",
+      "weight": "600"
+    },
+    {
+      "family": "Inter",
+      "src": "https://awsmd.com/fonts/Inter-Bold.woff2",
+      "style": "normal",
+      "weight": "700"
+    },
+    {
+      "family": "Freigeist Con",
+      "src": "https://awsmd.com/fonts/Fontspring-DEMO-freigeist-conregular.woff2",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "Freigeist Con",
+      "src": "https://awsmd.com/fonts/Fontspring-DEMO-freigeist-conbold.woff2",
+      "style": "normal",
+      "weight": "700"
+    },
+    {
+      "family": "Freigeist Con",
+      "src": "https://awsmd.com/fonts/Fontspring-DEMO-freigeist-conbolditalic.woff2",
+      "style": "italic",
+      "weight": "700"
+    },
+    {
+      "family": "TT Commons Pro",
+      "src": "https://awsmd.com/fonts/TTCommons-Pro-DemiBold-Regular.woff2",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "TT Commons Pro",
+      "src": "https://awsmd.com/fonts/Fontspring-DEMO-tt_commons_pro_demibold.woff2",
+      "style": "normal",
+      "weight": "600"
+    },
+    {
+      "family": "Mazzard",
+      "src": "https://awsmd.com/fonts/MazzardH-Medium.woff2",
+      "style": "normal",
+      "weight": "500"
+    },
+    {
+      "family": "Cedarville Cursive",
+      "src": "https://awsmd.com/fonts/Cedarville-Cursive.woff2",
+      "style": "normal",
+      "weight": "400"
+    }
+  ],
+  "cssCustomProperties": [
+    {
+      "name": "--swiper-theme-color",
+      "value": "#007aff",
+      "category": "color"
+    },
+    {
+      "name": "--f-spinner-width",
+      "value": "36px",
+      "category": "spacing"
+    },
+    {
+      "name": "--f-spinner-height",
+      "value": "36px",
+      "category": "spacing"
+    },
+    {
+      "name": "--f-spinner-color-1",
+      "value": "rgba(0,0,0,0.1)",
+      "category": "color"
+    },
+    {
+      "name": "--f-spinner-color-2",
+      "value": "rgba(17,24,28,0.8)",
+      "category": "color"
+    },
+    {
+      "name": "--f-spinner-stroke",
+      "value": "2.75",
+      "category": "spacing"
+    },
+    {
+      "name": "--f-button-width",
+      "value": "40px",
+      "category": "spacing"
+    },
+    {
+      "name": "--f-button-height",
+      "value": "40px",
+      "category": "spacing"
+    },
+    {
+      "name": "--f-button-border",
+      "value": "0",
+      "category": "spacing"
+    },
+    {
+      "name": "--f-button-border-radius",
+      "value": "0",
+      "category": "spacing"
+    },
+    {
+      "name": "--f-button-color",
+      "value": "#374151",
+      "category": "color"
+    },
+    {
+      "name": "--f-button-bg",
+      "value": "#f8f8f8",
+      "category": "color"
+    },
+    {
+      "name": "--f-button-hover-bg",
+      "value": "#e0e0e0",
+      "category": "color"
+    },
+    {
+      "name": "--f-button-active-bg",
+      "value": "#d0d0d0",
+      "category": "color"
+    },
+    {
+      "name": "--f-button-shadow",
+      "value": "none",
+      "category": "other"
+    },
+    {
+      "name": "--f-button-transition",
+      "value": "all 0.15s ease",
+      "category": "other"
+    },
+    {
+      "name": "--f-button-transform",
+      "value": "none",
+      "category": "other"
+    },
+    {
+      "name": "--f-button-svg-width",
+      "value": "20px",
+      "category": "spacing"
+    },
+    {
+      "name": "--f-button-svg-height",
+      "value": "20px",
+      "category": "spacing"
+    },
+    {
+      "name": "--f-button-svg-stroke-width",
+      "value": "1.5",
+      "category": "spacing"
+    },
+    {
+      "name": "--f-button-svg-fill",
+      "value": "none",
+      "category": "other"
+    },
+    {
+      "name": "--f-button-svg-filter",
+      "value": "none",
+      "category": "other"
+    },
+    {
+      "name": "--f-button-svg-disabled-opacity",
+      "value": "0.65",
+      "category": "spacing"
+    }
+  ],
+  "tags": [
+    "light",
+    "rounded",
+    "accented",
+    "bold-typography",
+    "sans-serif"
+  ],
+  "mood": "Friendly, approachable design with rounded shapes and generous whitespace.",
+  "heroHeadline": "We create",
+  "heroSubtitle": "",
+  "isJapanese": false
+}

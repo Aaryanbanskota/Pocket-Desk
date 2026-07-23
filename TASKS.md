@@ -102,13 +102,13 @@ Current Task: M4-T15 — Drag & Drop (Desktop) [Deferred]
 - [x] Tags
 
 ## Milestone 7 — Backend & Sync Infrastructure
-- [ ] Dart/Shelf Server Setup
-- [ ] WebSocket Server
-- [ ] Device Pairing REST API
-- [ ] QR Code Generation
-- [ ] Pairing Token (signed)
-- [ ] Sync Protocol Design
-- [ ] Delta Sync Engine
+- [x] Dart/Shelf Server Setup
+- [x] WebSocket Server
+- [x] Device Pairing REST API
+- [x] QR Code Generation
+- [x] Pairing Token (signed)
+- [x] Sync Protocol Design
+- [x] Delta Sync Engine
 
 ## Milestone 8 — Synchronization
 - [ ] Offline Queue

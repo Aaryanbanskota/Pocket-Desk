@@ -5,6 +5,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/date_time_utils.dart';
 import '../../data/models/calendar_event_model.dart';
 import '../providers/calendar_events_notifier.dart';
+import '../widgets/event_form_sheet.dart';
 import '../widgets/agenda_view_widget.dart';
 import '../widgets/day_view_widget.dart';
 import '../widgets/month_view_widget.dart';
@@ -187,118 +188,22 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
   }
 
   void _showAddEventDialog(BuildContext context, {CalendarEventModel? editingEvent}) {
-    final titleController = TextEditingController(text: editingEvent?.title);
-    final descController = TextEditingController(text: editingEvent?.description);
-    final locController = TextEditingController(text: editingEvent?.location);
-
-    TimeOfDay startTime = TimeOfDay.fromDateTime(editingEvent?.startTime ?? DateTime.now());
-    TimeOfDay endTime = TimeOfDay.fromDateTime(editingEvent?.endTime ?? DateTime.now().add(const Duration(hours: 1)));
-
-    showDialog<void>(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(editingEvent == null ? 'Add Event' : 'Edit Event'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
-              ),
-              TextField(
-                controller: descController,
-                decoration: const InputDecoration(labelText: 'Description'),
-              ),
-              TextField(
-                controller: locController,
-                decoration: const InputDecoration(labelText: 'Location'),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Start Time: ${startTime.format(ctx)}'),
-                  TextButton(
-                    onPressed: () async {
-                      final picked = await showTimePicker(context: ctx, initialTime: startTime);
-                      if (picked != null) {
-                        startTime = picked;
-                      }
-                    },
-                    child: const Text('Pick'),
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('End Time: ${endTime.format(ctx)}'),
-                  TextButton(
-                    onPressed: () async {
-                      final picked = await showTimePicker(context: ctx, initialTime: endTime);
-                      if (picked != null) {
-                        endTime = picked;
-                      }
-                    },
-                    child: const Text('Pick'),
-                  ),
-                ],
-              ),
-            ],
-          ),
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (_, scrollController) => EventFormSheet(
+          initialDate: _focusedDay,
+          editingEvent: editingEvent,
         ),
-        actions: [
-          if (editingEvent != null)
-            TextButton(
-              onPressed: () {
-                ref.read(calendarEventsProvider.notifier).deleteEvent(editingEvent.id);
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Deleted "${editingEvent.title}"')),
-                );
-              },
-              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
-              child: const Text('Delete'),
-            ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (titleController.text.trim().isEmpty) return;
-
-              final startDateTime = DateTime(
-                _focusedDay.year,
-                _focusedDay.month,
-                _focusedDay.day,
-                startTime.hour,
-                startTime.minute,
-              );
-              final endDateTime = DateTime(
-                _focusedDay.year,
-                _focusedDay.month,
-                _focusedDay.day,
-                endTime.hour,
-                endTime.minute,
-              );
-
-              ref.read(calendarEventsProvider.notifier).addOrUpdateEvent(
-                    title: titleController.text.trim(),
-                    startTime: startDateTime,
-                    endTime: endDateTime,
-                    description: descController.text.trim(),
-                    location: locController.text.trim(),
-                    eventId: editingEvent?.id,
-                  );
-
-              Navigator.pop(ctx);
-            },
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
   }
 }
+

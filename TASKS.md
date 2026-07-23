@@ -2,8 +2,8 @@
 
 Legend: ☐ Pending | ✓ Complete | ⚠ Blocked | 🔄 In Progress
 
-Current Milestone: Milestone 2 — Authentication
-Current Task: M2-T1 — Auth Model & Isar Schema
+Current Milestone: Milestone 3 — Dashboard
+Current Task: M3-T1 — Dashboard Layout
 
 ## Milestone 1 — Foundation
 - [x] M1-T1 — Project Setup
@@ -38,13 +38,13 @@ Current Task: M2-T1 — Auth Model & Isar Schema
   - [x] Validator functions
 
 ## Milestone 2 — Authentication
-- [ ] Local Auth Model & Isar Schema
-- [ ] Password Hashing (Argon2)
-- [ ] Login Screen
-- [ ] Register Screen
-- [ ] Auth State Management (Riverpod)
-- [ ] Secure Storage
-- [ ] Profile Screen
+- [x] Local Auth Model & Isar Schema
+- [x] Password Hashing (Argon2)
+- [x] Login Screen
+- [x] Register Screen
+- [x] Auth State Management (Riverpod)
+- [x] Secure Storage
+- [x] Profile Screen
 
 ## Milestone 3 — Dashboard
 - [ ] Dashboard Layout

@@ -31,6 +31,11 @@ abstract final class AppSpacing {
   static const double navBarHeight = 64.0;
   static const double sidebarWidth = 280.0;
   static const double minTouchTarget = 48.0;
+  // ─── Radius Aliases (convenience re-exports from AppRadius) ─────────────────
+  static const double radiusSm = 8.0;
+  static const double radiusMd = 12.0;
+  static const double radiusLg = 16.0;
+  static const double radiusXl = 20.0;
 }
 
 /// PocketDesk centralized border radius tokens.

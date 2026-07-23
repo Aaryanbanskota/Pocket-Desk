@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026-07-23] — M2 Complete: Local Authentication & User Profiles
+
+### Added
+- **M2-T1 Isar UserModel Schema**: Defined `UserModel` with secure schema annotations (unique index on username, hash + salt properties, theme preferences, timestamps).
+- **M2-T2 Password Hashing**: Implemented Argon2id password hashing parameters using OWASP recommendations (19 MiB memory, 2 iterations, 1 parallelism, 128-bit random salt, constant-time verification).
+- **M2-T3/M2-T4 UI Screens**: Designed stateful, beautiful Material 3 `LoginPage` and `RegisterPage` with curved scale-up animations, real-time password strength indicators, form validations, and custom styled form text fields (`PDTextField`).
+- **M2-T5 Auth State Notifier**: Wrote Riverpod `AuthNotifier` controlling application state (`AuthLoading`, `AuthUnauthenticated`, `AuthAuthenticated`, `AuthError`).
+- **M2-T6 Secure Auth Storage**: Handled secure local keychain persistence of session parameters using `flutter_secure_storage` (Android Keystore / GNOME Keyring).
+- **M2-T7 Profile Management Screen**: Created `ProfilePage` allowing display name updates, password alterations, sign-outs, and account detail logs.
+
+### Changed
+- Configured dynamic redirection inside `app_router.dart` depending on auth state changes.
+
+### Verified
+- `flutter analyze` -> Clean
+- `flutter test` -> All unit and widget tests pass ✅
+
 ## [2026-07-23] — M1 Complete: Routing, Error Handling, Core Utilities
 
 ### Added

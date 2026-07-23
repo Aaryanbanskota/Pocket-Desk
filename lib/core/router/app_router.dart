@@ -3,93 +3,84 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/auth/presentation/pages/profile_page.dart';
+import '../../features/auth/presentation/providers/auth_notifier.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
 
 // ---------------------------------------------------------------------------
-// Placeholder screens (replaced by real screens as milestones complete)
+// Placeholder screens (replaced in later milestones)
 // ---------------------------------------------------------------------------
 
 class _SplashPage extends StatelessWidget {
   const _SplashPage();
   @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
-    );
-  }
-}
-
-class _LoginPage extends StatelessWidget {
-  const _LoginPage();
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Text(
-          'Login',
-          style: Theme.of(context).textTheme.headlineLarge,
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
 }
 
 class _DashboardPage extends StatelessWidget {
   const _DashboardPage();
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Text(
-          'Dashboard',
-          style: Theme.of(context).textTheme.headlineLarge,
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: const Text('Dashboard')),
+        body: Center(
+          child: Text(
+            'Dashboard — Coming in Milestone 3',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
         ),
-      ),
-    );
-  }
+      );
 }
 
 class _NotFoundPage extends StatelessWidget {
   const _NotFoundPage();
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('404', style: Theme.of(context).textTheme.displayLarge),
-            const SizedBox(height: 16),
-            Text(
-              'Page not found',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: () => context.go(AppRoutes.dashboard),
-              child: const Text('Go Home'),
-            ),
-          ],
+  Widget build(BuildContext context) => Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('404', style: Theme.of(context).textTheme.displayLarge),
+              const SizedBox(height: 16),
+              Text('Page not found',
+                  style: Theme.of(context).textTheme.bodyLarge),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () => context.go(AppRoutes.dashboard),
+                child: const Text('Go Home'),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 }
 
 // ---------------------------------------------------------------------------
-// Router provider
+// Router provider — auth-aware redirect
 // ---------------------------------------------------------------------------
 
 @riverpod
 GoRouter appRouter(Ref ref) {
-  // TODO(auth): Replace with real auth state notifier in Milestone 2.
-  // Currently always unauthenticated → routes to login.
-  const isAuthenticated = false;
+  final authAsync = ref.watch(authNotifierProvider);
+
+  final isAuthenticated = authAsync.maybeWhen(
+    data: (state) => state is AuthAuthenticated,
+    orElse: () => false,
+  );
+
+  final isLoading = authAsync.maybeWhen(
+    loading: () => true,
+    data: (state) => state is AuthLoading,
+    orElse: () => false,
+  );
 
   return GoRouter(
-    initialLocation: isAuthenticated ? AppRoutes.dashboard : AppRoutes.login, // ignore: dead_code
+    initialLocation: AppRoutes.splash,
     debugLogDiagnostics: false,
     errorBuilder: (context, state) => const _NotFoundPage(),
     routes: [
@@ -99,11 +90,19 @@ GoRouter appRouter(Ref ref) {
       ),
       GoRoute(
         path: AppRoutes.login,
-        builder: (context, state) => const _LoginPage(),
+        builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        builder: (context, state) => const RegisterPage(),
       ),
       GoRoute(
         path: AppRoutes.dashboard,
         builder: (context, state) => const _DashboardPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.settingsProfile,
+        builder: (context, state) => const ProfilePage(),
       ),
       GoRoute(
         path: AppRoutes.notFound,
@@ -111,11 +110,14 @@ GoRouter appRouter(Ref ref) {
       ),
     ],
     redirect: (context, state) {
-      final onLoginPage = state.matchedLocation == AppRoutes.login ||
-          state.matchedLocation == AppRoutes.register;
-      if (!isAuthenticated && !onLoginPage) {
-        return AppRoutes.login;
-      }
+      if (isLoading) return AppRoutes.splash;
+
+      final onAuthPage = state.matchedLocation == AppRoutes.login ||
+          state.matchedLocation == AppRoutes.register ||
+          state.matchedLocation == AppRoutes.splash;
+
+      if (!isAuthenticated && !onAuthPage) return AppRoutes.login;
+      if (isAuthenticated && onAuthPage) return AppRoutes.dashboard;
       return null;
     },
   );

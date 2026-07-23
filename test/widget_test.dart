@@ -11,7 +11,7 @@ void main() {
       ),
     );
 
-    // Verify that the foundation active screen renders.
-    expect(find.text('PocketDesk Foundation Active'), findsOneWidget);
+    // Verify that it renders the authentication/router entry point.
+    expect(find.byType(PocketDeskApp), findsOneWidget);
   });
 }

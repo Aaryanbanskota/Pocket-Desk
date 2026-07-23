@@ -1,7 +1,7 @@
 # PocketDesk — Project Context
 ## Last Updated: 2026-07-23
-## Current Milestone: Milestone 1 — Foundation
-## Current Task: M1-T3 — Design System & Theme (NEXT)
+## Current Milestone: Milestone 2 — Authentication
+## Current Task: M2-T7 — Profile Screen (Complete)
 
 ## Project Summary
 [Brief description of PocketDesk]
@@ -38,6 +38,18 @@
 - [x] PROJECT_CONTEXT.md created
 - [x] CHANGELOG.md created
 - [x] M1-T1: Initialize Flutter project, configure linting, .gitignore, and Git repository
+- [x] M1-T2: Setup environment variables, configure build targets, flavored entry points
+- [x] M1-T3: Define color palettes, typography, theme mode notifier, theme configurations
+- [x] M1-T4: Configure GoRouter, route structures, deep linking placeholders
+- [x] M1-T5: GlobalErrorBoundary, Zone-based unhandled error logging, AppLogger structured log levels
+- [x] M1-T6: DateTimeUtils, String extensions, FileSystemUtils directory/IO, Form Validators
+- [x] M2-T1: Local Auth Model & Isar Schema (UserModel)
+- [x] M2-T2: Argon2id Password Hashing implementation
+- [x] M2-T3: Login Screen with custom fade animations and forms
+- [x] M2-T4: Register Screen with real-time password strength indicators
+- [x] M2-T5: Auth State Notifier using Riverpod
+- [x] M2-T6: Secure Auth Storage key-value persistence
+- [x] M2-T7: Profile Screen with display name editing, password changes, and sign-out
 - [x] M1-T2: Configure build targets (minSdk 24, targetSdk 34), add dependencies (Riverpod, Isar, GoRouter), and set up flavored environments (main_dev, main_prod, .env.development.json, .env.production.json)
 
 ## Pending Work

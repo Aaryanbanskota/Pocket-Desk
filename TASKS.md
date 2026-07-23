@@ -2,8 +2,8 @@
 
 Legend: ☐ Pending | ✓ Complete | ⚠ Blocked | 🔄 In Progress
 
-Current Milestone: Milestone 1 — Foundation
-Current Task: M1-T3 — Design System & Theme
+Current Milestone: Milestone 2 — Authentication
+Current Task: M2-T1 — Auth Model & Isar Schema
 
 ## Milestone 1 — Foundation
 - [x] M1-T1 — Project Setup
@@ -16,26 +16,26 @@ Current Task: M1-T3 — Design System & Theme
   - [x] Configure build targets
   - [x] Add base dependencies
   - [x] Setup flavored builds
-- [ ] M1-T3 — Design System & Theme
-  - [ ] Define color palette
-  - [ ] Define typography
-  - [ ] Create custom widget wrappers
-  - [ ] Implement light/dark mode switching
-- [ ] M1-T4 — Routing Setup
-  - [ ] Add routing dependency (go_router)
-  - [ ] Define route paths
-  - [ ] Create route guards
-  - [ ] Setup deep linking
-- [ ] M1-T5 — Error Handling & Logging
-  - [ ] Create global error boundary
-  - [ ] Implement logging utility
-  - [ ] Set up crash reporting (local)
-  - [ ] Format error UI
-- [ ] M1-T6 — Core Utilities
-  - [ ] Date/time formatting helpers
-  - [ ] String extensions
-  - [ ] File system helpers
-  - [ ] Validator functions
+- [x] M1-T3 — Design System & Theme
+  - [x] Define color palette
+  - [x] Define typography
+  - [x] Create custom widget wrappers
+  - [x] Implement light/dark mode switching
+- [x] M1-T4 — Routing Setup
+  - [x] Add routing dependency (go_router)
+  - [x] Define route paths
+  - [x] Create route guards
+  - [x] Setup deep linking
+- [x] M1-T5 — Error Handling & Logging
+  - [x] Create global error boundary
+  - [x] Implement logging utility
+  - [x] Set up crash reporting (local)
+  - [x] Format error UI
+- [x] M1-T6 — Core Utilities
+  - [x] Date/time formatting helpers
+  - [x] String extensions
+  - [x] File system helpers
+  - [x] Validator functions
 
 ## Milestone 2 — Authentication
 - [ ] Local Auth Model & Isar Schema

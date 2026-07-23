@@ -32,6 +32,9 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.6
 
+  # Typography
+  google_fonts: ^6.2.1
+
   # Navigation & Routing
   go_router: ^14.2.0
 

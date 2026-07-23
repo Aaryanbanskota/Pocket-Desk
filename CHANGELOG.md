@@ -5,7 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026-07-23] — M1 Complete: Routing, Error Handling, Core Utilities
+
+### Added
+- **M1-T4 Routing**: `AppRoutes` constants, `GoRouter` provider with auth-guard redirect, placeholder screens, barrel export (`lib/core/router/`)
+- **M1-T5 Error Handling**: `GlobalErrorBoundary` widget catching `FlutterError` + `runZonedGuarded`, `AppFailure` sealed class hierarchy (`DatabaseFailure`, `NetworkFailure`, `AuthFailure`, `SyncFailure`, `SerializationFailure`, `FileFailure`, `UnexpectedFailure`), `AppLogger` structured logger with levels (barrel: `lib/core/error/`, `lib/core/logging/`)
+- **M1-T6 Core Utilities**: `DateTimeUtils` (formatting, relative labels, boundaries), `StringX`/`NullableStringX` extensions, `FileSystemUtils` (persistent/cache dirs, read/write, size), `Validators` (username, password, required, composable) — barrel: `lib/core/utils/`
+
+### Changed
+- `lib/app/app.dart` updated to `MaterialApp.router` wired to `appRouterProvider`
+- `lib/main_dev.dart` and `lib/main_prod.dart` wrapped in `runZonedGuarded` + `GlobalErrorBoundary`
+
+### Verified
+- `flutter analyze --no-pub` → **No issues found**
+- Milestone 1 — Foundation: **100% complete** ✅
+
 ## [2026-07-23] — M1-T2: Flutter Configuration Complete
+
 
 Completed the dependency injection setup and flavored environment environments.
 

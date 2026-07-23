@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/isar_provider.dart';
 import '../../../../core/error/app_failure.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../data/models/calendar_event_model.dart';
 import '../../data/repositories/calendar_repository.dart';
 
@@ -74,6 +75,9 @@ class CalendarEventsNotifier extends AutoDisposeAsyncNotifier<List<CalendarEvent
       if (result.error != null) {
         state = AsyncValue.error(result.error!, StackTrace.current);
       } else {
+        if (result.event != null) {
+          await NotificationService.instance.scheduleEventReminders(result.event!);
+        }
         ref.invalidateSelf();
       }
     } catch (e, st) {
@@ -88,6 +92,9 @@ class CalendarEventsNotifier extends AutoDisposeAsyncNotifier<List<CalendarEvent
     state = const AsyncValue.loading();
     try {
       final repo = await ref.read(calendarRepositoryProvider.future);
+      // Cancel notifications first
+      await NotificationService.instance.cancelEventReminders(eventId);
+      
       final error = await repo.deleteEvent(eventId);
       if (error != null) {
         state = AsyncValue.error(error, StackTrace.current);

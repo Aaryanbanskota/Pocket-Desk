@@ -3,7 +3,7 @@
 Legend: ☐ Pending | ✓ Complete | ⚠ Blocked | 🔄 In Progress
 
 Current Milestone: Milestone 4 — Calendar
-Current Task: M4-T10 — Reminders & Notifications
+Current Task: M4-T11 — Multiple Calendars
 
 ## Milestone 1 — Foundation
 - [x] M1-T1 — Project Setup
@@ -67,7 +67,7 @@ Current Task: M4-T10 — Reminders & Notifications
 - [x] Agenda View
 - [x] Event Creation/Edit/Delete
 - [x] Recurring Events Engine
-- [ ] Reminders & Notifications
+- [x] Reminders & Notifications
 - [ ] Multiple Calendars
 - [ ] ICS Import
 - [ ] ICS Export

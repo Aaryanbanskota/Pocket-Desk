@@ -1,0 +1,22 @@
+/* Docs Page CSS for PocketDesk Product Website */
+.docs {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 80px 24px;
+}
+
+.docs-box {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.docs-box h3 {
+  margin-bottom: 16px;
+}
+
+.docs-box p {
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}

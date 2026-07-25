@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Features — PocketDesk</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="features.css">
+</head>
+<body class="light-mode">
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">🚀</span>
+        <span class="logo-text">PocketDesk</span>
+      </a>
+      <nav class="nav-links">
+        <a href="features.html" class="active">Features</a>
+        <a href="index.html#screenshots">Screenshots</a>
+        <a href="faq.html">FAQ</a>
+        <a href="docs.html">Docs</a>
+        <a href="download.html" class="btn-primary">Download</a>
+      </nav>
+      <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark mode">
+        <span class="sun-icon">☀️</span>
+        <span class="moon-icon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Features Grid -->
+    <section class="features">
+      <h2 class="section-title">Why PocketDesk?</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3>Privacy First</h3>
+          <p>Zero servers. All database records (Isar) stay locally on your device with biometric authentication & encrypted storage.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>Local P2P Sync</h3>
+          <p>Instantly sync calendars, tasks, and notes with other devices via secure local WebSocket pairing using cryptographic keys.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📅</div>
+          <h3>Integrated Workspace</h3>
+          <p>A central dashboard matching clean layouts, beautiful recurrence engines, interactive boards, and notification schedules.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p>&copy; 2026 PocketDesk. Built offline-first for privacy.</p>
+      <div class="footer-links">
+        <a href="#privacy">Privacy Policy</a>
+        <a href="#terms">Terms</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JS -->
+  <script src="app.js"></script>
+</body>
+</html>

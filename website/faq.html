@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAQ — PocketDesk</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="faq.css">
+</head>
+<body class="light-mode">
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">🚀</span>
+        <span class="logo-text">PocketDesk</span>
+      </a>
+      <nav class="nav-links">
+        <a href="features.html">Features</a>
+        <a href="index.html#screenshots">Screenshots</a>
+        <a href="faq.html" class="active">FAQ</a>
+        <a href="docs.html">Docs</a>
+        <a href="download.html" class="btn-primary">Download</a>
+      </nav>
+      <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark mode">
+        <span class="sun-icon">☀️</span>
+        <span class="moon-icon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="faq">
+      <h2 class="section-title">Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <div class="faq-item">
+          <h3>Does PocketDesk require an internet connection?</h3>
+          <p>No. PocketDesk is built offline-first. Your calendar, tasks, and notes are saved directly to a high-performance local database on your device.</p>
+        </div>
+        <div class="faq-item">
+          <h3>How does P2P synchronization work?</h3>
+          <p>Syncing happens directly between devices over your local local area network (LAN) using WebSockets. PocketDesk uses cryptographically generated keys to ensure only authorized devices sync with each other, completely bypassing third-party cloud servers.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Are my files secure?</h3>
+          <p>Yes, all application data is stored in a secure local database (Isar) and protected by biometric authentication (like fingerprint or face unlock) if enabled in settings.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What platforms are supported?</h3>
+          <p>PocketDesk is available for Android and Linux desktop. Both builds are fully native, fast, and feature-rich.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p>&copy; 2026 PocketDesk. Built offline-first for privacy.</p>
+      <div class="footer-links">
+        <a href="#privacy">Privacy Policy</a>
+        <a href="#terms">Terms</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JS -->
+  <script src="app.js"></script>
+</body>
+</html>

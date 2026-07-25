@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (userAgent.indexOf('android') !== -1) {
     osName = 'Android';
     actionText = 'Download for Android (APK)';
-    downloadLink = '#download';
+    downloadLink = 'all-apk/app-release.apk';
   } else if (platform.indexOf('win') !== -1) {
     osName = 'Windows';
     actionText = 'Download for Windows (Installer)';

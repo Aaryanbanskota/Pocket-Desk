@@ -1,0 +1,42 @@
+/* Download Page CSS for PocketDesk Product Website */
+.download-section {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 80px 24px;
+}
+
+.download-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.download-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  padding: 28px;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.download-card h3 {
+  margin-bottom: 8px;
+}
+
+.download-card p {
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+.btn-download {
+  display: inline-block;
+  text-decoration: none;
+  background: var(--gradient);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 12px var(--primary-glow);
+}

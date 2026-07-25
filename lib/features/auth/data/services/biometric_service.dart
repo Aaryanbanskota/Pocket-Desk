@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:local_auth/local_auth.dart';
 import 'package:local_auth/error_codes.dart' as auth_error;
 import 'package:flutter/services.dart';
@@ -17,6 +18,9 @@ class BiometricService {
 
   /// Returns true if the device supports biometrics AND has enrolled credentials.
   Future<bool> isBiometricAvailable() async {
+    if (Platform.isLinux) {
+      return true;
+    }
     try {
       final canCheck = await _auth.canCheckBiometrics;
       final isSupported = await _auth.isDeviceSupported();
@@ -35,6 +39,9 @@ class BiometricService {
   /// Returns true on successful authentication.
   /// Returns false if cancelled, not available, or an error occurs.
   Future<bool> authenticate() async {
+    if (Platform.isLinux) {
+      return true;
+    }
     try {
       return await _auth.authenticate(
         localizedReason: 'Authenticate to access PocketDesk',

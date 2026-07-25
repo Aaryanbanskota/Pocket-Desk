@@ -1,14 +1,39 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/utils/date_time_utils.dart';
+import '../../../tasks/data/models/task_model.dart';
+import '../../../tasks/presentation/providers/tasks_notifier.dart';
+import '../../../calendar/data/models/recurrence_engine.dart';
+import '../../../calendar/presentation/providers/calendar_events_notifier.dart';
 
-class StatisticsWidget extends StatelessWidget {
+class StatisticsWidget extends ConsumerWidget {
   const StatisticsWidget({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final now = DateTime.now();
+
+    final tasksAsync = ref.watch(tasksProvider);
+    final eventsAsync = ref.watch(calendarEventsProvider);
+
+    final doneTasksCount = tasksAsync.maybeWhen(
+      data: (state) => state.tasks
+          .where((t) => t.status == TaskStatus.done)
+          .length,
+      orElse: () => 0,
+    );
+
+    final weeklyEventsCount = eventsAsync.maybeWhen(
+      data: (events) {
+        final startOfWeek = DateTimeUtils.startOfWeek(now);
+        final endOfWeek = DateTimeUtils.endOfWeek(now);
+        return RecurrenceEngine.expandEvents(events, startOfWeek, endOfWeek).length;
+      },
+      orElse: () => 0,
+    );
 
     return Card(
       elevation: 0,
@@ -34,13 +59,25 @@ class StatisticsWidget extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatColumn(theme, colorScheme, '12', 'Tasks done', colorScheme.primary),
+                _buildStatColumn(
+                  theme,
+                  colorScheme,
+                  '$doneTasksCount',
+                  'Tasks done',
+                  colorScheme.primary,
+                ),
                 Container(
                   width: 1,
                   height: 40,
                   color: colorScheme.outlineVariant.withAlpha(80),
                 ),
-                _buildStatColumn(theme, colorScheme, '4', 'Meetings', colorScheme.secondary),
+                _buildStatColumn(
+                  theme,
+                  colorScheme,
+                  '$weeklyEventsCount',
+                  'Events',
+                  colorScheme.secondary,
+                ),
               ],
             ),
           ],

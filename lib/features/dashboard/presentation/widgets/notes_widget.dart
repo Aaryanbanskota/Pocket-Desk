@@ -1,28 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/utils/date_time_utils.dart';
+import '../../../notes/presentation/providers/notes_notifier.dart';
+import '../../../notes/presentation/pages/note_editor_page.dart';
 
-class NotesWidget extends StatelessWidget {
+class NotesWidget extends ConsumerWidget {
   const NotesWidget({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-
-    const mockNotes = [
-      _NoteMock(
-        title: 'Project Setup Notes',
-        snippet: 'Remember to configure dev flavors using dart-define config mappings...',
-        date: 'Today',
-      ),
-      _NoteMock(
-        title: 'Argon2id Benchmarking parameters',
-        snippet: 'Tested 19 MiB memory configuration resulting in ~100ms key derivation latency.',
-        date: 'Yesterday',
-      ),
-    ];
+    final notesAsync = ref.watch(notesProvider);
 
     return Card(
       elevation: 0,
@@ -54,54 +46,107 @@ class NotesWidget extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: mockNotes.length,
-              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
-              itemBuilder: (context, index) {
-                final note = mockNotes[index];
-                return Container(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withAlpha(40),
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            notesAsync.when(
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSpacing.md),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (err, _) => Center(child: Text('Error loading notes: $err')),
+              data: (state) {
+                final notes = state.notes;
+                if (notes.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Expanded(
-                            child: Text(
-                              note.title,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                          Icon(
+                            Icons.note_alt_outlined,
+                            size: 48,
+                            color: colorScheme.onSurfaceVariant.withAlpha(100),
                           ),
+                          const SizedBox(height: AppSpacing.sm),
                           Text(
-                            note.date,
-                            style: theme.textTheme.bodySmall?.copyWith(
+                            'No notes found',
+                            style: theme.textTheme.bodyMedium?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        note.snippet,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                    ),
+                  );
+                }
+
+                // Show up to 3 notes on dashboard
+                final displayedNotes = notes.take(3).toList();
+
+                return ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: displayedNotes.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+                  itemBuilder: (context, index) {
+                    final note = displayedNotes[index];
+                    return InkWell(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => NoteEditorPage(note: note),
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                      child: Container(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest.withAlpha(40),
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                          border: Border.all(
+                            color: colorScheme.outlineVariant.withAlpha(30),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    note.title.isEmpty ? 'Untitled Note' : note.title,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  DateTimeUtils.toRelativeLabel(note.updatedAt),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (note.content.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                note.content,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
@@ -110,16 +155,4 @@ class NotesWidget extends StatelessWidget {
       ),
     );
   }
-}
-
-class _NoteMock {
-  const _NoteMock({
-    required this.title,
-    required this.snippet,
-    required this.date,
-  });
-
-  final String title;
-  final String snippet;
-  final String date;
 }

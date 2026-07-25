@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/router/app_routes.dart';
 
 class CalendarMiniWidget extends StatelessWidget {
   const CalendarMiniWidget({super.key});
@@ -27,26 +29,29 @@ class CalendarMiniWidget extends StatelessWidget {
           color: colorScheme.outlineVariant.withAlpha(50),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Calendar Mini',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+      child: InkWell(
+        onTap: () => context.push(AppRoutes.calendar),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Calendar Mini',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-                  onPressed: () {},
-                ),
-              ],
-            ),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                    onPressed: () => context.push(AppRoutes.calendar),
+                  ),
+                ],
+              ),
             const SizedBox(height: AppSpacing.sm),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -93,6 +98,7 @@ class CalendarMiniWidget extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

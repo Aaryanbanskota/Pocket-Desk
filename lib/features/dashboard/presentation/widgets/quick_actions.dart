@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/router/app_routes.dart';
 
 class QuickActions extends StatelessWidget {
   const QuickActions({super.key});
@@ -15,19 +17,19 @@ class QuickActions extends StatelessWidget {
         icon: Icons.add_task_rounded,
         label: 'Add Task',
         color: colorScheme.primary,
-        onTap: () {},
+        onTap: () => context.push(AppRoutes.tasks),
       ),
       _ActionItem(
         icon: Icons.event_rounded,
         label: 'New Event',
         color: colorScheme.secondary,
-        onTap: () {},
+        onTap: () => context.push(AppRoutes.calendar),
       ),
       _ActionItem(
         icon: Icons.note_add_rounded,
         label: 'New Note',
         color: colorScheme.tertiary,
-        onTap: () {},
+        onTap: () => context.push(AppRoutes.notes),
       ),
     ];
 

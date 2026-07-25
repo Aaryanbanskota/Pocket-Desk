@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/task_model.dart';
@@ -7,13 +8,31 @@ class TaskFormSheet extends ConsumerStatefulWidget {
   const TaskFormSheet({super.key, this.task});
   final TaskModel? task;
 
-  static Future<void> show(BuildContext context, {TaskModel? task}) =>
-      showModalBottomSheet<void>(
+  static bool get _isDesktop =>
+      Platform.isLinux || Platform.isWindows || Platform.isMacOS;
+
+  static Future<void> show(BuildContext context, {TaskModel? task}) {
+    if (_isDesktop) {
+      return showDialog<void>(
         context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => TaskFormSheet(task: task),
+        barrierDismissible: true,
+        builder: (_) => Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
+            child: TaskFormSheet(task: task),
+          ),
+        ),
       );
+    }
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => TaskFormSheet(task: task),
+    );
+  }
 
   @override
   ConsumerState<TaskFormSheet> createState() => _TaskFormSheetState();
@@ -107,6 +126,48 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final isDesktop = TaskFormSheet._isDesktop;
+
+    // On desktop we render directly as a Column inside the Dialog.
+    // On mobile we use a DraggableScrollableSheet.
+    if (isDesktop) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                Text(
+                  widget.task == null ? 'New Task' : 'Edit Task',
+                  style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: _submit,
+                  child: const Text('Save'),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                children: _buildFormFields(cs, tt),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
@@ -159,156 +220,7 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                     20,
                     MediaQuery.of(context).viewInsets.bottom + 24,
                   ),
-                  children: [
-                    // Title
-                    TextFormField(
-                      controller: _titleCtrl,
-                      autofocus: widget.task == null,
-                      decoration: const InputDecoration(
-                        labelText: 'Task title *',
-                        prefixIcon: Icon(Icons.task_alt_outlined),
-                      ),
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Required' : null,
-                    ),
-                    const SizedBox(height: 12),
-                    // Description
-                    TextFormField(
-                      controller: _descCtrl,
-                      maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: 'Description',
-                        prefixIcon: Icon(Icons.notes_outlined),
-                        alignLabelWithHint: true,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Priority chips
-                    Text('Priority', style: tt.labelMedium?.copyWith(color: cs.onSurfaceVariant)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: TaskPriority.values.map((p) {
-                        final selected = _priority == p;
-                        return ChoiceChip(
-                          label: Text(_priorityLabel(p)),
-                          selected: selected,
-                          selectedColor: _priorityColor(p).withValues(alpha: 0.2),
-                          side: BorderSide(
-                            color: selected ? _priorityColor(p) : cs.outline,
-                          ),
-                          labelStyle: TextStyle(
-                            color: selected ? _priorityColor(p) : cs.onSurfaceVariant,
-                            fontWeight: selected ? FontWeight.w600 : null,
-                          ),
-                          onSelected: (_) => setState(() => _priority = p),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-                    // Due date
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.calendar_today_outlined, color: cs.primary),
-                      title: Text(_dueDate == null
-                          ? 'No due date'
-                          : 'Due: ${_dueDate!.toLocal().toString().split(' ')[0]}'),
-                      trailing: _dueDate != null
-                          ? IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: () => setState(() => _dueDate = null),
-                            )
-                          : null,
-                      onTap: _pickDate,
-                    ),
-                    const SizedBox(height: 8),
-                    // List / Folder / Category
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _listCtrl,
-                            decoration: const InputDecoration(
-                              labelText: 'List',
-                              prefixIcon: Icon(Icons.list_outlined),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _folderCtrl,
-                            decoration: const InputDecoration(
-                              labelText: 'Folder',
-                              prefixIcon: Icon(Icons.folder_outlined),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _categoryCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Category',
-                        prefixIcon: Icon(Icons.label_outline),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Recurring
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Recurring Task'),
-                      secondary: Icon(Icons.repeat, color: cs.primary),
-                      value: _isRecurring,
-                      onChanged: (v) => setState(() => _isRecurring = v),
-                    ),
-                    if (_isRecurring) ...[
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        initialValue: _recurrenceRule,
-                        decoration: const InputDecoration(labelText: 'Repeat'),
-                        items: _recurrenceOptions
-                            .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                            .toList(),
-                        onChanged: (v) => setState(() => _recurrenceRule = v),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    // Subtasks
-                    Text('Subtasks', style: tt.labelMedium?.copyWith(color: cs.onSurfaceVariant)),
-                    const SizedBox(height: 8),
-                    ..._subtasks.asMap().entries.map((e) => ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                          leading: const Icon(Icons.radio_button_unchecked, size: 18),
-                          title: Text(e.value),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.close, size: 18),
-                            onPressed: () =>
-                                setState(() => _subtasks.removeAt(e.key)),
-                          ),
-                        )),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _subtaskCtrl,
-                            decoration: const InputDecoration(
-                              hintText: 'Add subtask…',
-                              prefixIcon: Icon(Icons.add, size: 18),
-                            ),
-                            onFieldSubmitted: (_) => _addSubtask(),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton.filled(
-                          onPressed: _addSubtask,
-                          icon: const Icon(Icons.add),
-                        ),
-                      ],
-                    ),
-                  ],
+                  children: _buildFormFields(cs, tt),
                 ),
               ),
             ),
@@ -316,6 +228,159 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
         ),
       ),
     );
+  }
+
+  /// Shared list of form field widgets used by both desktop and mobile builds.
+  List<Widget> _buildFormFields(ColorScheme cs, TextTheme tt) {
+    return [
+      // Title
+      TextFormField(
+        controller: _titleCtrl,
+        autofocus: widget.task == null,
+        decoration: const InputDecoration(
+          labelText: 'Task title *',
+          prefixIcon: Icon(Icons.task_alt_outlined),
+        ),
+        validator: (v) =>
+            (v == null || v.trim().isEmpty) ? 'Required' : null,
+      ),
+      const SizedBox(height: 12),
+      // Description
+      TextFormField(
+        controller: _descCtrl,
+        maxLines: 3,
+        decoration: const InputDecoration(
+          labelText: 'Description',
+          prefixIcon: Icon(Icons.notes_outlined),
+          alignLabelWithHint: true,
+        ),
+      ),
+      const SizedBox(height: 16),
+      // Priority chips
+      Text('Priority', style: tt.labelMedium?.copyWith(color: cs.onSurfaceVariant)),
+      const SizedBox(height: 8),
+      Wrap(
+        spacing: 8,
+        children: TaskPriority.values.map((p) {
+          final selected = _priority == p;
+          return ChoiceChip(
+            label: Text(_priorityLabel(p)),
+            selected: selected,
+            selectedColor: _priorityColor(p).withValues(alpha: 0.2),
+            side: BorderSide(
+              color: selected ? _priorityColor(p) : cs.outline,
+            ),
+            labelStyle: TextStyle(
+              color: selected ? _priorityColor(p) : cs.onSurfaceVariant,
+              fontWeight: selected ? FontWeight.w600 : null,
+            ),
+            onSelected: (_) => setState(() => _priority = p),
+          );
+        }).toList(),
+      ),
+      const SizedBox(height: 16),
+      // Due date
+      ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(Icons.calendar_today_outlined, color: cs.primary),
+        title: Text(_dueDate == null
+            ? 'No due date'
+            : 'Due: ${_dueDate!.toLocal().toString().split(' ')[0]}'),
+        trailing: _dueDate != null
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => setState(() => _dueDate = null),
+              )
+            : null,
+        onTap: _pickDate,
+      ),
+      const SizedBox(height: 8),
+      // List / Folder / Category
+      Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              controller: _listCtrl,
+              decoration: const InputDecoration(
+                labelText: 'List',
+                prefixIcon: Icon(Icons.list_outlined),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextFormField(
+              controller: _folderCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Folder',
+                prefixIcon: Icon(Icons.folder_outlined),
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _categoryCtrl,
+        decoration: const InputDecoration(
+          labelText: 'Category',
+          prefixIcon: Icon(Icons.label_outline),
+        ),
+      ),
+      const SizedBox(height: 16),
+      // Recurring
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Recurring Task'),
+        secondary: Icon(Icons.repeat, color: cs.primary),
+        value: _isRecurring,
+        onChanged: (v) => setState(() => _isRecurring = v),
+      ),
+      if (_isRecurring) ...[
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          initialValue: _recurrenceRule,
+          decoration: const InputDecoration(labelText: 'Repeat'),
+          items: _recurrenceOptions
+              .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+              .toList(),
+          onChanged: (v) => setState(() => _recurrenceRule = v),
+        ),
+      ],
+      const SizedBox(height: 16),
+      // Subtasks
+      Text('Subtasks', style: tt.labelMedium?.copyWith(color: cs.onSurfaceVariant)),
+      const SizedBox(height: 8),
+      ..._subtasks.asMap().entries.map((e) => ListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            leading: const Icon(Icons.radio_button_unchecked, size: 18),
+            title: Text(e.value),
+            trailing: IconButton(
+              icon: const Icon(Icons.close, size: 18),
+              onPressed: () => setState(() => _subtasks.removeAt(e.key)),
+            ),
+          )),
+      Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              controller: _subtaskCtrl,
+              decoration: const InputDecoration(
+                hintText: 'Add subtask…',
+                prefixIcon: Icon(Icons.add, size: 18),
+              ),
+              onFieldSubmitted: (_) => _addSubtask(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton.filled(
+            onPressed: _addSubtask,
+            icon: const Icon(Icons.add),
+          ),
+        ],
+      ),
+    ];
   }
 
   String _priorityLabel(TaskPriority p) => switch (p) {

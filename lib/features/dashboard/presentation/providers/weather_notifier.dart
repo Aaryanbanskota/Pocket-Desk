@@ -16,7 +16,34 @@ class WeatherNotifier extends StateNotifier<AsyncValue<WeatherInfo>> {
   Future<void> fetchWeather() async {
     state = const AsyncValue.loading();
     try {
-      // 1. Get current location
+      // Try IP geolocator first to get actual location on Desktop/Linux without prompting native permission
+      try {
+        final ipGeoUri = Uri.parse('http://ip-api.com/json');
+        final ipGeoRes = await http.get(ipGeoUri).timeout(const Duration(seconds: 4));
+        if (ipGeoRes.statusCode == 200) {
+          final geoData = json.decode(ipGeoRes.body) as Map<String, dynamic>;
+          if (geoData['status'] == 'success') {
+            final lat = geoData['lat'] as double;
+            final lon = geoData['lon'] as double;
+            final city = geoData['city'] as String;
+
+            final url = Uri.parse(
+              'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current_weather=true',
+            );
+            final response = await http.get(url).timeout(const Duration(seconds: 10));
+            if (response.statusCode == 200) {
+              final data = json.decode(response.body) as Map<String, dynamic>;
+              final info = WeatherInfo.fromJson(data, city);
+              state = AsyncValue.data(info);
+              return;
+            }
+          }
+        }
+      } catch (_) {
+        // Fallback to native geolocator or Kathmandu
+      }
+
+      // 1. Get current location via native geolocator
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         // Fallback if location service is disabled

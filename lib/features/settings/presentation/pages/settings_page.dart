@@ -4,6 +4,7 @@ import '../widgets/qr_data_share_widget.dart';
 import '../widgets/device_settings_widget.dart';
 import '../widgets/privacy_settings_widget.dart';
 import '../widgets/appearance_settings_widget.dart';
+import '../widgets/security_settings_widget.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -19,7 +20,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -44,7 +45,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
-          isScrollable: false,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           labelColor: colorScheme.primary,
           unselectedLabelColor: colorScheme.onSurfaceVariant,
           indicatorColor: colorScheme.primary,
@@ -66,6 +68,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
               icon: Icon(Icons.privacy_tip_rounded),
               text: 'Privacy',
             ),
+            Tab(
+              icon: Icon(Icons.security_rounded),
+              text: 'Security',
+            ),
           ],
         ),
       ),
@@ -76,6 +82,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
           DeviceSettingsWidget(),
           AppearanceSettingsWidget(),
           PrivacySettingsWidget(),
+          SecuritySettingsWidget(),
         ],
       ),
     );

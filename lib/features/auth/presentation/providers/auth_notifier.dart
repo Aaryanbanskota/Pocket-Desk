@@ -205,6 +205,28 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       newPassword: newPassword,
     );
   }
+  // --------------------------------------------------------------------------
+  // Biometric preference
+  // --------------------------------------------------------------------------
+
+  Future<bool> getBiometricEnabled() async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    return repo.getBiometricEnabled();
+  }
+
+  Future<void> setBiometricEnabled(bool enabled) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    await repo.saveBiometricEnabled(enabled);
+  }
+
+  // --------------------------------------------------------------------------
+  // Last username
+  // --------------------------------------------------------------------------
+
+  Future<String?> getLastUsername() async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    return repo.getLastUsername();
+  }
 }
 
 final authNotifierProvider =

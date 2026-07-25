@@ -26,7 +26,9 @@ class _LoginPageState extends ConsumerState<LoginPage>
   bool _obscurePass = true;
   bool _submitting = false;
   bool _biometricAvailable = false;
+  bool _biometricEnabled = false;
   bool _biometricLoading = false;
+  String? _lastUsername;
   final _biometricService = BiometricService();
   late AnimationController _fadeCtrl;
   late Animation<double> _fadeAnim;
@@ -40,10 +42,30 @@ class _LoginPageState extends ConsumerState<LoginPage>
     );
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
     _fadeCtrl.forward();
-    // Check biometric availability asynchronously.
-    _biometricService.isBiometricAvailable().then((available) {
-      if (mounted) setState(() => _biometricAvailable = available);
+    _initBiometricAndUsername();
+  }
+
+  Future<void> _initBiometricAndUsername() async {
+    final available = await _biometricService.isBiometricAvailable();
+    final notifier = ref.read(authNotifierProvider.notifier);
+    final enabled = await notifier.getBiometricEnabled();
+    final lastUser = await notifier.getLastUsername();
+
+    if (!mounted) return;
+    setState(() {
+      _biometricAvailable = available;
+      _biometricEnabled = enabled;
+      _lastUsername = lastUser;
+      if (lastUser != null && _userCtrl.text.isEmpty) {
+        _userCtrl.text = lastUser;
+      }
     });
+
+    // Auto-trigger biometric login if enabled
+    if (available && enabled) {
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      if (mounted) _biometricLogin();
+    }
   }
 
   @override
@@ -202,6 +224,49 @@ class _LoginPageState extends ConsumerState<LoginPage>
               textInputAction: TextInputAction.next,
               autocorrect: false,
             ),
+            // --- Last-username suggestion chip ---
+            if (_lastUsername != null &&
+                _lastUsername!.isNotEmpty &&
+                _userCtrl.text != _lastUsername)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.xs),
+                child: Wrap(
+                  spacing: AppSpacing.xs,
+                  children: [
+                    Text(
+                      'Last used:',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () {
+                        setState(() => _userCtrl.text = _lastUsername!);
+                      },
+                      child: Chip(
+                        avatar: Icon(
+                          Icons.person_rounded,
+                          size: 16,
+                          color: colorScheme.primary,
+                        ),
+                        label: Text(_lastUsername!),
+                        labelStyle: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        backgroundColor:
+                            colorScheme.primary.withAlpha(20),
+                        side: BorderSide(
+                          color: colorScheme.primary.withAlpha(60),
+                        ),
+                        padding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: AppSpacing.md),
             PDTextField(
               controller: _passCtrl,
@@ -229,27 +294,26 @@ class _LoginPageState extends ConsumerState<LoginPage>
               label: 'Sign In',
               onPressed: _submit,
             ),
-            if (_biometricAvailable) ...
-              [
-                const SizedBox(height: AppSpacing.md),
-                OutlinedButton.icon(
-                  onPressed: _biometricLoading ? null : _biometricLogin,
-                  icon: _biometricLoading
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.fingerprint_rounded),
-                  label: const Text('Sign In with Biometrics'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                    ),
+            if (_biometricAvailable && _biometricEnabled) ...[
+              const SizedBox(height: AppSpacing.md),
+              OutlinedButton.icon(
+                onPressed: _biometricLoading ? null : _biometricLogin,
+                icon: _biometricLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.fingerprint_rounded),
+                label: const Text('Sign In with Biometrics'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                   ),
                 ),
-              ],
+              ),
+            ],
             const SizedBox(height: AppSpacing.md),
             Text(
               'Keep your data organized on the go',

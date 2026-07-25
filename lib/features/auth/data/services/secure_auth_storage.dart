@@ -7,6 +7,8 @@ import '../../../../core/logging/app_logger.dart';
 abstract final class _Keys {
   static const activeUserId = 'pocket_desk_active_user_id';
   static const sessionToken = 'pocket_desk_session_token';
+  static const lastUsername = 'pocket_desk_last_username';
+  static const biometricEnabled = 'pocket_desk_biometric_enabled';
 }
 
 final bool _isTest = Platform.environment.containsKey('FLUTTER_TEST');
@@ -99,6 +101,73 @@ class SecureAuthStorage {
     } catch (e, st) {
       AppLogger.e('Failed to delete session token',
           tag: 'SecureAuthStorage', error: e, st: st);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Last username (non-sensitive — pre-fill login field)
+  // --------------------------------------------------------------------------
+
+  Future<void> saveLastUsername(String username) async {
+    try {
+      final Future<void> writeFuture = _storage.write(
+        key: _Keys.lastUsername,
+        value: username,
+      );
+      await (_isTest ? writeFuture : writeFuture.timeout(const Duration(seconds: 1)));
+    } catch (e, st) {
+      AppLogger.e('Failed to save last username',
+          tag: 'SecureAuthStorage', error: e, st: st);
+    }
+  }
+
+  Future<String?> getLastUsername() async {
+    try {
+      final Future<String?> readFuture = _storage.read(key: _Keys.lastUsername);
+      return await (_isTest ? readFuture : readFuture.timeout(const Duration(seconds: 1)));
+    } catch (e, st) {
+      AppLogger.e('Failed to read last username',
+          tag: 'SecureAuthStorage', error: e, st: st);
+      return null;
+    }
+  }
+
+  Future<void> clearLastUsername() async {
+    try {
+      final Future<void> deleteFuture = _storage.delete(key: _Keys.lastUsername);
+      await (_isTest ? deleteFuture : deleteFuture.timeout(const Duration(seconds: 1)));
+    } catch (e, st) {
+      AppLogger.e('Failed to delete last username',
+          tag: 'SecureAuthStorage', error: e, st: st);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Biometric enabled preference
+  // --------------------------------------------------------------------------
+
+  Future<void> saveBiometricEnabled(bool enabled) async {
+    try {
+      final Future<void> writeFuture = _storage.write(
+        key: _Keys.biometricEnabled,
+        value: enabled ? '1' : '0',
+      );
+      await (_isTest ? writeFuture : writeFuture.timeout(const Duration(seconds: 1)));
+    } catch (e, st) {
+      AppLogger.e('Failed to save biometric preference',
+          tag: 'SecureAuthStorage', error: e, st: st);
+    }
+  }
+
+  Future<bool> getBiometricEnabled() async {
+    try {
+      final Future<String?> readFuture = _storage.read(key: _Keys.biometricEnabled);
+      final value = await (_isTest ? readFuture : readFuture.timeout(const Duration(seconds: 1)));
+      return value == '1';
+    } catch (e, st) {
+      AppLogger.e('Failed to read biometric preference',
+          tag: 'SecureAuthStorage', error: e, st: st);
+      return false;
     }
   }
 

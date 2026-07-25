@@ -119,6 +119,7 @@ class AuthRepository {
       });
 
       await _secureStorage.saveActiveUserId(user.id);
+      await _secureStorage.saveLastUsername(user.username);
       AppLogger.i('User logged in: ${user.username}', tag: 'AuthRepository');
       return (user: user, error: null);
     } catch (e, st) {
@@ -152,8 +153,24 @@ class AuthRepository {
 
   Future<void> logout() async {
     await _secureStorage.clearActiveUserId();
+    // Note: we intentionally keep lastUsername so the login page can still
+    // suggest the username after logout.
     AppLogger.i('User logged out', tag: 'AuthRepository');
   }
+
+  // --------------------------------------------------------------------------
+  // Last username
+  // --------------------------------------------------------------------------
+
+  Future<String?> getLastUsername() => _secureStorage.getLastUsername();
+
+  // --------------------------------------------------------------------------
+  // Biometric preference
+  // --------------------------------------------------------------------------
+
+  Future<bool> getBiometricEnabled() => _secureStorage.getBiometricEnabled();
+  Future<void> saveBiometricEnabled(bool enabled) =>
+      _secureStorage.saveBiometricEnabled(enabled);
 
   // --------------------------------------------------------------------------
   // Profile update

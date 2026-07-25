@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'dart:io' show Platform;
+
 const String _themeModeKey = 'pocketdesk_theme_mode';
+final bool _isTest = Platform.environment.containsKey('FLUTTER_TEST');
 
 class ThemeModeNotifier extends AsyncNotifier<ThemeMode> {
   late final FlutterSecureStorage _storage;
@@ -10,13 +13,24 @@ class ThemeModeNotifier extends AsyncNotifier<ThemeMode> {
   @override
   Future<ThemeMode> build() async {
     _storage = const FlutterSecureStorage();
-    final stored = await _storage.read(key: _themeModeKey);
-    return _fromString(stored);
+    try {
+      final Future<String?> readFuture = _storage.read(key: _themeModeKey);
+      final stored = await (_isTest ? readFuture : readFuture.timeout(const Duration(seconds: 1)));
+      return _fromString(stored);
+    } catch (e) {
+      // Fallback to system theme if Secure Storage initialization or read fails
+      return ThemeMode.system;
+    }
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
     state = AsyncData(mode);
-    await _storage.write(key: _themeModeKey, value: mode.name);
+    try {
+      final Future<void> writeFuture = _storage.write(key: _themeModeKey, value: mode.name);
+      await (_isTest ? writeFuture : writeFuture.timeout(const Duration(seconds: 1)));
+    } catch (e) {
+      // Ignore write failures due to storage hangs
+    }
   }
 
   Future<void> toggleTheme() async {
@@ -38,3 +52,37 @@ class ThemeModeNotifier extends AsyncNotifier<ThemeMode> {
 
 final themeModeProvider =
     AsyncNotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
+
+const String _textScaleKey = 'pocketdesk_text_scale';
+
+class TextScaleNotifier extends AsyncNotifier<double> {
+  late final FlutterSecureStorage _storage;
+
+  @override
+  Future<double> build() async {
+    _storage = const FlutterSecureStorage();
+    try {
+      final Future<String?> readFuture = _storage.read(key: _textScaleKey);
+      final stored = await (_isTest ? readFuture : readFuture.timeout(const Duration(seconds: 1)));
+      if (stored != null) {
+        return double.tryParse(stored) ?? 1.0;
+      }
+      return 1.0;
+    } catch (e) {
+      return 1.0;
+    }
+  }
+
+  Future<void> setTextScale(double scale) async {
+    state = AsyncData(scale);
+    try {
+      final Future<void> writeFuture = _storage.write(key: _textScaleKey, value: scale.toString());
+      await (_isTest ? writeFuture : writeFuture.timeout(const Duration(seconds: 1)));
+    } catch (e) {
+      // Ignore write failures
+    }
+  }
+}
+
+final textScaleProvider =
+    AsyncNotifierProvider<TextScaleNotifier, double>(TextScaleNotifier.new);

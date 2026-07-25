@@ -81,9 +81,10 @@ class PDTextField extends StatelessWidget {
           borderSide: BorderSide(color: colorScheme.error, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.md,
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.lg,
         ),
+        isDense: false,
       ),
     );
   }

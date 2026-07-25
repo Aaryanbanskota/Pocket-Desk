@@ -3,6 +3,7 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../logging/app_logger.dart';
 import '../../features/calendar/data/models/calendar_event_model.dart';
+import '../../features/tasks/data/models/task_model.dart';
 
 class NotificationService {
   NotificationService._();
@@ -143,5 +144,88 @@ class NotificationService {
     // Unique ID combining eventId and reminderIndex.
     // Assuming eventId is a small integer, we offset it.
     return (eventId * 10) + reminderIndex;
+  }
+
+  // --------------------------------------------------------------------------
+  // Task notifications
+  // --------------------------------------------------------------------------
+
+  /// Cancels all scheduled notifications for a task.
+  Future<void> cancelTaskReminder(int taskId) async {
+    if (!_isInitialized) await initialize();
+    try {
+      // Use a dedicated range (offset by 1_000_000) to avoid collision with event IDs.
+      for (int i = 0; i < 5; i++) {
+        await _notificationsPlugin.cancel(1000000 + (taskId * 10) + i);
+      }
+    } catch (e, st) {
+      AppLogger.e('Failed to cancel task notification: $taskId',
+          tag: 'NotificationService', error: e, st: st);
+    }
+  }
+
+  /// Schedules reminder notifications for a task based on its [dueDate]
+  /// and [reminderMinutesRaw] list.
+  ///
+  /// Each string in [reminderMinutesRaw] is expected to be an integer number
+  /// of minutes before [dueDate] to fire the reminder.
+  Future<void> scheduleTaskReminder(TaskModel task) async {
+    if (!_isInitialized) await initialize();
+    await cancelTaskReminder(task.id);
+
+    if (task.dueDate == null || task.reminderMinutesRaw.isEmpty) return;
+
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'pocketdesk_tasks_channel',
+      'Task Reminders',
+      channelDescription: 'Reminders for upcoming tasks and deadlines',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+    );
+
+    const NotificationDetails platformDetails = NotificationDetails(
+      android: androidDetails,
+      linux: LinuxNotificationDetails(),
+    );
+
+    final now = DateTime.now();
+
+    try {
+      for (int i = 0; i < task.reminderMinutesRaw.length; i++) {
+        final minutes = int.tryParse(task.reminderMinutesRaw[i]);
+        if (minutes == null) continue;
+
+        final reminderTime = task.dueDate!.subtract(Duration(minutes: minutes));
+        if (reminderTime.isBefore(now)) continue;
+
+        final tzReminderTime = tz.TZDateTime.from(reminderTime, tz.local);
+        final notificationId = 1000000 + (task.id * 10) + i;
+
+        final label = minutes == 0
+            ? 'Task due now'
+            : 'Due in $minutes minutes';
+
+        await _notificationsPlugin.zonedSchedule(
+          notificationId,
+          task.title,
+          '${task.description != null ? "${task.description} — " : ""}$label',
+          tzReminderTime,
+          platformDetails,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: 'task_id=${task.id}',
+        );
+
+        AppLogger.d(
+          'Scheduled task reminder $i for "${task.title}" at $reminderTime',
+          tag: 'NotificationService',
+        );
+      }
+    } catch (e, st) {
+      AppLogger.e('Failed to schedule task notifications for "${task.title}"',
+          tag: 'NotificationService', error: e, st: st);
+    }
   }
 }

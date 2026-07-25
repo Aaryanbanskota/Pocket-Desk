@@ -11,6 +11,7 @@ import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/calendar/presentation/pages/calendar_dashboard_view.dart';
 import '../../features/tasks/presentation/pages/tasks_dashboard_view.dart';
 import '../../features/notes/presentation/pages/notes_dashboard_view.dart';
+import '../../features/settings/presentation/pages/settings_page.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -109,6 +110,10 @@ GoRouter appRouter(Ref ref) {
         builder: (context, state) => const ProfilePage(),
       ),
       GoRoute(
+        path: AppRoutes.settings,
+        builder: (context, state) => const SettingsPage(),
+      ),
+      GoRoute(
         path: AppRoutes.notFound,
         builder: (context, state) => const _NotFoundPage(),
       ),
@@ -116,9 +121,15 @@ GoRouter appRouter(Ref ref) {
     redirect: (context, state) {
       if (isLoading) return AppRoutes.splash;
 
-      final onAuthPage = state.matchedLocation == AppRoutes.login ||
-          state.matchedLocation == AppRoutes.register ||
-          state.matchedLocation == AppRoutes.splash;
+      final location = state.matchedLocation;
+
+      // Splash is only shown while auth is loading — redirect once resolved.
+      if (location == AppRoutes.splash) {
+        return isAuthenticated ? AppRoutes.dashboard : AppRoutes.login;
+      }
+
+      final onAuthPage =
+          location == AppRoutes.login || location == AppRoutes.register;
 
       if (!isAuthenticated && !onAuthPage) return AppRoutes.login;
       if (isAuthenticated && onAuthPage) return AppRoutes.dashboard;

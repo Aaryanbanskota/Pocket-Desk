@@ -1,7 +1,7 @@
-/// Sync protocol constants and message types for PocketDesk device pairing.
-///
-/// Milestone 7 — Backend & Sync Infrastructure
-/// This defines the wire protocol used between paired devices over WebSocket.
+// Sync protocol constants and message types for PocketDesk device pairing.
+//
+// Milestone 7 — Backend & Sync Infrastructure
+// This defines the wire protocol used between paired devices over WebSocket.
 
 abstract final class SyncProtocol {
   // ─── Message Types ────────────────────────────────────────────────────────

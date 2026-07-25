@@ -55,24 +55,30 @@ class QuickActions extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.md,
-                      horizontal: AppSpacing.sm,
+                      vertical: AppSpacing.lg,
+                      horizontal: AppSpacing.md,
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         CircleAvatar(
+                          radius: 28,
                           backgroundColor: act.color.withAlpha(25),
-                          child: Icon(act.icon, color: act.color),
+                          child: Icon(
+                            act.icon,
+                            color: act.color,
+                            size: 28,
+                          ),
                         ),
-                        const SizedBox(height: AppSpacing.sm),
+                        const SizedBox(height: AppSpacing.md),
                         Text(
                           act.label,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
+                            fontSize: 14,
                           ),
                           textAlign: TextAlign.center,
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],

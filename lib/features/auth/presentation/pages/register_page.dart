@@ -355,23 +355,29 @@ class _SubmitButton extends StatelessWidget {
       duration: const Duration(milliseconds: 200),
       child: submitting
           ? const SizedBox(
-              height: 52,
-              child: Center(child: CircularProgressIndicator()),
+              height: 60,
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                ),
+              ),
             )
           : FilledButton(
               onPressed: onPressed,
               style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
+                minimumSize: const Size.fromHeight(60),
                 shape: RoundedRectangleBorder(
                   borderRadius:
                       BorderRadius.circular(AppSpacing.radiusMd),
                 ),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
               ),
               child: Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),

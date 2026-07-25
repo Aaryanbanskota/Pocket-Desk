@@ -9,6 +9,7 @@ import '../../../../core/utils/validators.dart';
 import '../providers/auth_notifier.dart';
 import '../widgets/auth_logo_header.dart';
 import '../widgets/pd_text_field.dart';
+import '../../data/services/biometric_service.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -24,6 +25,9 @@ class _LoginPageState extends ConsumerState<LoginPage>
   final _passCtrl = TextEditingController();
   bool _obscurePass = true;
   bool _submitting = false;
+  bool _biometricAvailable = false;
+  bool _biometricLoading = false;
+  final _biometricService = BiometricService();
   late AnimationController _fadeCtrl;
   late Animation<double> _fadeAnim;
 
@@ -36,6 +40,10 @@ class _LoginPageState extends ConsumerState<LoginPage>
     );
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
     _fadeCtrl.forward();
+    // Check biometric availability asynchronously.
+    _biometricService.isBiometricAvailable().then((available) {
+      if (mounted) setState(() => _biometricAvailable = available);
+    });
   }
 
   @override
@@ -63,6 +71,24 @@ class _LoginPageState extends ConsumerState<LoginPage>
       _showError(authState.failure.message);
     }
     // If authenticated, router redirect handles navigation automatically.
+  }
+
+  Future<void> _biometricLogin() async {
+    setState(() => _biometricLoading = true);
+    final authenticated = await _biometricService.authenticate();
+    if (!mounted) return;
+    if (authenticated) {
+      // Restore session — if a session exists the user is logged in.
+      await ref.read(authNotifierProvider.notifier).restoreSession();
+      if (!mounted) return;
+      final authState = ref.read(authNotifierProvider).valueOrNull;
+      if (authState is! AuthAuthenticated) {
+        _showError('No saved session. Please sign in with your password first.');
+      }
+    } else {
+      _showError('Biometric authentication failed or was cancelled.');
+    }
+    if (mounted) setState(() => _biometricLoading = false);
   }
 
   void _showError(String message) {
@@ -203,6 +229,35 @@ class _LoginPageState extends ConsumerState<LoginPage>
               label: 'Sign In',
               onPressed: _submit,
             ),
+            if (_biometricAvailable) ...
+              [
+                const SizedBox(height: AppSpacing.md),
+                OutlinedButton.icon(
+                  onPressed: _biometricLoading ? null : _biometricLogin,
+                  icon: _biometricLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.fingerprint_rounded),
+                  label: const Text('Sign In with Biometrics'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    ),
+                  ),
+                ),
+              ],
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Keep your data organized on the go',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
           ],
         ),
       ),
@@ -210,8 +265,9 @@ class _LoginPageState extends ConsumerState<LoginPage>
   }
 
   Widget _buildRegisterLink(ThemeData theme, ColorScheme colorScheme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
           "Don't have an account?",
@@ -249,23 +305,29 @@ class _SubmitButton extends StatelessWidget {
       duration: const Duration(milliseconds: 200),
       child: submitting
           ? const SizedBox(
-              height: 52,
-              child: Center(child: CircularProgressIndicator()),
+              height: 60,
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                ),
+              ),
             )
           : FilledButton(
               onPressed: onPressed,
               style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
+                minimumSize: const Size.fromHeight(60),
                 shape: RoundedRectangleBorder(
                   borderRadius:
                       BorderRadius.circular(AppSpacing.radiusMd),
                 ),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
               ),
               child: Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),

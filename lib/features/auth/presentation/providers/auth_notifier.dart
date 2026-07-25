@@ -81,6 +81,13 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     }
   }
 
+  /// Public entry-point for biometric login — re-checks the stored session.
+  Future<void> restoreSession() async {
+    state = const AsyncValue.loading();
+    final result = await _restoreSession();
+    state = AsyncValue.data(result);
+  }
+
   // --------------------------------------------------------------------------
   // Register
   // --------------------------------------------------------------------------

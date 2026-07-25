@@ -13,6 +13,7 @@ import '../widgets/quick_actions.dart';
 import '../widgets/statistics_widget.dart';
 import '../widgets/tasks_widget.dart';
 import '../widgets/today_schedule_widget.dart';
+import '../widgets/weather_widget.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -50,8 +51,13 @@ class DashboardPage extends ConsumerWidget {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.settings_rounded),
+            tooltip: 'Settings',
+            onPressed: () => context.push(AppRoutes.settings),
+          ),
+          IconButton(
             icon: const Icon(Icons.person_outline_rounded),
-            tooltip: 'Profile Settings',
+            tooltip: 'Profile',
             onPressed: () => context.push(AppRoutes.settingsProfile),
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -64,6 +70,8 @@ class DashboardPage extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildWelcomeHeader(theme, user?.displayName ?? user?.username ?? 'User'),
+              const SizedBox(height: AppSpacing.md),
+              const WeatherWidget(),
               const SizedBox(height: AppSpacing.lg),
               const QuickActions(),
               const SizedBox(height: AppSpacing.xl),

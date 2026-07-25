@@ -16,16 +16,11 @@ class AuthLogoHeader extends StatelessWidget {
 
     return Column(
       children: [
-        // Logo mark
+        // Logo mark with image
         Container(
-          width: 80,
-          height: 80,
+          width: 100,
+          height: 100,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.primary, AppColors.secondary],
-            ),
             borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
             boxShadow: [
               BoxShadow(
@@ -35,16 +30,36 @@ class AuthLogoHeader extends StatelessWidget {
               ),
             ],
           ),
-          child: const Icon(
-            Icons.table_rows_rounded,
-            size: 40,
-            color: Colors.white,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+            child: Image.asset(
+              'assets/logo.png',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback if image doesn't load
+                return Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppColors.primary, AppColors.secondary],
+                    ),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+                  ),
+                  child: const Icon(
+                    Icons.table_rows_rounded,
+                    size: 50,
+                    color: Colors.white,
+                  ),
+                );
+              },
+            ),
           ),
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           'PocketDesk',
-          style: theme.textTheme.headlineMedium?.copyWith(
+          style: theme.textTheme.headlineLarge?.copyWith(
             fontWeight: FontWeight.w800,
             color: colorScheme.onSurface,
             letterSpacing: -0.5,

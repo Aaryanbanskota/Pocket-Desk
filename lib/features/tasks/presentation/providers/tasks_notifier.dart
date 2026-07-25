@@ -4,6 +4,7 @@ import '../../../../core/error/app_failure.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../data/models/task_model.dart';
 import '../../data/repositories/task_repository.dart';
+import '../../../../core/services/notification_service.dart';
 
 final taskRepositoryProvider = FutureProvider<TaskRepository>((ref) async {
   final isar = await ref.watch(isarProvider.future);
@@ -98,6 +99,8 @@ class TasksNotifier extends AutoDisposeAsyncNotifier<TasksState> {
       state = AsyncValue.data((state.valueOrNull ?? const TasksState())
           .copyWith(error: result.error));
     } else {
+      // Schedule reminder notification if the task has a due date + reminders.
+      await NotificationService.instance.scheduleTaskReminder(task);
       ref.invalidateSelf();
     }
   }
@@ -118,6 +121,7 @@ class TasksNotifier extends AutoDisposeAsyncNotifier<TasksState> {
     if (error != null) {
       state = AsyncValue.data((state.valueOrNull ?? const TasksState()).copyWith(error: error));
     } else {
+      await NotificationService.instance.cancelTaskReminder(taskId);
       ref.invalidateSelf();
     }
   }

@@ -23,15 +23,24 @@ class PocketDeskApp extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
       routerConfig: router,
-      builder: (context, child) => ResponsiveBreakpoints.builder(
-        child: child!,
-        breakpoints: const [
-          Breakpoint(start: 0, end: 450, name: MOBILE),
-          Breakpoint(start: 451, end: 800, name: TABLET),
-          Breakpoint(start: 801, end: 1920, name: DESKTOP),
-          Breakpoint(start: 1921, end: double.infinity, name: '4K'),
-        ],
-      ),
+      builder: (context, child) {
+        final textScale = ref.watch(textScaleProvider).valueOrNull ?? 1.0;
+        final mediaQueryData = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQueryData.copyWith(
+            textScaler: TextScaler.linear(textScale),
+          ),
+          child: ResponsiveBreakpoints.builder(
+            child: child!,
+            breakpoints: const [
+              Breakpoint(start: 0, end: 450, name: MOBILE),
+              Breakpoint(start: 451, end: 800, name: TABLET),
+              Breakpoint(start: 801, end: 1920, name: DESKTOP),
+              Breakpoint(start: 1921, end: double.infinity, name: '4K'),
+            ],
+          ),
+        );
+      },
     );
   }
 }

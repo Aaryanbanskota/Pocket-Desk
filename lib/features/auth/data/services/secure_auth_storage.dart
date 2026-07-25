@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../../core/logging/app_logger.dart';
@@ -7,6 +8,8 @@ abstract final class _Keys {
   static const activeUserId = 'pocket_desk_active_user_id';
   static const sessionToken = 'pocket_desk_session_token';
 }
+
+final bool _isTest = Platform.environment.containsKey('FLUTTER_TEST');
 
 /// Manages secure persistence of auth-related values (active user ID,
 /// session tokens) using platform keychain/keystore via flutter_secure_storage.
@@ -29,21 +32,23 @@ class SecureAuthStorage {
 
   Future<void> saveActiveUserId(int userId) async {
     try {
-      await _storage.write(
+      final Future<void> writeFuture = _storage.write(
         key: _Keys.activeUserId,
         value: userId.toString(),
       );
+      await (_isTest ? writeFuture : writeFuture.timeout(const Duration(seconds: 1)));
       AppLogger.d('Saved active user ID: $userId', tag: 'SecureAuthStorage');
     } catch (e, st) {
       AppLogger.e('Failed to save active user ID',
           tag: 'SecureAuthStorage', error: e, st: st);
-      rethrow;
+      // Fallback: do not rethrow to avoid blocking initialization/actions
     }
   }
 
   Future<int?> getActiveUserId() async {
     try {
-      final value = await _storage.read(key: _Keys.activeUserId);
+      final Future<String?> readFuture = _storage.read(key: _Keys.activeUserId);
+      final value = await (_isTest ? readFuture : readFuture.timeout(const Duration(seconds: 1)));
       return value != null ? int.tryParse(value) : null;
     } catch (e, st) {
       AppLogger.e('Failed to read active user ID',
@@ -53,7 +58,13 @@ class SecureAuthStorage {
   }
 
   Future<void> clearActiveUserId() async {
-    await _storage.delete(key: _Keys.activeUserId);
+    try {
+      final Future<void> deleteFuture = _storage.delete(key: _Keys.activeUserId);
+      await (_isTest ? deleteFuture : deleteFuture.timeout(const Duration(seconds: 1)));
+    } catch (e, st) {
+      AppLogger.e('Failed to delete active user ID',
+          tag: 'SecureAuthStorage', error: e, st: st);
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -61,15 +72,34 @@ class SecureAuthStorage {
   // --------------------------------------------------------------------------
 
   Future<void> saveSessionToken(String token) async {
-    await _storage.write(key: _Keys.sessionToken, value: token);
+    try {
+      final Future<void> writeFuture = _storage.write(key: _Keys.sessionToken, value: token);
+      await (_isTest ? writeFuture : writeFuture.timeout(const Duration(seconds: 1)));
+    } catch (e, st) {
+      AppLogger.e('Failed to save session token',
+          tag: 'SecureAuthStorage', error: e, st: st);
+    }
   }
 
   Future<String?> getSessionToken() async {
-    return _storage.read(key: _Keys.sessionToken);
+    try {
+      final Future<String?> readFuture = _storage.read(key: _Keys.sessionToken);
+      return await (_isTest ? readFuture : readFuture.timeout(const Duration(seconds: 1)));
+    } catch (e, st) {
+      AppLogger.e('Failed to read session token',
+          tag: 'SecureAuthStorage', error: e, st: st);
+      return null;
+    }
   }
 
   Future<void> clearSessionToken() async {
-    await _storage.delete(key: _Keys.sessionToken);
+    try {
+      final Future<void> deleteFuture = _storage.delete(key: _Keys.sessionToken);
+      await (_isTest ? deleteFuture : deleteFuture.timeout(const Duration(seconds: 1)));
+    } catch (e, st) {
+      AppLogger.e('Failed to delete session token',
+          tag: 'SecureAuthStorage', error: e, st: st);
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -77,7 +107,13 @@ class SecureAuthStorage {
   // --------------------------------------------------------------------------
 
   Future<void> clearAll() async {
-    await _storage.deleteAll();
-    AppLogger.i('Secure storage cleared', tag: 'SecureAuthStorage');
+    try {
+      final Future<void> deleteAllFuture = _storage.deleteAll();
+      await (_isTest ? deleteAllFuture : deleteAllFuture.timeout(const Duration(seconds: 1)));
+      AppLogger.i('Secure storage cleared', tag: 'SecureAuthStorage');
+    } catch (e, st) {
+      AppLogger.e('Failed to clear secure storage',
+          tag: 'SecureAuthStorage', error: e, st: st);
+    }
   }
 }

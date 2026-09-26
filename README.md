@@ -49,6 +49,14 @@ It combines a full-featured **Calendar**, **Task Manager**, **Notes** app, and *
 
 ---
 
+## ⚡ Recent Updates & Fixes (v1.1.0+2)
+
+- 🛠 **Linux Desktop Build Fixes**: Resolved Flutter SDK 3.44+ compatibility issues by updating `CardThemeData` / `DialogThemeData` type constructors and upgrading `google_fonts` to `^6.3.2`.
+- 🐧 **Linux Debug & Release Tested**: Verified full compilation, dependency resolution (`flutter pub get`), and binary execution on Linux (`flutter build linux --debug`).
+- 🌐 **Interactive Release Logs**: Added a Google-inspired minimal logs page in `website/logs.html` with expandable change details.
+
+---
+
 ## 📥 Downloads & Releases
 
 ### 🤖 Android Downloads

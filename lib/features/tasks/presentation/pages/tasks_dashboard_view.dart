@@ -276,7 +276,7 @@ class _EmptyState extends StatelessWidget {
           Icon(
             Icons.task_alt_outlined,
             size: 72,
-            color: cs.primary.withValues(alpha: 0.3),
+            color: cs.primary.withOpacity(0.3),
           ),
           const SizedBox(height: 16),
           Text(

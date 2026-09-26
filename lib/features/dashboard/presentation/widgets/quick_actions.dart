@@ -21,77 +21,101 @@ class QuickActions extends StatelessWidget {
       ),
       _ActionItem(
         icon: Icons.event_rounded,
-        label: 'New Event',
+        label: 'Calendar',
         color: colorScheme.secondary,
         onTap: () => context.push(AppRoutes.calendar),
       ),
       _ActionItem(
         icon: Icons.note_add_rounded,
-        label: 'New Note',
+        label: 'Notes',
         color: colorScheme.tertiary,
         onTap: () => context.push(AppRoutes.notes),
       ),
+      _ActionItem(
+        icon: Icons.wifi_tethering_rounded,
+        label: 'File Share',
+        color: Colors.teal,
+        onTap: () => context.push(AppRoutes.fileShare),
+      ),
+      _ActionItem(
+        icon: Icons.chat_bubble_outline_rounded,
+        label: 'Chat',
+        color: Colors.blueAccent,
+        onTap: () => context.push(AppRoutes.chat),
+      ),
+      _ActionItem(
+        icon: Icons.account_balance_wallet_outlined,
+        label: 'Money',
+        color: Colors.green,
+        onTap: () => context.push(AppRoutes.moneyTracker),
+      ),
+      _ActionItem(
+        icon: Icons.access_time_rounded,
+        label: 'Clock',
+        color: Colors.orange,
+        onTap: () => context.push(AppRoutes.clock),
+      ),
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const double spacing = AppSpacing.md;
-        final double itemWidth = (constraints.maxWidth - (spacing * (actions.length - 1))) / actions.length;
-
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: actions.map((act) {
-            return SizedBox(
-              width: itemWidth,
-              child: Card(
-                elevation: 0,
-                color: colorScheme.surfaceContainerLow,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-                  side: BorderSide(
-                    color: colorScheme.outlineVariant.withAlpha(50),
-                  ),
+    return SizedBox(
+      height: 100,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: actions.length,
+        separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.md),
+        itemBuilder: (context, index) {
+          final act = actions[index];
+          return SizedBox(
+            width: 90,
+            child: Card(
+              elevation: 0,
+              color: colorScheme.surfaceContainerLow,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                side: BorderSide(
+                  color: colorScheme.outlineVariant.withAlpha(50),
                 ),
-                child: InkWell(
-                  onTap: act.onTap,
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.lg,
-                      horizontal: AppSpacing.md,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundColor: act.color.withAlpha(25),
-                          child: Icon(
-                            act.icon,
-                            color: act.color,
-                            size: 28,
-                          ),
+              ),
+              child: InkWell(
+                onTap: act.onTap,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppSpacing.sm,
+                    horizontal: AppSpacing.xs,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: act.color.withAlpha(25),
+                        child: Icon(
+                          act.icon,
+                          color: act.color,
+                          size: 20,
                         ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          act.label,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        act.label,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
                         ),
-                      ],
-                    ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
               ),
-            );
-          }).toList(),
-        );
-      },
+            ),
+          );
+        },
+      ),
     );
   }
 }

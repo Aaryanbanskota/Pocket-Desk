@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/p2p_sync_service.dart';
 import '../../../../core/theme/app_spacing.dart';
 
 class DeviceSettingsWidget extends ConsumerStatefulWidget {
@@ -16,7 +17,10 @@ class _DeviceSettingsWidgetState extends ConsumerState<DeviceSettingsWidget> {
   @override
   void initState() {
     super.initState();
-    _deviceNameController = TextEditingController(text: 'My Android Phone');
+    final service = P2PSyncService();
+    _deviceNameController = TextEditingController(
+      text: service.deviceName ?? 'My Device',
+    );
   }
 
   @override
@@ -124,36 +128,50 @@ class _DeviceSettingsWidgetState extends ConsumerState<DeviceSettingsWidget> {
             ),
             const SizedBox(height: AppSpacing.md),
 
-            // Empty state
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.devices_other_rounded,
-                      size: 48,
-                      color: colorScheme.onSurfaceVariant.withAlpha(100),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      'No other devices connected',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+            if (P2PSyncService().getConnectedPeers().isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.xl),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.devices_other_rounded,
+                        size: 48,
+                        color: colorScheme.onSurfaceVariant.withAlpha(100),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'Use QR codes to connect your other devices',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'No other devices connected',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        'Use QR codes to connect your other devices',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: P2PSyncService().getConnectedPeers().length,
+                itemBuilder: (context, index) {
+                  final peer = P2PSyncService().getConnectedPeers()[index] as Map<String, dynamic>;
+                  return ListTile(
+                    leading: const Icon(Icons.laptop_rounded),
+                    title: Text(peer['name'] as String? ?? 'Peer Device'),
+                    subtitle: Text(peer['address'] as String? ?? 'Connected'),
+                  );
+                },
               ),
-            ),
 
             const SizedBox(height: AppSpacing.xl),
 
@@ -199,7 +217,12 @@ class _DeviceSettingsWidgetState extends ConsumerState<DeviceSettingsWidget> {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   FilledButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      final newName = _deviceNameController.text.trim();
+                      if (newName.isNotEmpty) {
+                        await P2PSyncService().initialize(deviceName: newName);
+                      }
+                      if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Device name saved'),

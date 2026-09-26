@@ -29,6 +29,13 @@ abstract final class AppRoutes {
   static const String settingsDevices = '/settings/devices';
   static const String settingsQrPair = '/settings/devices/pair';
 
+  // New Modules
+  static const String fileShare = '/fileshare';
+  static const String posts = '/posts';
+  static const String chat = '/chat';
+  static const String moneyTracker = '/money';
+  static const String clock = '/clock';
+
   // Error
   static const String notFound = '/404';
 }

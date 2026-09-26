@@ -12,6 +12,11 @@ import '../../features/calendar/presentation/pages/calendar_dashboard_view.dart'
 import '../../features/tasks/presentation/pages/tasks_dashboard_view.dart';
 import '../../features/notes/presentation/pages/notes_dashboard_view.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/file_share/presentation/pages/file_share_page.dart';
+import '../../features/posts/presentation/pages/posts_page.dart';
+import '../../features/chat/presentation/pages/chat_page.dart';
+import '../../features/money_tracker/presentation/pages/money_tracker_page.dart';
+import '../../features/clock/presentation/pages/clock_page.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -112,6 +117,26 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.settings,
         builder: (context, state) => const SettingsPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.fileShare,
+        builder: (context, state) => const FileSharePage(),
+      ),
+      GoRoute(
+        path: AppRoutes.posts,
+        builder: (context, state) => const PostsPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.chat,
+        builder: (context, state) => const ChatPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.moneyTracker,
+        builder: (context, state) => const MoneyTrackerPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.clock,
+        builder: (context, state) => const ClockPage(),
       ),
       GoRoute(
         path: AppRoutes.notFound,

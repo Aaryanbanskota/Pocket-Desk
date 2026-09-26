@@ -102,9 +102,8 @@ class SyncCoordinator {
           .toList();
 
       // Apply changes using DeltaSyncEngine (LWW conflict resolution)
-      // Retrieve host user ID (assume userId 1 for fallback / pairing owner)
-      const mockUserId = 1;
-      await syncEngine.applyChanges(mockUserId, changes);
+      final activeUserId = await pairingService.wsClient.getConnectedUserId() ?? 1;
+      await syncEngine.applyChanges(activeUserId, changes);
 
       // Ack completion
       pairingService.wsClient.send(SyncMessage(

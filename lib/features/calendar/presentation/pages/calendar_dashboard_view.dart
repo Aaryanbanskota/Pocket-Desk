@@ -206,7 +206,10 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
                   } else if (_currentView == CalendarViewType.week) {
                     _focusedDay = _focusedDay.subtract(const Duration(days: 7));
                   } else {
-                    _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1, _focusedDay.day);
+                    final prevMonth = DateTime(_focusedDay.year, _focusedDay.month - 1, 1);
+                    final lastDayOfPrevMonth = DateTime(_focusedDay.year, _focusedDay.month, 0).day;
+                    final targetDay = _focusedDay.day > lastDayOfPrevMonth ? lastDayOfPrevMonth : _focusedDay.day;
+                    _focusedDay = DateTime(prevMonth.year, prevMonth.month, targetDay);
                   }
                 }),
               ),
@@ -218,7 +221,10 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
                   } else if (_currentView == CalendarViewType.week) {
                     _focusedDay = _focusedDay.add(const Duration(days: 7));
                   } else {
-                    _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1, _focusedDay.day);
+                    final nextMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 1);
+                    final lastDayOfNextMonth = DateTime(_focusedDay.year, _focusedDay.month + 2, 0).day;
+                    final targetDay = _focusedDay.day > lastDayOfNextMonth ? lastDayOfNextMonth : _focusedDay.day;
+                    _focusedDay = DateTime(nextMonth.year, nextMonth.month, targetDay);
                   }
                 }),
               ),

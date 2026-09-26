@@ -172,7 +172,7 @@ class _NoteCard extends ConsumerWidget {
           color: _cardColor(context),
           borderRadius: BorderRadius.circular(16),
           border: note.isPinned
-              ? Border.all(color: cs.primary.withValues(alpha: 0.6), width: 2)
+              ? Border.all(color: cs.primary.withOpacity(0.6), width: 2)
               : null,
         ),
         padding: const EdgeInsets.all(12),
@@ -220,7 +220,7 @@ class _NoteCard extends ConsumerWidget {
                 children: note.tags.take(3).map((t) => Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: cs.primary.withValues(alpha: 0.1),
+                        color: cs.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(t, style: TextStyle(fontSize: 10, color: cs.primary)),
@@ -313,7 +313,7 @@ class _FolderTile extends StatelessWidget {
         fontWeight: selected ? FontWeight.w600 : null,
         fontSize: 13,
       )),
-      tileColor: selected ? cs.primary.withValues(alpha: 0.1) : null,
+      tileColor: selected ? cs.primary.withOpacity(0.1) : null,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       onTap: onTap,
     );
@@ -371,7 +371,7 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.note_outlined, size: 72, color: cs.primary.withValues(alpha: 0.3)),
+          Icon(Icons.note_outlined, size: 72, color: cs.primary.withOpacity(0.3)),
           const SizedBox(height: 16),
           Text('No notes yet', style: Theme.of(context).textTheme.titleMedium
               ?.copyWith(color: cs.onSurfaceVariant)),

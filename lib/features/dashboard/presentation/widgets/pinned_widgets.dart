@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../notes/presentation/providers/notes_notifier.dart';
 import '../../../notes/presentation/pages/note_editor_page.dart';
+import '../../../tasks/presentation/providers/tasks_notifier.dart';
+import '../../../tasks/data/models/task_model.dart';
 
 class PinnedWidgets extends ConsumerWidget {
   const PinnedWidgets({super.key});
@@ -54,8 +56,12 @@ class PinnedWidgets extends ConsumerWidget {
               error: (err, _) => Center(child: Text('Error loading pinned items: $err')),
               data: (state) {
                 final pinnedNotes = state.notes.where((n) => n.isPinned).toList();
+                final tasksAsync = ref.watch(tasksProvider);
+                final urgentTasks = tasksAsync.valueOrNull?.tasks.where((t) => t.priority == TaskPriority.urgent || t.priority == TaskPriority.high).toList() ?? [];
 
-                if (pinnedNotes.isEmpty) {
+                final totalItemsCount = pinnedNotes.length + urgentTasks.length;
+
+                if (totalItemsCount == 0) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
@@ -72,10 +78,11 @@ class PinnedWidgets extends ConsumerWidget {
                 return ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: pinnedNotes.length,
+                  itemCount: totalItemsCount,
                   separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
                   itemBuilder: (context, index) {
-                    final note = pinnedNotes[index];
+                    if (index < pinnedNotes.length) {
+                      final note = pinnedNotes[index];
                     return InkWell(
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -128,6 +135,51 @@ class PinnedWidgets extends ConsumerWidget {
                         ),
                       ),
                     );
+                    } else {
+                      final task = urgentTasks[index - pinnedNotes.length];
+                      return Container(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest.withAlpha(40),
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                          border: Border.all(
+                            color: colorScheme.outlineVariant.withAlpha(30),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.task_alt_rounded,
+                              color: colorScheme.error,
+                              size: 20,
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    task.title,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    'Priority: ${task.priority.name.toUpperCase()}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.error,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
                   },
                 );
               },

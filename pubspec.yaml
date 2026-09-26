@@ -33,7 +33,7 @@ dependencies:
   cupertino_icons: ^1.0.6
 
   # Typography
-  google_fonts: ^8.2.0
+  google_fonts: ^6.3.0
 
   # Navigation & Routing
   go_router: ^14.2.0
@@ -66,6 +66,7 @@ dependencies:
   flutter_local_notifications: ^17.0.0
   http: ^1.2.2
   geolocator: ^13.0.2
+  file_picker: ^8.0.0
 
 dev_dependencies:
   flutter_test:

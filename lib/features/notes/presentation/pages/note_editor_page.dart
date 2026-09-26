@@ -141,7 +141,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
             decoration: InputDecoration(
               hintText: 'Title',
               hintStyle: tt.headlineSmall?.copyWith(
-                color: cs.onSurfaceVariant.withValues(alpha: 0.4),
+                color: cs.onSurfaceVariant.withOpacity(0.4),
                 fontWeight: FontWeight.bold,
               ),
               border: InputBorder.none,
@@ -153,7 +153,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
             style: tt.bodySmall?.copyWith(color: cs.primary),
             decoration: InputDecoration(
               hintText: 'Folder (optional)',
-              hintStyle: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+              hintStyle: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant.withOpacity(0.5)),
               prefixIcon: Icon(Icons.folder_outlined, size: 16, color: cs.primary),
               border: InputBorder.none,
               isDense: true,
@@ -229,7 +229,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
               style: tt.bodyMedium,
               decoration: InputDecoration(
                 hintText: 'Start writing… (Markdown supported)',
-                hintStyle: TextStyle(color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+                hintStyle: TextStyle(color: cs.onSurfaceVariant.withOpacity(0.5)),
                 border: InputBorder.none,
               ),
             ),

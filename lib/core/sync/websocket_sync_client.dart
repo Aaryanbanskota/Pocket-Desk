@@ -23,6 +23,9 @@ class WebSocketSyncClient {
 
   bool _connected = false;
   bool get isConnected => _connected;
+  int? _connectedUserId;
+
+  Future<int?> getConnectedUserId() async => _connectedUserId;
 
   String? _serverUrl;
   Duration _reconnectDelay = const Duration(seconds: 2);

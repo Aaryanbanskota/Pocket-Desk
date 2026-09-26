@@ -109,7 +109,7 @@ abstract final class AppTheme {
       ),
 
       // ─── Card ──────────────────────────────────────────────────────────────
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: isLight ? AppColors.cardLight : AppColors.cardDark,
         elevation: AppElevation.sm,
         shape: RoundedRectangleBorder(
@@ -230,7 +230,7 @@ abstract final class AppTheme {
       ),
 
       // ─── Dialog ───────────────────────────────────────────────────────────
-      dialogTheme: DialogThemeData(
+      dialogTheme: DialogTheme(
         backgroundColor: isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
         elevation: AppElevation.dialog,
         shape: RoundedRectangleBorder(
@@ -259,7 +259,7 @@ abstract final class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         height: AppSpacing.navBarHeight,
         backgroundColor: isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
-        indicatorColor: AppColors.primary.withValues(alpha: 0.15),
+        indicatorColor: AppColors.primary.withOpacity(0.15),
         labelTextStyle: WidgetStateProperty.all(AppTypography.labelSmall()),
         elevation: AppElevation.navbar,
       ),
@@ -267,7 +267,7 @@ abstract final class AppTheme {
       // ─── NavigationRail ───────────────────────────────────────────────────
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
-        indicatorColor: AppColors.primary.withValues(alpha: 0.15),
+        indicatorColor: AppColors.primary.withOpacity(0.15),
         labelType: NavigationRailLabelType.all,
         groupAlignment: -0.9,
       ),

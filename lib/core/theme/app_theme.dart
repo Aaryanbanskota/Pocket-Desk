@@ -120,7 +120,7 @@ abstract final class AppTheme {
           vertical: AppSpacing.xs,
         ),
       ),
-
+      
       // ─── Elevated Button ───────────────────────────────────────────────────
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(

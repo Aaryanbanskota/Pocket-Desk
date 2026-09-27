@@ -131,32 +131,38 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
     final historyContext = _messages.take(6).map((m) => '${m.senderName}: ${m.text}').join('\n');
     final prompt = 'Chat history:\n$historyContext\n$username: ${userMsg.text}';
-    const systemPrompt = '''
-You are Pocketdesk AI, the official built-in companion and assistant for Pocketdesk. Always address the user warmly (e.g. "yo <username>"). Be casual, helpful, clear, and friendly!
+    final nowStr = DateTime.now().toString();
+    final systemPrompt = '''
+You are Pocketdesk AI, the official built-in action agent for Pocketdesk. Always address the user warmly (e.g. "yo <username>"). Be casual, helpful, clear, and friendly!
+Current timestamp: $nowStr
 
-You have full authority to perform actions on behalf of the user across Pocketdesk features (EXCEPT Personal Feed):
-1. Tasks: Create or edit tasks.
-2. Notes: Create or edit notes.
-3. Calendar & Events: Create or edit calendar events.
-4. Money Tracker: Log expenses or update wallet.
+CAPABILITY & PERMISSION MATRIX:
+1. Calendar & Events: Support reading, creating, and editing events. Ask for missing details if underspecified.
+2. Tasks: Support reading, creating, and editing tasks. Understand natural date phrases like "tomorrow", "next Monday", "in 2 days".
+3. Notes: Support reading, creating, and editing notes.
+4. Money Tracker: Support reading, creating, and logging expenses.
+5. Personal Feed: STRICTLY READ-ONLY. NEVER attempt to post, edit, or delete personal feed items.
+6. Trash: READ-ONLY. AI cannot restore or permanently purge trash items.
+7. Deletion Rule: DELETION IS STRICTLY FORBIDDEN BY DEFAULT across all modules. If the user asks to delete an item, check if Master AI permission is enabled and ask for explicit user confirmation before taking any action.
 
-IF THE USER ASKS YOU TO CREATE, ADD, OR LOG SOMETHING (e.g. "Add a task to buy groceries", "Remind me to call John tomorrow", "Log 50 rs expense for coffee", "Create note about project ideas"):
-You MUST return a JSON action block at the END of your response formatted exactly like this:
+IF THE USER ASKS YOU TO CREATE OR EDIT AN ITEM:
+You MUST output a JSON action block at the END of your message:
 ```json
 {
-  "action": "create_task" | "create_note" | "create_event" | "add_expense",
+  "action": "create_task" | "create_note" | "create_event" | "add_expense" | "ask_confirmation",
   "data": { ... }
 }
 ```
 
-Field details for action data:
+Field specifications:
 - create_task: {"title": "...", "description": "...", "dueDate": "YYYY-MM-DD HH:mm"}
 - create_note: {"title": "...", "content": "...", "folder": "..."}
 - create_event: {"title": "...", "startTime": "YYYY-MM-DD HH:mm", "endTime": "YYYY-MM-DD HH:mm", "location": "..."}
-- add_expense: {"title": "...", "amount": 100.0, "category": "Food/Bills/etc", "date": "YYYY-MM-DD"}
+- add_expense: {"title": "...", "amount": 100.0, "category": "...", "date": "YYYY-MM-DD"}
+- ask_confirmation: {"type": "delete" | "edit", "details": "..."}
 
-DO NOT outputs malicious code or scripts in data fields. Make sure title/content are clean text.
-Always include a friendly confirmation sentence before the JSON block explaining what you did!
+If essential details are missing (e.g. event time or task title), ask a quick clarifying question instead of guessing!
+Sanitize all inputs: NEVER include executable code or script tags.
 ''';
 
     final reply = await ref.read(aiSettingsProvider.notifier).generateCompletion(
@@ -239,12 +245,39 @@ Always include a friendly confirmation sentence before the JSON block explaining
           final start = DateTime.tryParse(data['startTime'].toString()) ?? DateTime.now().add(const Duration(hours: 1));
           final end = DateTime.tryParse(data['endTime'].toString()) ?? start.add(const Duration(hours: 1));
           final loc = sanitize(data['location']);
-          await ref.read(calendarEventsProvider.notifier).addOrUpdateEvent(
-            title: title,
-            startTime: start,
-            endTime: end,
-            location: loc.isEmpty ? null : loc,
-          );
+
+          if (mounted) {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (dialogCtx) => AlertDialog(
+                title: const Text('Confirm Calendar Event'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Title: $title', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text('Start: ${start.toString().substring(0, 16)}'),
+                    Text('End: ${end.toString().substring(0, 16)}'),
+                    if (loc.isNotEmpty) Text('Location: $loc'),
+                  ],
+                ),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('Cancel')),
+                  FilledButton(onPressed: () => Navigator.pop(dialogCtx, true), child: const Text('Confirm & Save')),
+                ],
+              ),
+            );
+
+            if (confirm == true) {
+              await ref.read(calendarEventsProvider.notifier).addOrUpdateEvent(
+                title: title,
+                startTime: start,
+                endTime: end,
+                location: loc.isEmpty ? null : loc,
+              );
+            }
+          }
         }
       } else if (action == 'add_expense') {
         final title = sanitize(data['title']);

@@ -785,14 +785,23 @@ class _InstantCameraModalState extends State<_InstantCameraModal> {
       } else {
         if (mounted) {
           setState(() {
-            _cameraError = 'No camera hardware detected';
+            _cameraError = Platform.isLinux
+                ? 'No webcam detected on Linux.\nPlease connect a USB webcam and try again.'
+                : 'No camera hardware detected.';
           });
         }
       }
     } catch (e) {
       if (mounted) {
+        final errStr = e.toString();
         setState(() {
-          _cameraError = 'Camera access error: ${e.toString()}';
+          if (errStr.contains('No implementation found') || errStr.contains('UnimplementedError')) {
+            _cameraError = Platform.isLinux
+                ? 'Camera stream plugin is not supported on Linux platform.\nUse gallery picker icon above to select images on desktop.'
+                : 'Camera platform plugin missing.';
+          } else {
+            _cameraError = 'Unable to access camera: ${e.toString()}';
+          }
         });
       }
     }

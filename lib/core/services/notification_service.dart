@@ -19,8 +19,12 @@ class NotificationService {
     try {
       // 1. Initialize timezone database
       tz.initializeTimeZones();
-      // Set default local location to UTC for safety, or local if available
-      tz.setLocalLocation(tz.getLocation('UTC'));
+      try {
+        final String localName = DateTime.now().timeZoneName;
+        tz.setLocalLocation(tz.getLocation(localName));
+      } catch (_) {
+        tz.setLocalLocation(tz.getLocation('UTC'));
+      }
 
       // 2. Setup initialization settings
       const AndroidInitializationSettings initializationSettingsAndroid =
@@ -28,8 +32,8 @@ class NotificationService {
 
       const InitializationSettings initializationSettings = InitializationSettings(
         android: initializationSettingsAndroid,
-        iOS: null, // Add iOS configs if needed in future specs
-        macOS: null,
+        iOS: DarwinInitializationSettings(),
+        macOS: DarwinInitializationSettings(),
         linux: LinuxInitializationSettings(
           defaultActionName: 'Open',
         ),
@@ -44,9 +48,48 @@ class NotificationService {
       );
 
       _isInitialized = initialized ?? false;
+
+      // Request Android 13+ permission & Android 12+ exact alarm permission
+      final androidImpl = _notificationsPlugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      if (androidImpl != null) {
+        await androidImpl.requestNotificationsPermission();
+        await androidImpl.requestExactAlarmsPermission();
+      }
+
       AppLogger.i('NotificationService initialized: $_isInitialized', tag: 'NotificationService');
     } catch (e, st) {
       AppLogger.e('Failed to initialize NotificationService', tag: 'NotificationService', error: e, st: st);
+    }
+  }
+
+  /// Shows an instant notification alert (used for alarms and timers on Android & Linux).
+  Future<void> showNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    if (!_isInitialized) await initialize();
+    try {
+      const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+        'pocketdesk_alarms_channel',
+        'Alarms & Timers',
+        channelDescription: 'Alerts for alarms, timers, and countdowns',
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+      );
+
+      const NotificationDetails platformDetails = NotificationDetails(
+        android: androidDetails,
+        linux: LinuxNotificationDetails(),
+      );
+
+      await _notificationsPlugin.show(id, title, body, platformDetails, payload: payload);
+    } catch (e, st) {
+      AppLogger.e('Failed to show notification', tag: 'NotificationService', error: e, st: st);
     }
   }
 

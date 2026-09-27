@@ -36,7 +36,7 @@ class TaskCard extends ConsumerWidget {
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => TaskFormSheet.show(context, task: task),
+          onTap: () => _showTaskPreview(context, ref),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
@@ -134,6 +134,48 @@ class TaskCard extends ConsumerWidget {
                     ],
                   ),
                 ),
+                // Actions (Edit & Delete small icons)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      tooltip: 'Edit task',
+                      onPressed: () => TaskFormSheet.show(context, task: task),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.delete_outline, size: 18, color: cs.error),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      tooltip: 'Delete task',
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Delete Task?'),
+                            content: Text('Are you sure you want to delete "${task.title}"?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancel'),
+                              ),
+                              FilledButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                style: FilledButton.styleFrom(backgroundColor: cs.error),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          await notifier.deleteTask(task.id);
+                        }
+                      },
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -161,6 +203,140 @@ class TaskCard extends ConsumerWidget {
 
   bool _isOverdue(DateTime d) =>
       d.isBefore(DateTime.now().subtract(const Duration(hours: 24)));
+
+  void _showTaskPreview(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final isDone = task.status == TaskStatus.done;
+    final notifier = ref.read(tasksProvider.notifier);
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                task.title,
+                style: tt.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  decoration: isDone ? TextDecoration.lineThrough : null,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Edit',
+              onPressed: () {
+                Navigator.pop(ctx);
+                TaskFormSheet.show(context, task: task);
+              },
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (task.description != null && task.description!.isNotEmpty) ...[
+                Text(
+                  task.description!,
+                  style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                ),
+                const SizedBox(height: 16),
+              ],
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  if (task.priority != TaskPriority.none)
+                    _PriorityBadge(task.priority),
+                  if (task.dueDate != null)
+                    _InfoChip(
+                      icon: Icons.calendar_today_outlined,
+                      label: 'Due: ${_formatDate(task.dueDate!)}',
+                      color: _isOverdue(task.dueDate!) && !isDone
+                          ? cs.error
+                          : cs.onSurfaceVariant,
+                    ),
+                  if (task.listName != null && task.listName!.isNotEmpty)
+                    _InfoChip(
+                      icon: Icons.list_outlined,
+                      label: 'List: ${task.listName!}',
+                      color: cs.onSurfaceVariant,
+                    ),
+                  if (task.folderName != null && task.folderName!.isNotEmpty)
+                    _InfoChip(
+                      icon: Icons.folder_outlined,
+                      label: 'Folder: ${task.folderName!}',
+                      color: cs.onSurfaceVariant,
+                    ),
+                  if (task.category != null && task.category!.isNotEmpty)
+                    _InfoChip(
+                      icon: Icons.label_outline,
+                      label: 'Category: ${task.category!}',
+                      color: cs.onSurfaceVariant,
+                    ),
+                ],
+              ),
+              if (task.subtaskTitles.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Subtasks (${task.subtaskDone.where((d) => d).length}/${task.subtaskTitles.length})',
+                  style: tt.labelMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 6),
+                ...task.subtaskTitles.asMap().entries.map((e) {
+                  final subDone = task.subtaskDone.length > e.key ? task.subtaskDone[e.key] : false;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Row(
+                      children: [
+                        Icon(
+                          subDone ? Icons.check_box : Icons.check_box_outline_blank,
+                          size: 16,
+                          color: subDone ? cs.primary : cs.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            e.value,
+                            style: tt.bodySmall?.copyWith(
+                              decoration: subDone ? TextDecoration.lineThrough : null,
+                              color: subDone ? cs.onSurfaceVariant : cs.onSurface,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              notifier.updateStatus(
+                task.id,
+                isDone ? TaskStatus.todo : TaskStatus.done,
+              );
+              Navigator.pop(ctx);
+            },
+            icon: Icon(isDone ? Icons.undo : Icons.check),
+            label: Text(isDone ? 'Mark Incomplete' : 'Mark Complete'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ─── Tiny helper widgets ─────────────────────────────────────────────────────

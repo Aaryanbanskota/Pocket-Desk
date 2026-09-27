@@ -187,6 +187,13 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     }
   }
 
+  Future<bool> verifyPassword(String password) async {
+    final current = state.valueOrNull;
+    if (current is! AuthAuthenticated) return false;
+    final repo = await ref.read(authRepositoryProvider.future);
+    return repo.verifyUserPassword(current.user.id, password);
+  }
+
   // --------------------------------------------------------------------------
   // Password change
   // --------------------------------------------------------------------------

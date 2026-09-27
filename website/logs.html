@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PocketDesk — Release Logs & Change Details</title>
+  <meta name="description" content="Detailed release logs and change history for PocketDesk. Formatted for AI and developer inspection with expandable summaries.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #ffffff;
+      --surface-color: #f8f9fa;
+      --surface-hover: #f1f3f4;
+      --border-color: #dadce0;
+      --text-primary: #202124;
+      --text-secondary: #5f6368;
+      --text-muted: #80868b;
+      
+      --google-blue: #1a73e8;
+      --google-blue-bg: #e8f0fe;
+      --google-green: #137333;
+      --google-green-bg: #e6f4ea;
+      --google-amber: #b06000;
+      --google-amber-bg: #feefc3;
+      
+      --radius-card: 12px;
+      --radius-chip: 16px;
+      --font-main: 'Google Sans', 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --font-code: 'Roboto Mono', monospace;
+    }
+
+    body.dark-mode {
+      --bg-color: #202124;
+      --surface-color: #292a2d;
+      --surface-hover: #35363a;
+      --border-color: #3c4043;
+      --text-primary: #e8eaed;
+      --text-secondary: #9aa0a6;
+      --text-muted: #80868b;
+      
+      --google-blue: #8ab4f8;
+      --google-blue-bg: rgba(138, 180, 248, 0.15);
+      --google-green: #81c995;
+      --google-green-bg: rgba(129, 201, 149, 0.15);
+      --google-amber: #fdd663;
+      --google-amber-bg: rgba(253, 214, 99, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      font-family: var(--font-main);
+      line-height: 1.5;
+      padding: 0;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      background: var(--bg-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 24px;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-size: 1.25rem;
+      font-weight: 500;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--google-blue-bg);
+      color: var(--google-blue);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 6px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Main Container */
+    main {
+      max-width: 860px;
+      margin: 40px auto;
+      padding: 0 24px;
+    }
+
+    .title-section {
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 500;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    /* AI Summary Banner */
+    .ai-banner {
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--google-blue);
+      border-radius: var(--radius-card);
+      padding: 20px;
+      margin-bottom: 32px;
+    }
+
+    .ai-banner-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      color: var(--google-blue);
+      margin-bottom: 8px;
+    }
+
+    /* Filters */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 6px 16px;
+      border-radius: var(--radius-chip);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-chip.active, .filter-chip:hover {
+      background: var(--google-blue-bg);
+      color: var(--google-blue);
+      border-color: transparent;
+    }
+
+    /* Log Items Accordion */
+    .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .log-item {
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+
+    .log-item:hover {
+      border-color: var(--google-blue);
+    }
+
+    .log-header {
+      padding: 16px 20px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+
+    .log-title-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 2px 10px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-fix { background: var(--google-green-bg); color: var(--google-green); }
+    .badge-feature { background: var(--google-blue-bg); color: var(--google-blue); }
+    .badge-build { background: var(--google-amber-bg); color: var(--google-amber); }
+
+    .log-title {
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    .log-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    .chevron {
+      transition: transform 0.2s ease;
+    }
+
+    .log-item.open .chevron {
+      transform: rotate(180deg);
+    }
+
+    .log-body {
+      display: none;
+      padding: 0 20px 20px 20px;
+      border-top: 1px solid var(--border-color);
+      margin-top: 4px;
+      padding-top: 16px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .log-item.open .log-body {
+      display: block;
+    }
+
+    .log-body h4 {
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      margin: 12px 0 6px 0;
+      font-weight: 500;
+    }
+
+    .code-block {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      border-radius: 6px;
+      font-family: var(--font-code);
+      font-size: 0.85rem;
+      overflow-x: auto;
+      margin: 8px 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 40px 0;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 60px;
+    }
+  </style>
+</head>
+<body class="light-mode">
+
+  <header>
+    <a href="index.html" class="brand">
+      <div class="brand-icon">⚡</div>
+      <span>PocketDesk Logs</span>
+    </a>
+    <div class="nav-right">
+      <button class="theme-toggle" id="theme-toggle">☀️ Light / 🌙 Dark</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="title-section">
+      <h1>Change Details & Release Logs</h1>
+      <p class="subtitle">Structured changelog and diagnostic summaries designed for developers and AI assistants.</p>
+    </div>
+
+    <!-- AI Summary Banner -->
+    <div class="ai-banner">
+      <div class="ai-banner-header">
+        <span>✨</span> AI Summary
+      </div>
+      <p>PocketDesk v1.2.0 features universal multi-screen AI integration (Isar direct query), Argon2id password protection for saved API keys, complete Money Health wallet tracker with AI Spending Score (0–100), offline Personal Social Feed, Task & Event preview modals, and complete Note formatting/checklist suite pinned to Flutter 3.24.0 SDK via FVM.</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+      <button class="filter-chip active" onclick="filterLogs('all')">All Changes</button>
+      <button class="filter-chip" onclick="filterLogs('fix')">Fixes</button>
+      <button class="filter-chip" onclick="filterLogs('feature')">Features</button>
+      <button class="filter-chip" onclick="filterLogs('build')">Build / Infra</button>
+    </div>
+
+    <!-- Logs Accordion -->
+    <div class="log-list">
+
+      <!-- Log Item 0: v1.2.0 -->
+      <div class="log-item open" data-category="feature">
+        <div class="log-header" onclick="toggleLog(this)">
+          <div class="log-title-area">
+            <span class="badge badge-feature">Major Release</span>
+            <span class="log-title">v1.2.0 — Universal AI Companion, Money Health & Security Lock</span>
+          </div>
+          <div class="log-meta">
+            <span>v1.2.0</span>
+            <span class="chevron">▼</span>
+          </div>
+        </div>
+        <div class="log-body">
+          <p><strong>Summary:</strong> Integrated direct database Isar querying for reliable AI execution across all pages, added Argon2id password locking for API keys, Money Health dashboard, task/event previews, and rich note checklist ecosystem.</p>
+          
+          <h4>Key Features & Fixes:</h4>
+          <ul>
+            <li><strong>AI Database Persistence:</strong> Direct Isar DB lookup (`AISettingsRepository`) eliminates transient provider initialization errors permanently across Money Health, Note Editor, Chat Buddy ("yo {username}"), and Feed.</li>
+            <li><strong>Security API Key Lock:</strong> Password verification dialog (`AuthNotifier.verifyPassword`) prevents unauthorized access or modification to saved OpenRouter API keys.</li>
+            <li><strong>Money Health & Wallet:</strong> Initial wallet balance setup, automatic calculation upon adding/editing expenses, category breakdowns, and AI Spending Score (0–100).</li>
+            <li><strong>Task & Event Previews:</strong> Tapping tasks or calendar events displays detailed preview sheets with quick edit and delete icons.</li>
+            <li><strong>Note Checklist & Editor:</strong> Added auto-save, archive, trash/restore, duplicate notes, rich markdown formatting, and media attachments.</li>
+            <li><strong>FVM SDK Pinning:</strong> Pinned Flutter SDK version to 3.24.0 for build reproducibility.</li>
+          </ul>
+
+          <div class="code-block">
+fvm flutter analyze --no-pub
+# Output: No issues found! (0 analyzer errors)
+          </div>
+        </div>
+      </div>
+
+      <!-- Log Item 2 -->
+      <div class="log-item" data-category="fix">
+        <div class="log-header" onclick="toggleLog(this)">
+          <div class="log-title-area">
+            <span class="badge badge-fix">Fix</span>
+            <span class="log-title">Calendar & Task Manager Integration Wiring</span>
+          </div>
+          <div class="log-meta">
+            <span>v1.1.0+1</span>
+            <span class="chevron">▼</span>
+          </div>
+        </div>
+        <div class="log-body">
+          <p><strong>Summary:</strong> Verified end-to-end data persistence between Isar database providers and UI state management for tasks, subtasks, and calendar events.</p>
+          
+          <h4>Details:</h4>
+          <ul>
+            <li>Connected task priority filters with Riverpod providers.</li>
+            <li>Fixed RFC 5545 recurrence rule parsing for recurring calendar items.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Log Item 3 -->
+      <div class="log-item" data-category="feature">
+        <div class="log-header" onclick="toggleLog(this)">
+          <div class="log-title-area">
+            <span class="badge badge-feature">Feature</span>
+            <span class="log-title">Device-to-Device Offline Encryption Engine</span>
+          </div>
+          <div class="log-meta">
+            <span>v1.0.0</span>
+            <span class="chevron">▼</span>
+          </div>
+        </div>
+        <div class="log-body">
+          <p><strong>Summary:</strong> Implemented local WebSocket sync with AES-GCM-128 encryption and QR code pairing for zero-cloud data transfer.</p>
+          
+          <h4>Details:</h4>
+          <ul>
+            <li>HMAC-SHA256 authentication tokens generated during local pairing.</li>
+            <li>Delta-sync protocol queue for auto-resume when reconnecting on LAN.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>PocketDesk Change Logs — Minimal Google-inspired Design System</p>
+  </footer>
+
+  <script>
+    function toggleLog(header) {
+      const item = header.parentElement;
+      item.classList.toggle('open');
+    }
+
+    function filterLogs(category) {
+      document.querySelectorAll('.filter-chip').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      document.querySelectorAll('.log-item').forEach(item => {
+        if (category === 'all' || item.dataset.category === category) {
+          item.style.display = 'block';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
+    // Theme toggle
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+    });
+  </script>
+</body>
+</html>

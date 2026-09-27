@@ -14,6 +14,7 @@ import '../widgets/statistics_widget.dart';
 import '../widgets/tasks_widget.dart';
 import '../widgets/today_schedule_widget.dart';
 import '../widgets/weather_widget.dart';
+import '../widgets/app_hamburger_drawer.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -30,6 +31,7 @@ class DashboardPage extends ConsumerWidget {
     final isTablet = width > 600 && width <= 1000;
 
     return Scaffold(
+      drawer: const AppHamburgerDrawer(),
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,11 +56,6 @@ class DashboardPage extends ConsumerWidget {
             icon: const Icon(Icons.settings_rounded),
             tooltip: 'Settings',
             onPressed: () => context.push(AppRoutes.settings),
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline_rounded),
-            tooltip: 'Profile',
-            onPressed: () => context.push(AppRoutes.settingsProfile),
           ),
           const SizedBox(width: AppSpacing.sm),
         ],

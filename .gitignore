@@ -50,3 +50,6 @@ app.*.map.json
 # Local database locks/cache (Isar)
 *.isar.lock
 *.isar.db
+
+# FVM Version Cache
+.fvm/

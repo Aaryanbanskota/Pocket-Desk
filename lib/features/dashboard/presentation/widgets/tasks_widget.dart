@@ -101,7 +101,100 @@ class TasksWidget extends ConsumerWidget {
                     final isCompleted = task.status == TaskStatus.done;
 
                     return InkWell(
-                      onTap: () => TaskFormSheet.show(context, task: task),
+                      onTap: () {
+                        // Open task preview dialog
+                        showDialog<void>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            title: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    task.title,
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      decoration: isCompleted
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined),
+                                  tooltip: 'Edit',
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    TaskFormSheet.show(context, task: task);
+                                  },
+                                ),
+                              ],
+                            ),
+                            content: SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (task.description != null &&
+                                      task.description!.isNotEmpty) ...[
+                                    Text(
+                                      task.description!,
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                  ],
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 6,
+                                    children: [
+                                      if (task.priority != TaskPriority.none)
+                                        Chip(
+                                          label: Text(task.priority.name),
+                                          padding: EdgeInsets.zero,
+                                        ),
+                                      if (task.dueDate != null)
+                                        Chip(
+                                          avatar: const Icon(Icons.calendar_today_outlined, size: 14),
+                                          label: Text('Due: ${task.dueDate!.day}/${task.dueDate!.month}/${task.dueDate!.year}'),
+                                          padding: EdgeInsets.zero,
+                                        ),
+                                      if (task.listName != null && task.listName!.isNotEmpty)
+                                        Chip(
+                                          avatar: const Icon(Icons.list_outlined, size: 14),
+                                          label: Text(task.listName!),
+                                          padding: EdgeInsets.zero,
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Close'),
+                              ),
+                              FilledButton.icon(
+                                onPressed: () {
+                                  ref.read(tasksProvider.notifier).updateStatus(
+                                        task.id,
+                                        isCompleted
+                                            ? TaskStatus.todo
+                                            : TaskStatus.done,
+                                      );
+                                  Navigator.pop(ctx);
+                                },
+                                icon: Icon(isCompleted ? Icons.undo : Icons.check),
+                                label: Text(isCompleted ? 'Mark Incomplete' : 'Mark Complete'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                       borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -147,6 +240,42 @@ class TasksWidget extends ConsumerWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 18),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                              tooltip: 'Edit Task',
+                              onPressed: () => TaskFormSheet.show(context, task: task),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete_outline, size: 18, color: colorScheme.error),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                              tooltip: 'Delete Task',
+                              onPressed: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Delete Task?'),
+                                    content: Text('Are you sure you want to delete "${task.title}"?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      FilledButton(
+                                        onPressed: () => Navigator.pop(ctx, true),
+                                        style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
+                                        child: const Text('Delete'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  await ref.read(tasksProvider.notifier).deleteTask(task.id);
+                                }
+                              },
                             ),
                           ],
                         ),

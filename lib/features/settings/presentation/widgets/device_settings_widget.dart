@@ -222,7 +222,7 @@ class _DeviceSettingsWidgetState extends ConsumerState<DeviceSettingsWidget> {
                       if (newName.isNotEmpty) {
                         await P2PSyncService().initialize(deviceName: newName);
                       }
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Device name saved'),

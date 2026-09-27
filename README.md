@@ -49,6 +49,20 @@ It combines a full-featured **Calendar**, **Task Manager**, **Notes** app, and *
 
 ---
 
+## ⚡ Recent Updates & Fixes (v1.2.0)
+
+- 🤖 **Universal AI Integration & Security**:
+  - Implemented direct Isar database querying (`AISettingsRepository`) for AI features across all screens (Money Health, Note Editor, Chat Buddy, Personal Feed), eliminating transient state issues.
+  - Added **Argon2id Password Lock** in Settings to protect saved AI API keys; users must authenticate with their login password before viewing, editing, or deleting API keys.
+- 💬 **AI Buddy Companion**: Offline/P2P chat falls back to PocketDesk AI ("yo {username}") when no peer is connected.
+- 💰 **Money Tracker & Money Health Page**: Added full expense management (Wallet balance, expense breakdown by category, currency selector) and AI Spending Analysis with Spending Score (0–100).
+- 📲 **Offline Personal Social Feed**: Added local feed with post creation, media attachments, and automatic AI interactions/comments.
+- 📝 **Rich Note Checklist & Formatting**: Auto-save, archive, trash/restore, duplicate notes, checklist formatting, audio/drawings/attachments support.
+- 🎯 **Task & Event Previews & Navigation**: Modernized task preview modal, edit sheet, deletion icon, and hamburger navigation drawer across all main pages.
+- 🛠 **FVM Flutter SDK Pinning & Linux Desktop Build**: Pinned Flutter `3.24.0` via FVM to maintain build stability and compatibility across environments.
+
+---
+
 ## 📥 Downloads & Releases
 
 ### 🤖 Android Downloads
@@ -101,46 +115,63 @@ sudo dnf install clang cmake ninja-build pkgconfig gtk3-devel libsecret-devel
 <tr>
 <td width="50%" valign="top">
 
-### 📅 Calendar
+### 📅 Calendar & Events
 - Day / Week / Month / Year / Agenda views
 - Recurring events (full RFC 5545 support)
-- Multiple color-coded calendars
-- Multiple reminders per event
-- ICS Import & Export
-- Time-zone aware & fully offline
+- Event Previews & Quick Edit / Delete
+- Multiple color-coded calendars & reminders
+- ICS Import & Export, fully offline
 
 </td>
 <td width="50%" valign="top">
 
 ### ✅ Task Manager
-- Lists, Folders & Categories
+- Task Preview modal & compact edit sheet
+- Subtask checklists & progress tracking
 - Priority levels (Urgent → Low)
-- Nested subtasks with progress tracking
-- Recurring tasks + due dates + reminders
-- Swipe-to-complete / swipe-to-delete
-- Archive history
+- Quick edit/delete icons on dashboard
+- Swipe actions & Archive history
 
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
 
-### 📝 Notes
-- Rich text & Markdown editor
-- Checklists & image attachments
-- Pin, favorite, folders & tags
-- Full-text search
-- Sticky-note grid layout
+### 📝 Note Ecosystem
+- Markdown & Rich Text Editor + AI Auto-format
+- Core checklist (Title, Content, Tags, Pin, Star, Archive, Trash, Duplicate)
+- Formatting: Headings, checklists, code blocks, lists
+- Attachments: Images, files/PDFs, audio notes, drawings
+- Organization: Folders, colors, tag/title search
 
 </td>
 <td width="50%" valign="top">
 
-### 🔄 Device-to-Device Sync
-- Encrypted WebSocket (AES-GCM-128)
-- QR Code pairing — **no accounts**
-- HMAC-SHA256 signed tokens
-- Delta synchronization
-- Offline queue with auto-resume
+### 💰 Money Health & Wallet
+- Starting & current wallet balance tracker
+- Expense recording with categories & dates
+- Complete spending history & category filters
+- **AI Spending Score (0–100)** with personalized financial advice
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### 🤖 Smart AI Integration
+- Companion Chatbot (`"yo {username}"`)
+- Password-secured OpenRouter API Key storage (Argon2id)
+- Multipage AI (Money Health, Note Formatting, Feed Comments)
+- Direct Isar DB lookup for persistent state
+
+</td>
+<td width="50%" valign="top">
+
+### 🔄 P2P Sync & Social Feed
+- Encrypted WebSocket sync (AES-GCM-128)
+- Zero cloud servers & QR pairing
+- Offline Personal Social Feed with AI auto-replies
+- Unified Hamburger Navigation & smooth transitions
 
 </td>
 </tr>
@@ -150,6 +181,7 @@ sudo dnf install clang cmake ninja-build pkgconfig gtk3-devel libsecret-devel
 
 - Local authentication with **Argon2id** (OWASP parameters)
 - All data stored on-device in **Isar** database
+- **Argon2id Password Protection** for sensitive Settings (AI API Key edit/delete)
 - **Zero** telemetry, tracking, or cloud lock-in
 - You fully own your data
 
@@ -171,11 +203,15 @@ lib/
 │   ├── theme/                # Design tokens (colors, type, spacing)
 │   └── utils/                # Date, string, file, validators
 └── features/
-    ├── auth/                 # Login, Register, Profile
-    ├── calendar/             # Events, recurrence, views
-    ├── dashboard/            # Home widgets
-    ├── notes/                # Rich editor, folders
-    └── tasks/                # Task lists, subtasks
+    ├── ai/                   # AI Settings, direct Isar repository, security lock
+    ├── auth/                 # Argon2id auth, profile, password validation
+    ├── calendar/             # Events, recurrence, event preview
+    ├── chat/                 # P2P chat & AI companion buddy ("yo {username}")
+    ├── dashboard/            # Home widgets, quick action icons
+    ├── feed/                 # Personal social feed & AI post comments
+    ├── money/                # Wallet balance, expenses, Money Health AI
+    ├── notes/                # Rich editor, checklists, attachments, AI format
+    └── tasks/                # Task lists, subtasks, task preview modal
 ```
 
 ### Tech Stack
@@ -193,27 +229,33 @@ lib/
 
 ## 🚀 Quick Start (Development)
 
-### Prerequisites
+### Prerequisites & Flutter SDK Pinning
 
-- [Flutter SDK](https://flutter.dev) **3.22+**
-- Dart 3.x (included with Flutter)
-- Android Studio or VS Code + Flutter extension
+PocketDesk uses **[FVM (Flutter Version Management)](https://fvm.app/)** to pin Flutter **3.24.0** (Dart 3.5.0) for reproducible builds across developer environments and CI/CD pipelines.
+
+- **Pinned Flutter SDK**: `3.24.0` (managed via `.fvmrc`)
+- **Dart SDK**: `^3.5.0`
+- [FVM CLI](https://fvm.app/docs/getting_started/installation) (`dart pub global activate fvm`)
 
 ### Setup
 
 ```bash
-# Clone
+# 1. Clone repository
 git clone https://github.com/Aaryanbanskota/Pocket-Desk.git
 cd Pocket-Desk
 
-# Install dependencies
-flutter pub get
+# 2. Install pinned Flutter SDK version via FVM
+fvm install
+fvm use 3.24.0
 
-# Generate code
-dart run build_runner build --delete-conflicting-outputs
+# 3. Install dependencies using pinned Flutter
+fvm flutter pub get
 
-# Run (development)
-flutter run -t lib/main_dev.dart
+# 4. Generate code
+fvm dart run build_runner build --delete-conflicting-outputs
+
+# 5. Run (development)
+fvm flutter run -t lib/main_dev.dart
 ```
 
 ### Build Releases

@@ -4,6 +4,7 @@ import '../../data/models/task_model.dart';
 import '../providers/tasks_notifier.dart';
 import '../widgets/task_card.dart';
 import '../widgets/task_form_sheet.dart';
+import '../../../dashboard/presentation/widgets/app_hamburger_drawer.dart';
 
 class TasksDashboardView extends ConsumerStatefulWidget {
   const TasksDashboardView({super.key});
@@ -63,6 +64,7 @@ class _TasksDashboardViewState extends ConsumerState<TasksDashboardView>
     final tasksAsync = ref.watch(tasksProvider);
 
     return Scaffold(
+      drawer: const AppHamburgerDrawer(),
       backgroundColor: cs.surface,
       appBar: AppBar(
         backgroundColor: cs.surface,

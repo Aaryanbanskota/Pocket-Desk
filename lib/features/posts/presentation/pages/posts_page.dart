@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:camera/camera.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketdesk/core/theme/app_spacing.dart';
@@ -227,184 +229,20 @@ class _PostsPageState extends ConsumerState<PostsPage> {
   }
 
   void _openCreateInstantCamera({String? initialPath}) {
-    final textCtrl = TextEditingController();
-    Offset textOffset = const Offset(80, 250);
-    String imagePath = initialPath ?? '';
-
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.black,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setCameraState) => Container(
-          height: MediaQuery.of(context).size.height * 0.96,
-          color: Colors.black,
-          child: Column(
-            children: [
-              // Top Header Bar matching screenshot
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, color: Colors.white, size: 26),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                    const Text(
-                      'New Instant',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.photo_library_rounded, color: Colors.white, size: 24),
-                      tooltip: 'Choose from gallery',
-                      onPressed: () async {
-                        final pickerResult = await FilePicker.platform.pickFiles(type: FileType.image);
-                        if (pickerResult != null && pickerResult.files.single.path != null) {
-                          setCameraState(() {
-                            imagePath = pickerResult.files.single.path!;
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              // Squircle Camera Viewport matching uploaded image
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(44),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        if (imagePath.isNotEmpty && File(imagePath).existsSync())
-                          Image.file(File(imagePath), fit: BoxFit.cover)
-                        else
-                          Container(
-                            color: const Color(0xFF1E293B),
-                            child: const Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.camera_alt_rounded, color: Colors.white70, size: 54),
-                                  SizedBox(height: 12),
-                                  Text(
-                                    'Camera Viewport\nTap shutter below or icon above for gallery',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(color: Colors.white60, fontSize: 13),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        Positioned(
-                          left: textOffset.dx,
-                          top: textOffset.dy,
-                          child: GestureDetector(
-                            onPanUpdate: (details) {
-                              setCameraState(() {
-                                textOffset += details.delta;
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.5),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Text(
-                                textCtrl.text.isEmpty ? 'Tap top bar to type overlay text' : textCtrl.text,
-                                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 16,
-                          left: 16,
-                          right: 16,
-                          child: TextField(
-                            controller: textCtrl,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                            decoration: InputDecoration(
-                              hintText: 'Type overlay text…',
-                              hintStyle: const TextStyle(color: Colors.white70),
-                              filled: true,
-                              fillColor: Colors.black54,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                            ),
-                            onChanged: (_) => setCameraState(() {}),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // Bottom Camera Capture Shutter Controls matching uploaded screenshot
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    // Flash / Off toggle
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: const BoxDecoration(color: Color(0xFF1E293B), shape: BoxShape.circle),
-                      child: const Icon(Icons.flash_off_rounded, color: Colors.white, size: 22),
-                    ),
-
-                    // Big White Camera Shutter Button (Captures / Posts Instant)
-                    GestureDetector(
-                      onTap: () async {
-                        final normX = (textOffset.dx / MediaQuery.of(context).size.width).clamp(0.0, 1.0);
-                        final normY = (textOffset.dy / MediaQuery.of(context).size.height).clamp(0.0, 1.0);
-
-                        await ref.read(instantsProvider.notifier).createInstant(
-                          imagePath: imagePath,
-                          textOverlay: textCtrl.text.trim().isEmpty ? null : textCtrl.text.trim(),
-                          textX: normX,
-                          textY: normY,
-                        );
-
-                        if (context.mounted) Navigator.pop(ctx);
-                      },
-                      child: Container(
-                        width: 76,
-                        height: 76,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 5),
-                        ),
-                        child: Center(
-                          child: Container(
-                            width: 60,
-                            height: 60,
-                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Camera Flip icon
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: const BoxDecoration(color: Color(0xFF1E293B), shape: BoxShape.circle),
-                      child: const Icon(Icons.flip_camera_ios_rounded, color: Colors.white, size: 22),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+      builder: (ctx) => _InstantCameraModal(
+        initialPath: initialPath,
+        onInstantCreated: (imagePath, textOverlay, textX, textY) async {
+          await ref.read(instantsProvider.notifier).createInstant(
+            imagePath: imagePath,
+            textOverlay: textOverlay,
+            textX: textX,
+            textY: textY,
+          );
+        },
       ),
     );
   }
@@ -902,6 +740,361 @@ class _PostsPageState extends ConsumerState<PostsPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: _showCreatePostModal,
         child: const Icon(Icons.add_rounded),
+      ),
+    );
+  }
+}
+
+class _InstantCameraModal extends StatefulWidget {
+  const _InstantCameraModal({
+    required this.onInstantCreated,
+    this.initialPath,
+  });
+
+  final String? initialPath;
+  final Future<void> Function(String imagePath, String? textOverlay, double textX, double textY) onInstantCreated;
+
+  @override
+  State<_InstantCameraModal> createState() => _InstantCameraModalState();
+}
+
+class _InstantCameraModalState extends State<_InstantCameraModal> {
+  final _textCtrl = TextEditingController();
+  Offset _textOffset = const Offset(80, 250);
+  String _imagePath = '';
+  List<CameraDescription> _availableCameras = [];
+  CameraController? _cameraController;
+  int _selectedCameraIndex = 0;
+  bool _isCameraInitialized = false;
+  bool _isFlashOn = false;
+  bool _isCapturing = false;
+  String? _cameraError;
+
+  @override
+  void initState() {
+    super.initState();
+    _imagePath = widget.initialPath ?? '';
+    _initCamera();
+  }
+
+  Future<void> _initCamera() async {
+    try {
+      _availableCameras = await availableCameras();
+      if (_availableCameras.isNotEmpty) {
+        await _setupController(_availableCameras[_selectedCameraIndex]);
+      } else {
+        if (mounted) {
+          setState(() {
+            _cameraError = 'No camera hardware detected';
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _cameraError = 'Camera access error: ${e.toString()}';
+        });
+      }
+    }
+  }
+
+  Future<void> _setupController(CameraDescription camera) async {
+    if (_cameraController != null) {
+      await _cameraController!.dispose();
+    }
+
+    final controller = CameraController(
+      camera,
+      ResolutionPreset.high,
+      enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.jpeg,
+    );
+
+    _cameraController = controller;
+
+    try {
+      await controller.initialize();
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = true;
+          _cameraError = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = false;
+          _cameraError = 'Failed to start camera: ${e.toString()}';
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleFlash() async {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) return;
+    try {
+      final newMode = _isFlashOn ? FlashMode.off : FlashMode.torch;
+      await _cameraController!.setFlashMode(newMode);
+      if (mounted) {
+        setState(() {
+          _isFlashOn = !_isFlashOn;
+        });
+      }
+    } catch (_) {
+      // Flash mode not supported by camera
+    }
+  }
+
+  Future<void> _switchCamera() async {
+    if (kIsWeb || Platform.isLinux) return; // No camera flip on Linux
+    if (_availableCameras.length < 2) return;
+
+    _selectedCameraIndex = (_selectedCameraIndex + 1) % _availableCameras.length;
+    setState(() {
+      _isCameraInitialized = false;
+    });
+    await _setupController(_availableCameras[_selectedCameraIndex]);
+  }
+
+  Future<void> _captureOrPost() async {
+    if (_isCapturing) return;
+
+    String finalPath = _imagePath;
+
+    final size = MediaQuery.of(context).size;
+
+    if (finalPath.isEmpty && _cameraController != null && _cameraController!.value.isInitialized) {
+      setState(() => _isCapturing = true);
+      try {
+        final XFile photo = await _cameraController!.takePicture();
+        finalPath = photo.path;
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to capture photo: $e')),
+          );
+        }
+        setState(() => _isCapturing = false);
+        return;
+      }
+      setState(() => _isCapturing = false);
+    }
+
+    final normX = (_textOffset.dx / size.width).clamp(0.0, 1.0);
+    final normY = (_textOffset.dy / size.height).clamp(0.0, 1.0);
+
+    await widget.onInstantCreated(
+      finalPath,
+      _textCtrl.text.trim().isEmpty ? null : _textCtrl.text.trim(),
+      normX,
+      normY,
+    );
+
+    if (mounted) Navigator.pop(context);
+  }
+
+  @override
+  void dispose() {
+    _cameraController?.dispose();
+    _textCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isLinuxOrWeb = kIsWeb || Platform.isLinux;
+    final canSwitchCamera = !isLinuxOrWeb && _availableCameras.length > 1;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.96,
+      color: Colors.black,
+      child: Column(
+        children: [
+          // Top Header Bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: Colors.white, size: 26),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                const Text(
+                  'New Instant',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.photo_library_rounded, color: Colors.white, size: 24),
+                  tooltip: 'Choose from gallery',
+                  onPressed: () async {
+                    final pickerResult = await FilePicker.platform.pickFiles(type: FileType.image);
+                    if (pickerResult != null && pickerResult.files.single.path != null) {
+                      setState(() {
+                        _imagePath = pickerResult.files.single.path!;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // Squircle Camera Viewport
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(44),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (_imagePath.isNotEmpty && File(_imagePath).existsSync())
+                      Image.file(File(_imagePath), fit: BoxFit.cover)
+                    else if (_isCameraInitialized && _cameraController != null)
+                      CameraPreview(_cameraController!)
+                    else
+                      Container(
+                        color: const Color(0xFF1E293B),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.camera_alt_rounded, color: Colors.white70, size: 54),
+                              const SizedBox(height: 12),
+                              Text(
+                                _cameraError ?? 'Initializing Camera Stream…',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.white60, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    // Moveable Text Overlay
+                    Positioned(
+                      left: _textOffset.dx,
+                      top: _textOffset.dy,
+                      child: GestureDetector(
+                        onPanUpdate: (details) {
+                          setState(() {
+                            _textOffset += details.delta;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            _textCtrl.text.isEmpty ? 'Tap top bar to type overlay text' : _textCtrl.text,
+                            style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Text Input Field
+                    Positioned(
+                      top: 16,
+                      left: 16,
+                      right: 16,
+                      child: TextField(
+                        controller: _textCtrl,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          hintText: 'Type overlay text…',
+                          hintStyle: const TextStyle(color: Colors.white70),
+                          filled: true,
+                          fillColor: Colors.black54,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Bottom Camera Controls Bar
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Flash Toggle
+                GestureDetector(
+                  onTap: _toggleFlash,
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: _isFlashOn ? Colors.amber : const Color(0xFF1E293B),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _isFlashOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+                      color: _isFlashOn ? Colors.black : Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
+
+                // Main Shutter Button
+                GestureDetector(
+                  onTap: _captureOrPost,
+                  child: Container(
+                    width: 76,
+                    height: 76,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 5),
+                    ),
+                    child: Center(
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: _isCapturing ? Colors.amber : Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: _isCapturing
+                            ? const Padding(
+                                padding: EdgeInsets.all(16),
+                                child: CircularProgressIndicator(strokeWidth: 3, color: Colors.black),
+                              )
+                            : null,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Flip Camera Button (Android only)
+                GestureDetector(
+                  onTap: canSwitchCamera ? _switchCamera : null,
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: canSwitchCamera ? const Color(0xFF1E293B) : Colors.white10,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.flip_camera_ios_rounded,
+                      color: canSwitchCamera ? Colors.white : Colors.white38,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

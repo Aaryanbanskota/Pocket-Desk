@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_file_plus/open_file_plus.dart';
@@ -17,6 +18,10 @@ class _AboutAppPageState extends State<AboutAppPage> {
 
   static const String _logsUrl =
       'https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/refs/heads/main/website/logs.html?token=GHSAT0AAAAAAEIYBMYEOAP22DFD5JVV4HIE2VYUQBA';
+  static const String _termsUrl =
+      'https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/main/TERMS_OF_SERVICE.md';
+  static const String _privacyUrl =
+      'https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/main/PRIVACY_POLICY.md';
 
   @override
   void initState() {
@@ -46,12 +51,19 @@ class _AboutAppPageState extends State<AboutAppPage> {
     }
   }
 
-  Future<void> _openLogsUrl() async {
-    final result = await OpenFile.open(_logsUrl);
-    if (result.type != ResultType.done && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Opening logs: ${result.message}')),
-      );
+  Future<void> _openWebUrl(String url) async {
+    try {
+      if (Platform.isLinux) {
+        await Process.run('xdg-open', [url]);
+      } else {
+        await OpenFile.open(url);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open link: $e')),
+        );
+      }
     }
   }
 
@@ -169,11 +181,16 @@ class _AboutAppPageState extends State<AboutAppPage> {
                   const SizedBox(height: 16),
 
                   // Policy Items
-                  _buildPolicyTile('1', 'Terms of Service'),
+                  _buildPolicyTile('1', 'Terms of Service', onTap: () => _openWebUrl(_termsUrl)),
                   const SizedBox(height: 12),
-                  _buildPolicyTile('2', 'Privacy Policy'),
+                  _buildPolicyTile('2', 'Privacy Policy', onTap: () => _openWebUrl(_privacyUrl)),
                   const SizedBox(height: 12),
-                  _buildPolicyTile('3', 'Open Source Licenses', trailingIcon: Icons.send_rounded),
+                  _buildPolicyTile(
+                    '3',
+                    'Open Source Licenses',
+                    trailingIcon: Icons.send_rounded,
+                    onTap: () => showLicensePage(context: context),
+                  ),
 
                   // Online-only Logs Button
                   if (!_checkingOnline && _isOnline) ...[
@@ -187,7 +204,7 @@ class _AboutAppPageState extends State<AboutAppPage> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        onPressed: _openLogsUrl,
+                        onPressed: () => _openWebUrl(_logsUrl),
                         icon: const Icon(Icons.receipt_long_rounded, color: Colors.white),
                         label: const Text('Logs', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
@@ -211,39 +228,43 @@ class _AboutAppPageState extends State<AboutAppPage> {
     );
   }
 
-  Widget _buildPolicyTile(String number, String title, {IconData? trailingIcon}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: trailingIcon != null ? Colors.white.withAlpha(25) : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        border: trailingIcon == null ? Border.all(color: Colors.white.withAlpha(40)) : null,
-      ),
-      child: Row(
-        children: [
-          Text(
-            number,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              title,
+  Widget _buildPolicyTile(String number, String title, {IconData? trailingIcon, VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: trailingIcon != null ? Colors.white.withAlpha(25) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: trailingIcon == null ? Border.all(color: Colors.white.withAlpha(40)) : null,
+        ),
+        child: Row(
+          children: [
+            Text(
+              number,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
               ),
             ),
-          ),
-          if (trailingIcon != null)
-            Icon(trailingIcon, color: Colors.white, size: 20),
-        ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            if (trailingIcon != null)
+              Icon(trailingIcon, color: Colors.white, size: 20),
+          ],
+        ),
       ),
     );
   }

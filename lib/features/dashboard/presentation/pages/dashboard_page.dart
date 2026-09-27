@@ -16,11 +16,26 @@ import '../widgets/today_schedule_widget.dart';
 import '../widgets/weather_widget.dart';
 import '../widgets/app_hamburger_drawer.dart';
 
-class DashboardPage extends ConsumerWidget {
+import '../../../../core/services/app_update_service.dart';
+
+class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends ConsumerState<DashboardPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppUpdateService.checkForUpdates(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final authState = ref.watch(authNotifierProvider).valueOrNull;

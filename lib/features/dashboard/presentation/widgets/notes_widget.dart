@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/utils/date_time_utils.dart';
 import '../../../notes/presentation/providers/notes_notifier.dart';
 import '../../../notes/presentation/pages/note_editor_page.dart';
+import '../../../notes/presentation/widgets/note_preview_dialog.dart';
 
 class NotesWidget extends ConsumerWidget {
   const NotesWidget({super.key});
@@ -92,11 +92,7 @@ class NotesWidget extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final note = displayedNotes[index];
                     return InkWell(
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => NoteEditorPage(note: note),
-                        ),
-                      ),
+                      onTap: () => NotePreviewDialog.show(context, note),
                       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                       child: Container(
                         padding: const EdgeInsets.all(AppSpacing.md),
@@ -123,11 +119,35 @@ class NotesWidget extends ConsumerWidget {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                Text(
-                                  DateTimeUtils.toRelativeLabel(note.updatedAt),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
+                                Row(
+                                  children: [
+                                    InkWell(
+                                      onTap: () => Navigator.of(context).push(
+                                        MaterialPageRoute<void>(
+                                          builder: (_) => NoteEditorPage(note: note),
+                                        ),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(2),
+                                        child: Icon(Icons.edit_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    InkWell(
+                                      onTap: () async {
+                                        final title = note.title;
+                                        final messenger = ScaffoldMessenger.of(context);
+                                        await ref.read(notesProvider.notifier).deleteNote(note.id);
+                                        messenger.showSnackBar(
+                                          SnackBar(content: Text('Deleted "$title"')),
+                                        );
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(2),
+                                        child: Icon(Icons.delete_outline_rounded, size: 16, color: colorScheme.error),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),

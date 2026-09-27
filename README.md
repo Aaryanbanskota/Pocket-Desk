@@ -51,15 +51,27 @@ It combines a full-featured **Calendar**, **Task Manager**, **Notes** app, and *
 
 ## ⚡ Recent Updates & Fixes (v1.2.0)
 
+- 🔄 **Self-Hosted In-App Update System**:
+  - Offline-first background update checks against raw `update.json` hosted on GitHub.
+  - Automatic download progress modal and seamless launch of Android's native package installer (`FileProvider` / `REQUEST_INSTALL_PACKAGES`).
+  - Preserves user data and silently degrades when offline or without internet access.
 - 🤖 **Universal AI Integration & Security**:
-  - Implemented direct Isar database querying (`AISettingsRepository`) for AI features across all screens (Money Health, Note Editor, Chat Buddy, Personal Feed), eliminating transient state issues.
-  - Added **Argon2id Password Lock** in Settings to protect saved AI API keys; users must authenticate with their login password before viewing, editing, or deleting API keys.
-- 💬 **AI Buddy Companion**: Offline/P2P chat falls back to PocketDesk AI ("yo {username}") when no peer is connected.
-- 💰 **Money Tracker & Money Health Page**: Added full expense management (Wallet balance, expense breakdown by category, currency selector) and AI Spending Analysis with Spending Score (0–100).
-- 📲 **Offline Personal Social Feed**: Added local feed with post creation, media attachments, and automatic AI interactions/comments.
-- 📝 **Rich Note Checklist & Formatting**: Auto-save, archive, trash/restore, duplicate notes, checklist formatting, audio/drawings/attachments support.
-- 🎯 **Task & Event Previews & Navigation**: Modernized task preview modal, edit sheet, deletion icon, and hamburger navigation drawer across all main pages.
-- 🛠 **FVM Flutter SDK Pinning & Linux Desktop Build**: Pinned Flutter `3.24.0` via FVM to maintain build stability and compatibility across environments.
+  - Direct Isar database querying (`AISettingsRepository`) powering AI across all screens (Money Health, Note Formatting, Chat Buddy, Personal Social Feed).
+  - **Argon2id Password Lock** in Settings to protect saved AI API keys; authenticates user before viewing, editing, or deleting keys.
+- 📁 **Enhanced File Sharing & Local Web Server**:
+  - Redesigned File Share page with local network web server support.
+  - Generates network link and PIN code so external devices without the app installed can download shared files directly over Wi-Fi.
+- 💬 **AI Companion & Offline Social Feed**:
+  - Offline/P2P chat falls back to PocketDesk AI ("yo {username}") when no peer is connected.
+  - Personal social feed supporting image/video post attachments, post liking, and automatic AI interactions.
+- 📝 **Rich Note Ecosystem & Preview Navigation**:
+  - Note preview modal on tap, with explicit edit and delete actions.
+  - Functional auto-save on edit, checklists, audio/drawings/attachments, archive, duplicate, and tag organization.
+- 🔐 **Privacy Settings & Security**:
+  - Integrated password change feature in Privacy Settings with Argon2id hash verification.
+- 🎯 **Navigation & UX Improvements**:
+  - Uncramped, clean hamburger menu drawer across all dashboard views.
+  - Pinned Flutter `3.24.0` via FVM for consistent builds.
 
 ---
 
@@ -138,11 +150,11 @@ sudo dnf install clang cmake ninja-build pkgconfig gtk3-devel libsecret-devel
 <td width="50%" valign="top">
 
 ### 📝 Note Ecosystem
-- Markdown & Rich Text Editor + AI Auto-format
-- Core checklist (Title, Content, Tags, Pin, Star, Archive, Trash, Duplicate)
-- Formatting: Headings, checklists, code blocks, lists
+- Note Preview on click with Edit & Delete actions
+- Auto-save on edit with complete state preservation
+- Checklist formatting, code blocks, headings
 - Attachments: Images, files/PDFs, audio notes, drawings
-- Organization: Folders, colors, tag/title search
+- Organization: Folders, colors, tag/title search, duplicate note
 
 </td>
 <td width="50%" valign="top">
@@ -161,17 +173,18 @@ sudo dnf install clang cmake ninja-build pkgconfig gtk3-devel libsecret-devel
 ### 🤖 Smart AI Integration
 - Companion Chatbot (`"yo {username}"`)
 - Password-secured OpenRouter API Key storage (Argon2id)
-- Multipage AI (Money Health, Note Formatting, Feed Comments)
+- Universal AI across Money Health, Note Formatting, Feed Comments
 - Direct Isar DB lookup for persistent state
 
 </td>
 <td width="50%" valign="top">
 
-### 🔄 P2P Sync & Social Feed
-- Encrypted WebSocket sync (AES-GCM-128)
-- Zero cloud servers & QR pairing
-- Offline Personal Social Feed with AI auto-replies
-- Unified Hamburger Navigation & smooth transitions
+### 🔄 P2P Sync & Network Share
+- In-App Self-Hosted Update System via raw GitHub hosting
+- Local Wi-Fi network file server with PIN access
+- Encrypted WebSocket sync (AES-GCM-128) & zero cloud servers
+- Personal social feed with post media, likes, and AI responses
+- Clean, responsive hamburger navigation drawer
 
 </td>
 </tr>

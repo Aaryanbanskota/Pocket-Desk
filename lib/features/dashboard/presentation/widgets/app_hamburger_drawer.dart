@@ -13,160 +13,185 @@ class AppHamburgerDrawer extends ConsumerWidget {
     final user = authState is AuthAuthenticated ? authState.user : null;
     final username = user?.displayName ?? user?.username ?? 'User';
     final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
 
     return Drawer(
       backgroundColor: cs.surface,
+      width: 310,
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with close button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          children: [
+            // Header Section
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 16, 16, 20),
+              decoration: BoxDecoration(
+                color: cs.primaryContainer.withOpacity(0.3),
+                border: Border(bottom: BorderSide(color: cs.outlineVariant.withOpacity(0.4))),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconButton(
-                    icon: Icon(Icons.close, color: cs.onSurface, size: 28),
-                    onPressed: () => Navigator.of(context).pop(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: cs.primary,
+                        child: Text(
+                          username.isNotEmpty ? username[0].toUpperCase() : 'U',
+                          style: TextStyle(color: cs.onPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close_rounded, color: cs.onSurfaceVariant, size: 24),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  RichText(
+                    text: TextSpan(
+                      style: tt.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: cs.onSurface,
+                      ),
+                      children: [
+                        const TextSpan(text: 'yo '),
+                        TextSpan(
+                          text: username,
+                          style: TextStyle(color: cs.primary, fontWeight: FontWeight.w900),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'PocketDesk Workspace',
+                    style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+            ),
 
-              // Greeting title matching app theme
-              RichText(
-                text: TextSpan(
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Roboto',
-                    color: cs.onSurface,
+            // Navigation Items List
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                children: [
+                  _NavItem(
+                    icon: Icons.dashboard_rounded,
+                    label: 'Dashboard',
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go(AppRoutes.dashboard);
+                    },
                   ),
-                  children: [
-                    TextSpan(
-                      text: 'yo ',
-                      style: TextStyle(color: cs.onSurface),
-                    ),
-                    TextSpan(
-                      text: username,
-                      style: TextStyle(
-                        color: cs.primary, // App primary accent color
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
+                  _NavItem(
+                    icon: Icons.calendar_month_rounded,
+                    label: 'Calendar',
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push(AppRoutes.calendar);
+                    },
+                  ),
+                  _NavItem(
+                    icon: Icons.check_circle_outline_rounded,
+                    label: 'Tasks',
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push(AppRoutes.tasks);
+                    },
+                  ),
+                  _NavItem(
+                    icon: Icons.notes_rounded,
+                    label: 'Notes',
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push(AppRoutes.notes);
+                    },
+                  ),
+                  _NavItem(
+                    icon: Icons.account_balance_wallet_rounded,
+                    label: 'Money Health',
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push(AppRoutes.moneyTracker);
+                    },
+                  ),
+                  _NavItem(
+                    icon: Icons.dynamic_feed_rounded,
+                    label: 'Personal Feed',
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push(AppRoutes.posts);
+                    },
+                  ),
+                  _NavItem(
+                    icon: Icons.folder_shared_rounded,
+                    label: 'File Share & Network',
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push(AppRoutes.fileShare);
+                    },
+                  ),
+                  _NavItem(
+                    icon: Icons.access_time_filled_rounded,
+                    label: 'Clock',
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push(AppRoutes.clock);
+                    },
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Divider(height: 1),
+                  ),
+                  _NavItem(
+                    icon: Icons.person_outline_rounded,
+                    label: 'Profile',
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push(AppRoutes.settingsProfile);
+                    },
+                  ),
+                  _NavItem(
+                    icon: Icons.settings_rounded,
+                    label: 'Settings',
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push(AppRoutes.settings);
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 32),
+            ),
 
-              // Navigation List Items
-              Expanded(
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    _NavItem(
-                      label: 'Profile',
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push(AppRoutes.settingsProfile);
-                      },
-                    ),
-                    _NavItem(
-                      label: 'Dashboard',
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.go(AppRoutes.dashboard);
-                      },
-                    ),
-                    _NavItem(
-                      label: 'Calendar',
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push(AppRoutes.calendar);
-                      },
-                    ),
-                    _NavItem(
-                      label: 'Tasks',
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push(AppRoutes.tasks);
-                      },
-                    ),
-                    _NavItem(
-                      label: 'Notes',
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push(AppRoutes.notes);
-                      },
-                    ),
-                    _NavItem(
-                      label: 'Money Tracker',
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push(AppRoutes.moneyTracker);
-                      },
-                    ),
-                    _NavItem(
-                      label: 'Personal Feed',
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push(AppRoutes.posts);
-                      },
-                    ),
-                    _NavItem(
-                      label: 'Clock',
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push(AppRoutes.clock);
-                      },
-                    ),
-                    _NavItem(
-                      label: 'File Share',
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push(AppRoutes.fileShare);
-                      },
-                    ),
-                    _NavItem(
-                      label: 'Settings',
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.push(AppRoutes.settings);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              // Logout Button at Bottom
-              SizedBox(
+            // Logout Footer
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
                 width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: cs.primary,
-                    foregroundColor: cs.onPrimary,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
-                    ),
+                height: 48,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: cs.error,
+                    side: BorderSide(color: cs.error.withOpacity(0.5)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   onPressed: () async {
                     Navigator.pop(context);
                     await ref.read(authNotifierProvider.notifier).logout();
                   },
-                  child: const Text(
+                  icon: const Icon(Icons.logout_rounded, size: 20),
+                  label: const Text(
                     'Logout',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                    ),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -174,7 +199,13 @@ class AppHamburgerDrawer extends ConsumerWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  const _NavItem({required this.label, required this.onTap});
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
   final String label;
   final VoidCallback onTap;
 
@@ -182,19 +213,21 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Text(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: ListTile(
+        leading: Icon(icon, color: cs.primary, size: 22),
+        title: Text(
           label,
           style: TextStyle(
             color: cs.onSurface,
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
           ),
         ),
+        horizontalTitleGap: 12,
+        dense: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onTap: onTap,
       ),
     );
   }

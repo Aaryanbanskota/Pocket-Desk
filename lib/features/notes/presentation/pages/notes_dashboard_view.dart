@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketdesk/features/dashboard/presentation/widgets/app_hamburger_drawer.dart';
 import '../../data/models/note_model.dart';
 import '../providers/notes_notifier.dart';
+import '../widgets/note_preview_dialog.dart';
 import 'note_editor_page.dart';
 
 class NotesDashboardView extends ConsumerStatefulWidget {
@@ -27,6 +28,10 @@ class _NotesDashboardViewState extends ConsumerState<NotesDashboardView> {
     if (q.trim().isEmpty) { setState(() => _searchResults = null); return; }
     final results = await ref.read(notesProvider.notifier).searchNotes(q);
     setState(() => _searchResults = results);
+  }
+
+  void _openPreview(NoteModel note) {
+    NotePreviewDialog.show(context, note);
   }
 
   void _openEditor([NoteModel? note]) =>
@@ -86,7 +91,7 @@ class _NotesDashboardViewState extends ConsumerState<NotesDashboardView> {
               Expanded(
                 child: displayNotes.isEmpty
                     ? _EmptyState(onAdd: _openEditor)
-                    : _NotesGrid(notes: displayNotes, onTap: _openEditor),
+                    : _NotesGrid(notes: displayNotes, onTap: _openPreview),
               ),
             ],
           );
@@ -268,19 +273,54 @@ class _NoteCard extends ConsumerWidget {
                   style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                 ),
               ),
-            const Spacer(),
-            if (note.tags.isNotEmpty)
-              Wrap(
-                spacing: 4,
-                children: note.tags.take(3).map((t) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: cs.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
+            Row(
+              children: [
+                if (note.tags.isNotEmpty)
+                  Expanded(
+                    child: Wrap(
+                      spacing: 4,
+                      children: note.tags.take(2).map((t) => Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: cs.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(t, style: TextStyle(fontSize: 10, color: cs.primary)),
+                          )).toList(),
+                    ),
+                  )
+                else
+                  const Spacer(),
+                InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => NoteEditorPage(note: note),
                       ),
-                      child: Text(t, style: TextStyle(fontSize: 10, color: cs.primary)),
-                    )).toList(),
-              ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(Icons.edit_outlined, size: 16, color: cs.onSurfaceVariant),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                InkWell(
+                  onTap: () async {
+                    final title = note.title;
+                    final messenger = ScaffoldMessenger.of(context);
+                    await ref.read(notesProvider.notifier).deleteNote(note.id);
+                    messenger.showSnackBar(
+                      SnackBar(content: Text('Deleted "$title"')),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(Icons.delete_outline_rounded, size: 16, color: cs.error),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

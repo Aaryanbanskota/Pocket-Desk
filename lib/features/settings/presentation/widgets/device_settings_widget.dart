@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/p2p_sync_service.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/services/app_update_service.dart';
 
 class DeviceSettingsWidget extends ConsumerStatefulWidget {
   const DeviceSettingsWidget({super.key});
@@ -230,6 +231,48 @@ class _DeviceSettingsWidgetState extends ConsumerState<DeviceSettingsWidget> {
                       );
                     },
                     child: const Text('Save'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+
+            // Check for Updates section
+            Container(
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                border: Border.all(
+                  color: colorScheme.outlineVariant,
+                ),
+              ),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Row(
+                children: [
+                  Icon(Icons.system_update_rounded, color: colorScheme.primary),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Check for Updates',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Self-hosted in-app update checker',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  OutlinedButton(
+                    onPressed: () => AppUpdateService.checkForUpdates(context),
+                    child: const Text('Check Now'),
                   ),
                 ],
               ),

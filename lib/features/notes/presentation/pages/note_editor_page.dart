@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketdesk/features/auth/presentation/providers/auth_notifier.dart';
@@ -5,7 +7,7 @@ import '../../data/models/note_model.dart';
 import '../providers/notes_notifier.dart';
 import '../../../settings/presentation/providers/ai_settings_notifier.dart';
 
-/// Full-screen note editor (create & edit).
+/// Full-screen note editor (create & edit) with rich formatting toolbar and media support.
 class NoteEditorPage extends ConsumerStatefulWidget {
   const NoteEditorPage({super.key, this.note});
   final NoteModel? note;
@@ -20,6 +22,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   final _tagCtrl = TextEditingController();
   final _folderCtrl = TextEditingController();
   final _checkItemCtrl = TextEditingController();
+  final _contentFocusNode = FocusNode();
 
   bool _isPinned = false;
   bool _isFavorite = false;
@@ -27,6 +30,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   List<String> _tags = [];
   List<String> _checkItems = [];
   List<bool> _checkDone = [];
+  List<String> _imagePaths = [];
   bool _dirty = false;
   bool _aiFormatting = false;
 
@@ -101,6 +105,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
       _tags = List.from(n.tags);
       _checkItems = List.from(n.checklistItems);
       _checkDone = List.from(n.checklistDone);
+      _imagePaths = List.from(n.imagePaths);
     }
     _titleCtrl.addListener(() => setState(() => _dirty = true));
     _contentCtrl.addListener(() => setState(() => _dirty = true));
@@ -113,17 +118,44 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
     _tagCtrl.dispose();
     _folderCtrl.dispose();
     _checkItemCtrl.dispose();
+    _contentFocusNode.dispose();
     super.dispose();
   }
 
-  Future<void> _save() async {
-    final title = _titleCtrl.text.trim();
-    if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Title cannot be empty')),
-      );
-      return;
+  void _insertMarkdownPrefix(String prefix, {String suffix = ''}) {
+    final text = _contentCtrl.text;
+    final selection = _contentCtrl.selection;
+    if (!selection.isValid) {
+      _contentCtrl.text = '$text$prefix$suffix';
+      _contentCtrl.selection = TextSelection.collapsed(offset: _contentCtrl.text.length - suffix.length);
+    } else {
+      final selectedText = selection.textInside(text);
+      final newText = text.replaceRange(selection.start, selection.end, '$prefix$selectedText$suffix');
+      _contentCtrl.text = newText;
+      _contentCtrl.selection = TextSelection.collapsed(offset: selection.start + prefix.length + selectedText.length);
     }
+    setState(() => _dirty = true);
+  }
+
+  Future<void> _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.image, allowMultiple: true);
+    if (result != null && result.paths.isNotEmpty) {
+      setState(() {
+        for (final p in result.paths) {
+          if (p != null && !_imagePaths.contains(p)) {
+            _imagePaths.add(p);
+          }
+        }
+        _dirty = true;
+      });
+    }
+  }
+
+  Future<void> _save() async {
+    final title = _titleCtrl.text.trim().isEmpty ? 'Untitled Note' : _titleCtrl.text.trim();
+    final isEditing = widget.note != null;
+    final messenger = ScaffoldMessenger.of(context);
+
     await ref.read(notesProvider.notifier).saveNote(
           title: title,
           content: _contentCtrl.text,
@@ -134,9 +166,17 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
           hasChecklist: _hasChecklist,
           checklistItems: _checkItems,
           checklistDone: _checkDone,
+          imagePaths: _imagePaths,
           noteId: widget.note?.id,
         );
-    if (mounted) Navigator.of(context).pop();
+
+    setState(() => _dirty = false);
+    if (mounted) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(isEditing ? 'Note updated successfully!' : 'Note created successfully!')),
+      );
+      Navigator.of(context).pop();
+    }
   }
 
   void _addTag() {
@@ -246,157 +286,287 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                 },
                 tooltip: 'Duplicate Note',
               ),
-            FilledButton(
-              onPressed: _save,
-              child: const Text('Save'),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilledButton(
+                onPressed: _save,
+                child: const Text('Save'),
+              ),
             ),
-            const SizedBox(width: 8),
           ],
         ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
-        children: [
-          // Title
-          TextField(
-            controller: _titleCtrl,
-            autofocus: widget.note == null,
-            style: tt.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            decoration: InputDecoration(
-              hintText: 'Title',
-              hintStyle: tt.headlineSmall?.copyWith(
-                color: cs.onSurfaceVariant.withOpacity(0.4),
-                fontWeight: FontWeight.bold,
+        body: Column(
+          children: [
+            // Formatting Toolbar
+            Container(
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerLow,
+                border: Border(bottom: BorderSide(color: cs.outlineVariant.withOpacity(0.4))),
               ),
-              border: InputBorder.none,
-            ),
-          ),
-          // Folder
-          TextField(
-            controller: _folderCtrl,
-            style: tt.bodySmall?.copyWith(color: cs.primary),
-            decoration: InputDecoration(
-              hintText: 'Folder (optional)',
-              hintStyle: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant.withOpacity(0.5)),
-              prefixIcon: Icon(Icons.folder_outlined, size: 16, color: cs.primary),
-              border: InputBorder.none,
-              isDense: true,
-            ),
-          ),
-          const Divider(height: 24),
-
-          // Checklist toggle
-          Row(
-            children: [
-              FilterChip(
-                label: const Text('Checklist'),
-                selected: _hasChecklist,
-                onSelected: (v) => setState(() { _hasChecklist = v; _dirty = true; }),
-                avatar: Icon(
-                  _hasChecklist ? Icons.check_box_outlined : Icons.check_box_outline_blank,
-                  size: 16,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // Content or Checklist
-          if (_hasChecklist) ...[
-            ..._checkItems.asMap().entries.map((e) => CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  value: _checkDone[e.key],
-                  onChanged: (v) => setState(() {
-                    _checkDone[e.key] = v ?? false;
-                    _dirty = true;
-                  }),
-                  title: Text(
-                    e.value,
-                    style: TextStyle(
-                      decoration: _checkDone[e.key] ? TextDecoration.lineThrough : null,
-                      color: _checkDone[e.key] ? cs.onSurfaceVariant : cs.onSurface,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.format_bold_rounded, size: 20),
+                    onPressed: () => _insertMarkdownPrefix('**', suffix: '**'),
+                    tooltip: 'Bold',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.format_italic_rounded, size: 20),
+                    onPressed: () => _insertMarkdownPrefix('*', suffix: '*'),
+                    tooltip: 'Italic',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.format_underlined_rounded, size: 20),
+                    onPressed: () => _insertMarkdownPrefix('<u>', suffix: '</u>'),
+                    tooltip: 'Underline',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.strikethrough_s_rounded, size: 20),
+                    onPressed: () => _insertMarkdownPrefix('~~', suffix: '~~'),
+                    tooltip: 'Strikethrough',
+                  ),
+                  const VerticalDivider(indent: 8, endIndent: 8),
+                  IconButton(
+                    icon: const Icon(Icons.title_rounded, size: 20),
+                    onPressed: () => _insertMarkdownPrefix('# '),
+                    tooltip: 'Heading 1',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.format_list_bulleted_rounded, size: 20),
+                    onPressed: () => _insertMarkdownPrefix('- '),
+                    tooltip: 'Bullet List',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.format_list_numbered_rounded, size: 20),
+                    onPressed: () => _insertMarkdownPrefix('1. '),
+                    tooltip: 'Numbered List',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.code_rounded, size: 20),
+                    onPressed: () => _insertMarkdownPrefix('```\n', suffix: '\n```'),
+                    tooltip: 'Code Block',
+                  ),
+                  const VerticalDivider(indent: 8, endIndent: 8),
+                  IconButton(
+                    icon: const Icon(Icons.add_photo_alternate_rounded, size: 20),
+                    onPressed: _pickImage,
+                    tooltip: 'Attach Image',
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      _hasChecklist ? Icons.checklist_rtl_rounded : Icons.playlist_add_check_rounded,
+                      size: 20,
+                      color: _hasChecklist ? cs.primary : null,
                     ),
+                    onPressed: () => setState(() { _hasChecklist = !_hasChecklist; _dirty = true; }),
+                    tooltip: 'Toggle Checklist Mode',
                   ),
-                  secondary: IconButton(
-                    icon: const Icon(Icons.close, size: 16),
-                    onPressed: () => setState(() {
-                      _checkItems.removeAt(e.key);
-                      _checkDone.removeAt(e.key);
-                      _dirty = true;
-                    }),
-                  ),
-                )),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _checkItemCtrl,
-                    decoration: const InputDecoration(
-                      hintText: 'Add item…',
+                ],
+              ),
+            ),
+
+            // Note Content Body
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+                children: [
+                  // Title Input
+                  TextField(
+                    controller: _titleCtrl,
+                    autofocus: widget.note == null,
+                    style: tt.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      hintText: 'Note Title',
+                      hintStyle: tt.headlineSmall?.copyWith(
+                        color: cs.onSurfaceVariant.withOpacity(0.4),
+                        fontWeight: FontWeight.bold,
+                      ),
                       border: InputBorder.none,
-                      prefixIcon: Icon(Icons.add, size: 18),
-                      isDense: true,
                     ),
-                    onSubmitted: (_) => _addCheckItem(),
                   ),
-                ),
-                IconButton(onPressed: _addCheckItem, icon: const Icon(Icons.add_circle_outline)),
-              ],
-            ),
-          ] else
-            TextField(
-              controller: _contentCtrl,
-              maxLines: null,
-              keyboardType: TextInputType.multiline,
-              style: tt.bodyMedium,
-              decoration: InputDecoration(
-                hintText: 'Start writing… (Markdown supported)',
-                hintStyle: TextStyle(color: cs.onSurfaceVariant.withOpacity(0.5)),
-                border: InputBorder.none,
+
+                  // Folder & Tag metadata bar
+                  Row(
+                    children: [
+                      Icon(Icons.folder_outlined, size: 16, color: cs.primary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: TextField(
+                          controller: _folderCtrl,
+                          style: tt.bodySmall?.copyWith(color: cs.primary, fontWeight: FontWeight.bold),
+                          decoration: InputDecoration(
+                            hintText: 'Folder (e.g. Work, Ideas)',
+                            hintStyle: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant.withOpacity(0.5)),
+                            border: InputBorder.none,
+                            isDense: true,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 20),
+
+                  // Attached Images Row
+                  if (_imagePaths.isNotEmpty) ...[
+                    SizedBox(
+                      height: 100,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _imagePaths.length,
+                        itemBuilder: (ctx, i) => Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.file(
+                                  File(_imagePaths[i]),
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: () => setState(() {
+                                    _imagePaths.removeAt(i);
+                                    _dirty = true;
+                                  }),
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: const Icon(Icons.close_rounded, color: Colors.white, size: 14),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Checklist Mode or Markdown Content Editor
+                  if (_hasChecklist) ...[
+                    Text('Checklist Items', style: tt.labelLarge?.copyWith(fontWeight: FontWeight.bold, color: cs.primary)),
+                    const SizedBox(height: 8),
+                    ..._checkItems.asMap().entries.map((e) => Card(
+                      elevation: 0,
+                      color: cs.surfaceContainerLow,
+                      margin: const EdgeInsets.only(bottom: 6),
+                      child: CheckboxListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        dense: true,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        value: _checkDone[e.key],
+                        onChanged: (v) => setState(() {
+                          _checkDone[e.key] = v ?? false;
+                          _dirty = true;
+                        }),
+                        title: Text(
+                          e.value,
+                          style: TextStyle(
+                            decoration: _checkDone[e.key] ? TextDecoration.lineThrough : null,
+                            color: _checkDone[e.key] ? cs.onSurfaceVariant : cs.onSurface,
+                          ),
+                        ),
+                        secondary: IconButton(
+                          icon: const Icon(Icons.close_rounded, size: 18),
+                          onPressed: () => setState(() {
+                            _checkItems.removeAt(e.key);
+                            _checkDone.removeAt(e.key);
+                            _dirty = true;
+                          }),
+                        ),
+                      ),
+                    )),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _checkItemCtrl,
+                            decoration: const InputDecoration(
+                              hintText: 'Add checklist item…',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              isDense: true,
+                            ),
+                            onSubmitted: (_) => _addCheckItem(),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton.filled(
+                          onPressed: _addCheckItem,
+                          icon: const Icon(Icons.add_rounded),
+                        ),
+                      ],
+                    ),
+                  ] else
+                    TextField(
+                      controller: _contentCtrl,
+                      focusNode: _contentFocusNode,
+                      maxLines: null,
+                      keyboardType: TextInputType.multiline,
+                      style: tt.bodyMedium?.copyWith(height: 1.5),
+                      decoration: InputDecoration(
+                        hintText: 'Start writing your note…\n\nSupports Markdown formatting:\n• # Heading\n• **Bold**, *Italic*, ~~Strikethrough~~\n• - Bullet list\n• ```code block```',
+                        hintStyle: TextStyle(color: cs.onSurfaceVariant.withOpacity(0.4)),
+                        border: InputBorder.none,
+                      ),
+                    ),
+
+                  const SizedBox(height: 24),
+                  const Divider(),
+                  const SizedBox(height: 8),
+
+                  // Tags Section
+                  Text('Tags', style: tt.labelMedium?.copyWith(fontWeight: FontWeight.bold, color: cs.onSurfaceVariant)),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      ..._tags.map((tag) => Chip(
+                            label: Text(tag, style: const TextStyle(fontSize: 12)),
+                            deleteIcon: const Icon(Icons.close_rounded, size: 14),
+                            onDeleted: () => setState(() { _tags.remove(tag); _dirty = true; }),
+                            padding: EdgeInsets.zero,
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          )),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _tagCtrl,
+                          decoration: const InputDecoration(
+                            hintText: 'Add tag (e.g. urgent, idea)…',
+                            border: InputBorder.none,
+                            prefixIcon: Icon(Icons.local_offer_outlined, size: 18),
+                            isDense: true,
+                          ),
+                          onSubmitted: (_) => _addTag(),
+                        ),
+                      ),
+                      IconButton(onPressed: _addTag, icon: const Icon(Icons.add_circle_outline_rounded)),
+                    ],
+                  ),
+                ],
               ),
             ),
-
-          const SizedBox(height: 16),
-          const Divider(),
-          const SizedBox(height: 8),
-
-          // Tags
-          Text('Tags', style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: [
-              ..._tags.map((tag) => Chip(
-                    label: Text(tag, style: const TextStyle(fontSize: 12)),
-                    deleteIcon: const Icon(Icons.close, size: 14),
-                    onDeleted: () => setState(() { _tags.remove(tag); _dirty = true; }),
-                    padding: EdgeInsets.zero,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  )),
-            ],
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _tagCtrl,
-                  decoration: const InputDecoration(
-                    hintText: 'Add tag…',
-                    border: InputBorder.none,
-                    prefixIcon: Icon(Icons.label_outline, size: 16),
-                    isDense: true,
-                  ),
-                  onSubmitted: (_) => _addTag(),
-                ),
-              ),
-              IconButton(onPressed: _addTag, icon: const Icon(Icons.add_circle_outline)),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

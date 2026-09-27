@@ -12,6 +12,7 @@ import '../../features/notes/data/models/note_model.dart';
 import '../../features/money_tracker/data/models/wallet_model.dart';
 import '../../features/money_tracker/data/models/expense_model.dart';
 import '../../features/posts/data/models/post_model.dart';
+import '../../features/posts/data/models/instant_model.dart';
 import '../../features/settings/data/models/ai_settings_model.dart';
 import '../../features/trash/data/models/trash_item_model.dart';
 import '../../core/logging/app_logger.dart';
@@ -33,6 +34,7 @@ final isarProvider = FutureProvider<Isar>((ref) async {
       WalletModelSchema,
       ExpenseModelSchema,
       PostModelSchema,
+      InstantModelSchema,
       AISettingsModelSchema,
       TrashItemModelSchema,
     ],

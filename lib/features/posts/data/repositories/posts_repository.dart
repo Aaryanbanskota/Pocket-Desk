@@ -1,5 +1,6 @@
 import 'package:isar/isar.dart';
 import '../../../../core/logging/app_logger.dart';
+import '../models/instant_model.dart';
 import '../models/post_model.dart';
 
 class PostsRepository {
@@ -43,5 +44,33 @@ class PostsRepository {
 
   Future<void> deletePost(int postId) async {
     await _isar.writeTxn(() => _isar.postModels.delete(postId));
+  }
+
+  Future<InstantModel> saveInstant(InstantModel instant) async {
+    final now = DateTime.now();
+    instant.createdAt = now;
+    instant.expiresAt = now.add(const Duration(hours: 24));
+    await _isar.writeTxn(() => _isar.instantModels.put(instant));
+    return instant;
+  }
+
+  Future<List<InstantModel>> getInstantsForUser(int userId) async {
+    try {
+      final now = DateTime.now();
+      return await _isar.instantModels
+          .where()
+          .userIdEqualTo(userId)
+          .filter()
+          .expiresAtGreaterThan(now)
+          .sortByCreatedAtDesc()
+          .findAll();
+    } catch (e, st) {
+      AppLogger.e('Failed to fetch instants', tag: 'PostsRepo', error: e, st: st);
+      return [];
+    }
+  }
+
+  Future<void> deleteInstant(int id) async {
+    await _isar.writeTxn(() => _isar.instantModels.delete(id));
   }
 }

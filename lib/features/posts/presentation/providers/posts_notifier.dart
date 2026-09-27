@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketdesk/core/database/isar_provider.dart';
 import 'package:pocketdesk/features/auth/presentation/providers/auth_notifier.dart';
 import 'package:pocketdesk/features/settings/presentation/providers/ai_settings_notifier.dart';
+import 'package:pocketdesk/features/posts/data/models/instant_model.dart';
 import 'package:pocketdesk/features/posts/data/models/post_model.dart';
 import 'package:pocketdesk/features/posts/data/repositories/posts_repository.dart';
 import 'package:pocketdesk/features/trash/data/models/trash_item_model.dart';
@@ -11,6 +12,55 @@ final postsRepositoryProvider = FutureProvider<PostsRepository>((ref) async {
   final isar = await ref.watch(isarProvider.future);
   return PostsRepository(isar: isar);
 });
+
+// ---------------------------------------------------------------------------
+// Instants Notifier & Provider
+// ---------------------------------------------------------------------------
+
+final instantsProvider = AutoDisposeAsyncNotifierProvider<InstantsNotifier, List<InstantModel>>(
+  InstantsNotifier.new,
+);
+
+class InstantsNotifier extends AutoDisposeAsyncNotifier<List<InstantModel>> {
+  @override
+  Future<List<InstantModel>> build() async {
+    final auth = ref.watch(authNotifierProvider).valueOrNull;
+    if (auth is! AuthAuthenticated) return [];
+    final repo = await ref.watch(postsRepositoryProvider.future);
+    return repo.getInstantsForUser(auth.user.id);
+  }
+
+  Future<void> createInstant({
+    required String imagePath,
+    String? textOverlay,
+    double textX = 0.5,
+    double textY = 0.5,
+  }) async {
+    final auth = ref.read(authNotifierProvider).valueOrNull;
+    if (auth is! AuthAuthenticated) return;
+    final repo = await ref.read(postsRepositoryProvider.future);
+
+    final instant = InstantModel()
+      ..userId = auth.user.id
+      ..imagePath = imagePath
+      ..textOverlay = textOverlay
+      ..textX = textX
+      ..textY = textY;
+
+    await repo.saveInstant(instant);
+    ref.invalidateSelf();
+  }
+
+  Future<void> deleteInstant(int id) async {
+    final repo = await ref.read(postsRepositoryProvider.future);
+    await repo.deleteInstant(id);
+    ref.invalidateSelf();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Posts Notifier & Provider
+// ---------------------------------------------------------------------------
 
 class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
   @override
@@ -113,6 +163,37 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
     final repo = await ref.read(postsRepositoryProvider.future);
     await repo.savePost(post);
     ref.invalidateSelf();
+
+    // Trigger AI response in thread if cap of 5 AI replies hasn't been reached
+    _triggerAIThreadReply(post);
+  }
+
+  Future<void> _triggerAIThreadReply(PostModel post) async {
+    final aiCount = post.commentAuthors.where((a) => a.contains('AI')).length;
+    if (aiCount >= 5) return; // Cap AI replies to 5 per post
+
+    final aiSettings = await ref.read(aiSettingsRepositoryProvider.future).then((r) => r.getOrCreateSettings(post.userId));
+    if (!aiSettings.isEnabled || !aiSettings.allowPostsAccess || !aiSettings.postReactionsEnabled || aiSettings.apiKey.trim().isEmpty) {
+      return;
+    }
+
+    final prompt = 'User commented in post thread: "${post.comments.last}". Context post: "${post.content}"';
+    const systemPrompt = 'You are Pocketdesk AI chatting warmly in the comments section of a user post. Keep responses short, friendly (1-2 sentences), and casual like a real friend on Instagram.';
+
+    final reply = await ref.read(aiSettingsProvider.notifier).generateCompletion(
+      prompt: prompt,
+      systemPrompt: systemPrompt,
+    );
+
+    if (reply != null && reply.isNotEmpty) {
+      final freshRepo = await ref.read(postsRepositoryProvider.future);
+      final currentPost = await freshRepo.getPostById(post.id) ?? post;
+      currentPost.comments.add(reply);
+      currentPost.commentAuthors.add('Pocketdesk AI 🤖');
+      currentPost.commentDates.add(DateTime.now());
+      await freshRepo.savePost(currentPost);
+      ref.invalidateSelf();
+    }
   }
 
   Future<void> deletePost(int postId) async {

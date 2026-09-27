@@ -187,6 +187,34 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                   child: Text(inst.textOverlay!, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                                 ),
                               ),
+                            Positioned(
+                              top: 16,
+                              right: 16,
+                              child: Container(
+                                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                child: IconButton(
+                                  icon: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
+                                  tooltip: 'Delete Instant',
+                                  onPressed: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (dialogCtx) => AlertDialog(
+                                        title: const Text('Delete Instant?'),
+                                        content: const Text('Are you sure you want to permanently delete this Instant?'),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('Cancel')),
+                                          TextButton(onPressed: () => Navigator.pop(dialogCtx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm == true) {
+                                      await ref.read(instantsProvider.notifier).deleteInstant(inst.id);
+                                      if (ctx.mounted) Navigator.pop(ctx);
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
                           ],
                         );
                       },

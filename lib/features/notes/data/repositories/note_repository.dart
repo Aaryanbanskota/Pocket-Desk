@@ -7,6 +7,14 @@ class NoteRepository {
   NoteRepository({required Isar isar}) : _isar = isar;
   final Isar _isar;
 
+  Future<NoteModel?> getNoteById(int noteId) async {
+    try {
+      return await _isar.noteModels.get(noteId);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<List<NoteModel>> getNotesForUser(int userId, {String? folder}) async {
     try {
       final all = await _isar.noteModels.where().userIdEqualTo(userId).findAll();

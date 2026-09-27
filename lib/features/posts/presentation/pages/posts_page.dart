@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketdesk/core/theme/app_spacing.dart';
+import 'package:pocketdesk/features/auth/presentation/providers/auth_notifier.dart';
 import 'package:pocketdesk/features/dashboard/presentation/widgets/app_hamburger_drawer.dart';
+import 'package:pocketdesk/features/posts/data/models/instant_model.dart';
 import 'package:pocketdesk/features/posts/data/models/post_model.dart';
 import 'package:pocketdesk/features/posts/presentation/providers/posts_notifier.dart';
 
@@ -48,6 +51,368 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Profile Editor Modal
+  // ---------------------------------------------------------------------------
+
+  void _showEditProfileModal() {
+    final auth = ref.read(authNotifierProvider).valueOrNull;
+    if (auth is! AuthAuthenticated) return;
+
+    final nameCtrl = TextEditingController(text: auth.user.displayName ?? auth.user.username);
+    String? currentAvatar = auth.user.avatarBase64;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Edit Profile', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () async {
+                  final result = await FilePicker.platform.pickFiles(type: FileType.image);
+                  if (result != null && result.files.single.path != null) {
+                    final bytes = await File(result.files.single.path!).readAsBytes();
+                    final b64 = base64Encode(bytes);
+                    setModalState(() => currentAvatar = b64);
+                  }
+                },
+                child: Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                      backgroundImage: currentAvatar != null ? MemoryImage(base64Decode(currentAvatar!)) : null,
+                      child: currentAvatar == null ? Icon(Icons.person_rounded, size: 40, color: Theme.of(context).colorScheme.primary) : null,
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, shape: BoxShape.circle),
+                      child: const Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Display Name', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: () async {
+                  await ref.read(authNotifierProvider.notifier).updateProfile(
+                    displayName: nameCtrl.text.trim(),
+                    avatarBase64: currentAvatar,
+                  );
+                  if (context.mounted) Navigator.pop(ctx);
+                },
+                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                child: const Text('Save Profile'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Instagram-style Instants Feature
+  // ---------------------------------------------------------------------------
+
+  void _openInstantsDashboard(List<InstantModel> instants) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.black,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => FractionallySizedBox(
+        heightFactor: 0.9,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const Text('My Instants', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.add_a_photo_rounded, color: Colors.white),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _openCreateInstantCamera();
+                    },
+                  ),
+                  IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+            ),
+            Expanded(
+              child: instants.isEmpty
+                  ? const Center(child: Text('No Instants yet. Tap camera to create!', style: TextStyle(color: Colors.white70)))
+                  : PageView.builder(
+                      itemCount: instants.length,
+                      itemBuilder: (context, i) {
+                        final inst = instants[i];
+                        final hasFile = inst.imagePath.isNotEmpty && File(inst.imagePath).existsSync();
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: hasFile
+                                  ? Image.file(File(inst.imagePath), fit: BoxFit.cover)
+                                  : Container(
+                                      color: const Color(0xFF1E293B),
+                                      child: const Center(
+                                        child: Icon(Icons.broken_image_rounded, color: Colors.white54, size: 48),
+                                      ),
+                                    ),
+                            ),
+                            if (inst.textOverlay != null && inst.textOverlay!.isNotEmpty)
+                              Positioned(
+                                left: inst.textX * MediaQuery.of(context).size.width * 0.8,
+                                top: inst.textY * MediaQuery.of(context).size.height * 0.6,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(12)),
+                                  child: Text(inst.textOverlay!, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            Positioned(
+                              top: 16,
+                              right: 16,
+                              child: Container(
+                                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                child: IconButton(
+                                  icon: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
+                                  tooltip: 'Delete Instant',
+                                  onPressed: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (dialogCtx) => AlertDialog(
+                                        title: const Text('Delete Instant?'),
+                                        content: const Text('Are you sure you want to permanently delete this Instant?'),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('Cancel')),
+                                          TextButton(onPressed: () => Navigator.pop(dialogCtx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm == true) {
+                                      await ref.read(instantsProvider.notifier).deleteInstant(inst.id);
+                                      if (ctx.mounted) Navigator.pop(ctx);
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openCreateInstantCamera({String? initialPath}) {
+    final textCtrl = TextEditingController();
+    Offset textOffset = const Offset(80, 250);
+    String imagePath = initialPath ?? '';
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.black,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setCameraState) => Container(
+          height: MediaQuery.of(context).size.height * 0.96,
+          color: Colors.black,
+          child: Column(
+            children: [
+              // Top Header Bar matching screenshot
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Colors.white, size: 26),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                    const Text(
+                      'New Instant',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.photo_library_rounded, color: Colors.white, size: 24),
+                      tooltip: 'Choose from gallery',
+                      onPressed: () async {
+                        final pickerResult = await FilePicker.platform.pickFiles(type: FileType.image);
+                        if (pickerResult != null && pickerResult.files.single.path != null) {
+                          setCameraState(() {
+                            imagePath = pickerResult.files.single.path!;
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              // Squircle Camera Viewport matching uploaded image
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(44),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (imagePath.isNotEmpty && File(imagePath).existsSync())
+                          Image.file(File(imagePath), fit: BoxFit.cover)
+                        else
+                          Container(
+                            color: const Color(0xFF1E293B),
+                            child: const Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.camera_alt_rounded, color: Colors.white70, size: 54),
+                                  SizedBox(height: 12),
+                                  Text(
+                                    'Camera Viewport\nTap shutter below or icon above for gallery',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: Colors.white60, fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        Positioned(
+                          left: textOffset.dx,
+                          top: textOffset.dy,
+                          child: GestureDetector(
+                            onPanUpdate: (details) {
+                              setCameraState(() {
+                                textOffset += details.delta;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                textCtrl.text.isEmpty ? 'Tap top bar to type overlay text' : textCtrl.text,
+                                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 16,
+                          left: 16,
+                          right: 16,
+                          child: TextField(
+                            controller: textCtrl,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            decoration: InputDecoration(
+                              hintText: 'Type overlay text…',
+                              hintStyle: const TextStyle(color: Colors.white70),
+                              filled: true,
+                              fillColor: Colors.black54,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            ),
+                            onChanged: (_) => setCameraState(() {}),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Bottom Camera Capture Shutter Controls matching uploaded screenshot
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // Flash / Off toggle
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: const BoxDecoration(color: Color(0xFF1E293B), shape: BoxShape.circle),
+                      child: const Icon(Icons.flash_off_rounded, color: Colors.white, size: 22),
+                    ),
+
+                    // Big White Camera Shutter Button (Captures / Posts Instant)
+                    GestureDetector(
+                      onTap: () async {
+                        final normX = (textOffset.dx / MediaQuery.of(context).size.width).clamp(0.0, 1.0);
+                        final normY = (textOffset.dy / MediaQuery.of(context).size.height).clamp(0.0, 1.0);
+
+                        await ref.read(instantsProvider.notifier).createInstant(
+                          imagePath: imagePath,
+                          textOverlay: textCtrl.text.trim().isEmpty ? null : textCtrl.text.trim(),
+                          textX: normX,
+                          textY: normY,
+                        );
+
+                        if (context.mounted) Navigator.pop(ctx);
+                      },
+                      child: Container(
+                        width: 76,
+                        height: 76,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 5),
+                        ),
+                        child: Center(
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Camera Flip icon
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: const BoxDecoration(color: Color(0xFF1E293B), shape: BoxShape.circle),
+                      child: const Icon(Icons.flip_camera_ios_rounded, color: Colors.white, size: 22),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Instagram-style Post Form Sheet
+  // ---------------------------------------------------------------------------
+
   void _showCreatePostModal() {
     _contentCtrl.clear();
     _titleCtrl.clear();
@@ -57,16 +422,9 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.lg,
-          AppSpacing.lg,
-          MediaQuery.of(ctx).viewInsets.bottom + AppSpacing.lg,
-        ),
+        padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, MediaQuery.of(ctx).viewInsets.bottom + AppSpacing.lg),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -75,7 +433,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Create Personal Post', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  Text('New Post', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
                 ],
               ),
@@ -89,19 +447,15 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                 controller: _contentCtrl,
                 maxLines: 4,
                 decoration: const InputDecoration(
-                  labelText: 'What is on your mind?',
-                  hintText: 'Share a moment, goal, or daily thought…',
+                  labelText: 'Write a caption…',
+                  hintText: 'Share a moment, thoughts, or story…',
                   border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: _tagsCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Tags (comma separated)',
-                  hintText: 'e.g. study, win, daily',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(labelText: 'Tags (comma separated)', hintText: 'e.g. daily, win, fun', border: OutlineInputBorder()),
               ),
               const SizedBox(height: AppSpacing.md),
               OutlinedButton.icon(
@@ -110,14 +464,12 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                   (ctx as Element).markNeedsBuild();
                 },
                 icon: const Icon(Icons.perm_media_rounded),
-                label: Text(_selectedImagePaths.isEmpty
-                    ? 'Attach Images / Videos'
-                    : '${_selectedImagePaths.length} Media Attached'),
+                label: Text(_selectedImagePaths.isEmpty ? 'Attach Photos / Videos / GIFs' : '${_selectedImagePaths.length} Media Selected'),
               ),
               if (_selectedImagePaths.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: 60,
+                  height: 70,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: _selectedImagePaths.length,
@@ -127,12 +479,12 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                         borderRadius: BorderRadius.circular(8),
                         child: Image.file(
                           File(_selectedImagePaths[i]),
-                          width: 60,
-                          height: 60,
+                          width: 70,
+                          height: 70,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => Container(
-                            width: 60,
-                            height: 60,
+                            width: 70,
+                            height: 70,
                             color: Colors.grey.shade300,
                             child: const Icon(Icons.movie_rounded, size: 24),
                           ),
@@ -142,29 +494,12 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                   ),
                 ),
               ],
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                children: [
-                  Icon(Icons.lock_outline_rounded, size: 16, color: Theme.of(ctx).colorScheme.primary),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      '🔒 Private — AI reads your post text only; attached media is never sent to AI.',
-                      style: TextStyle(fontSize: 12, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: AppSpacing.lg),
               FilledButton(
                 onPressed: () {
                   final text = _contentCtrl.text.trim();
                   if (text.isEmpty && _selectedImagePaths.isEmpty) return;
-                  final tags = _tagsCtrl.text
-                      .split(',')
-                      .map((t) => t.trim())
-                      .where((t) => t.isNotEmpty)
-                      .toList();
+                  final tags = _tagsCtrl.text.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
 
                   ref.read(postsNotifierProvider.notifier).createPost(
                     content: text,
@@ -175,7 +510,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
 
                   Navigator.pop(ctx);
                 },
-                child: const Text('Post to Personal Feed'),
+                child: const Text('Share Post'),
               ),
             ],
           ),
@@ -184,28 +519,160 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     );
   }
 
-  void _showCommentDialog(PostModel post) {
+  // ---------------------------------------------------------------------------
+  // Instagram-style Comment Bottom Sheet with AI thread replies (capped at 5)
+  // ---------------------------------------------------------------------------
+
+  void _showInstagramCommentsSheet(PostModel post) {
     _commentCtrl.clear();
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Consumer(
+        builder: (context, ref, child) {
+          final cs = Theme.of(context).colorScheme;
+          final postsState = ref.watch(postsNotifierProvider).valueOrNull ?? [];
+          final currentPost = postsState.firstWhere((p) => p.id == post.id, orElse: () => post);
+
+          return Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
+                  Text('Comments', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  const Divider(height: 24),
+                  Expanded(
+                    child: currentPost.comments.isEmpty
+                        ? Center(child: Text('No comments yet. Be the first to comment!', style: TextStyle(color: cs.onSurfaceVariant)))
+                        : ListView.builder(
+                            itemCount: currentPost.comments.length,
+                            itemBuilder: (context, i) {
+                              final author = currentPost.commentAuthors[i];
+                              final comment = currentPost.comments[i];
+                              final isAI = author.contains('AI');
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor: isAI ? cs.primaryContainer : cs.surfaceContainerHighest,
+                                      child: isAI
+                                          ? const Icon(Icons.smart_toy_rounded, size: 16, color: Colors.blue)
+                                          : const Icon(Icons.person_rounded, size: 16),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(author, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isAI ? cs.primary : cs.onSurface)),
+                                          const SizedBox(height: 2),
+                                          Text(comment, style: TextStyle(fontSize: 14, color: cs.onSurface)),
+                                          const SizedBox(height: 4),
+                                          GestureDetector(
+                                            onTap: () {
+                                              _commentCtrl.text = '@$author ';
+                                              _commentCtrl.selection = TextSelection.fromPosition(
+                                                TextPosition(offset: _commentCtrl.text.length),
+                                              );
+                                            },
+                                            child: Text(
+                                              'Reply',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: cs.onSurfaceVariant,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                  const Divider(height: 1),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _commentCtrl,
+                          decoration: const InputDecoration(
+                            hintText: 'Add a comment…',
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                          textInputAction: TextInputAction.send,
+                          onSubmitted: (val) async {
+                            final text = val.trim();
+                            if (text.isNotEmpty) {
+                              await ref.read(postsNotifierProvider.notifier).addComment(currentPost, text);
+                              _commentCtrl.clear();
+                            }
+                          },
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          final text = _commentCtrl.text.trim();
+                          if (text.isNotEmpty) {
+                            await ref.read(postsNotifierProvider.notifier).addComment(currentPost, text);
+                            _commentCtrl.clear();
+                          }
+                        },
+                        child: const Text('Post', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // Full-screen Zoomable Image Viewer
+  void _openFullImageViewer(List<String> imagePaths, int initialIndex) {
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add Comment / Reply'),
-        content: TextField(
-          controller: _commentCtrl,
-          decoration: const InputDecoration(hintText: 'Write a reply…', border: OutlineInputBorder()),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            PageView.builder(
+              controller: PageController(initialPage: initialIndex),
+              itemCount: imagePaths.length,
+              itemBuilder: (context, index) => InteractiveViewer(
+                minScale: 0.8,
+                maxScale: 4.0,
+                child: Image.file(File(imagePaths[index]), fit: BoxFit.contain),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () {
-              if (_commentCtrl.text.trim().isNotEmpty) {
-                ref.read(postsNotifierProvider.notifier).addComment(post, _commentCtrl.text.trim());
-              }
-              Navigator.pop(ctx);
-            },
-            child: const Text('Reply'),
-          ),
-        ],
       ),
     );
   }
@@ -214,257 +681,227 @@ class _PostsPageState extends ConsumerState<PostsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final auth = ref.watch(authNotifierProvider).valueOrNull;
+    final currentUser = auth is AuthAuthenticated ? auth.user : null;
+
     final postsAsync = ref.watch(postsNotifierProvider);
+    final instantsAsync = ref.watch(instantsProvider);
 
     return Scaffold(
       drawer: const AppHamburgerDrawer(),
       appBar: AppBar(
-        title: const Text('Personal Feed'),
+        title: const Text('Personal Feed', style: TextStyle(fontWeight: FontWeight.bold)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_note_rounded),
+            onPressed: _showEditProfileModal,
+            tooltip: 'Edit Profile',
+          ),
+        ],
       ),
-      body: postsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (posts) {
-          if (posts.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.dynamic_feed_rounded, size: 64, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
-                  const SizedBox(height: 16),
-                  Text('Your personal feed is empty.', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Text('Capture daily thoughts, wins, or moments offline!', style: TextStyle(color: cs.onSurfaceVariant)),
-                  const SizedBox(height: 16),
-                  FilledButton.icon(
-                    onPressed: _showCreatePostModal,
-                    icon: const Icon(Icons.add_rounded),
-                    label: const Text('Create First Post'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            itemCount: posts.length,
-            itemBuilder: (context, index) {
-              final post = posts[index];
-              return Card(
-                elevation: 0,
-                margin: const EdgeInsets.only(bottom: AppSpacing.lg),
-                color: cs.surfaceContainerLow,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(
-                    color: post.isPinned ? cs.primary : cs.outlineVariant.withValues(alpha: 0.4),
-                    width: post.isPinned ? 2 : 1,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header User Row
-                      Row(
+      body: CustomScrollView(
+        slivers: [
+          // Instants Header Row
+          SliverToBoxAdapter(
+            child: Container(
+              height: 100,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: instantsAsync.when(
+                data: (instants) => ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    // Create Instant Box
+                    GestureDetector(
+                      onTap: _openCreateInstantCamera,
+                      child: Column(
                         children: [
-                          CircleAvatar(
-                            backgroundColor: cs.primaryContainer,
-                            child: Icon(Icons.person_rounded, color: cs.primary),
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: cs.primary, width: 2),
+                              color: cs.primaryContainer,
+                            ),
+                            child: Icon(Icons.add_a_photo_rounded, color: cs.primary),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text('My Day', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-                                    if (post.isPinned) ...[
-                                      const SizedBox(width: 6),
-                                      Icon(Icons.push_pin, size: 14, color: cs.primary),
-                                    ],
-                                  ],
+                          const SizedBox(height: 4),
+                          const Text('Instant', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+
+                    if (instants.isNotEmpty)
+                      Builder(builder: (context) {
+                        final firstPath = instants.first.imagePath;
+                        final hasRingFile = firstPath.isNotEmpty && File(firstPath).existsSync();
+                        return GestureDetector(
+                          onTap: () => _openInstantsDashboard(instants),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.pink, width: 2.5),
+                                  color: cs.primaryContainer,
+                                  image: hasRingFile
+                                      ? DecorationImage(image: FileImage(File(firstPath)), fit: BoxFit.cover)
+                                      : null,
                                 ),
-                                Text(
-                                  '${post.createdAt.day}/${post.createdAt.month}/${post.createdAt.year} • ${post.createdAt.hour}:${post.createdAt.minute.toString().padLeft(2, '0')}',
-                                  style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant, fontSize: 11),
-                                ),
+                                child: hasRingFile ? null : Icon(Icons.star_rounded, color: cs.primary),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text('Your Instants', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        );
+                      }),
+                  ],
+                ),
+                loading: () => const SizedBox(),
+                error: (_, __) => const SizedBox(),
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(child: Divider(height: 1)),
+
+          // Feed Posts
+          postsAsync.when(
+            loading: () => const SliverFillRemaining(child: Center(child: CircularProgressIndicator())),
+            error: (e, _) => SliverFillRemaining(child: Center(child: Text('Error: $e'))),
+            data: (posts) {
+              if (posts.isEmpty) {
+                return SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.dynamic_feed_rounded, size: 64, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+                        const SizedBox(height: 16),
+                        Text('Your feed is empty.', style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 16),
+                        FilledButton.icon(
+                          onPressed: _showCreatePostModal,
+                          icon: const Icon(Icons.add_rounded),
+                          label: const Text('Create First Post'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              return SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final post = posts[index];
+                    final avatarB64 = currentUser?.avatarBase64;
+                    final displayName = currentUser?.displayName ?? currentUser?.username ?? 'Me';
+
+                    return Card(
+                      elevation: 0,
+                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      color: cs.surfaceContainerLow,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header User Row
+                          ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: cs.primaryContainer,
+                              backgroundImage: avatarB64 != null ? MemoryImage(base64Decode(avatarB64)) : null,
+                              child: avatarB64 == null ? Icon(Icons.person_rounded, color: cs.primary) : null,
+                            ),
+                            title: Text(displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text('${post.createdAt.day}/${post.createdAt.month}/${post.createdAt.year}'),
+                            trailing: PopupMenuButton<String>(
+                              onSelected: (val) {
+                                final notifier = ref.read(postsNotifierProvider.notifier);
+                                if (val == 'pin') notifier.togglePin(post);
+                                if (val == 'delete') notifier.deletePost(post.id);
+                              },
+                              itemBuilder: (ctx) => [
+                                PopupMenuItem(value: 'pin', child: Text(post.isPinned ? 'Unpin' : 'Pin')),
+                                const PopupMenuItem(value: 'delete', child: Text('Delete')),
                               ],
                             ),
                           ),
-                          PopupMenuButton<String>(
-                            onSelected: (val) {
-                              final notifier = ref.read(postsNotifierProvider.notifier);
-                              if (val == 'pin') notifier.togglePin(post);
-                              if (val == 'delete') notifier.deletePost(post.id);
-                            },
-                            itemBuilder: (ctx) => [
-                              PopupMenuItem(
-                                value: 'pin',
-                                child: Text(post.isPinned ? 'Unpin Post' : 'Pin Post'),
+
+                          if (post.title != null && post.title!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(post.title!, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                            ),
+
+                          if (post.content.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(post.content, style: theme.textTheme.bodyMedium),
+                            ),
+
+                          // Carousel Media Gallery with Tap to Zoom
+                          if (post.imagePaths.isNotEmpty)
+                            SizedBox(
+                              height: 280,
+                              child: PageView.builder(
+                                itemCount: post.imagePaths.length,
+                                itemBuilder: (context, i) {
+                                  final path = post.imagePaths[i];
+                                  return GestureDetector(
+                                    onTap: () => _openFullImageViewer(post.imagePaths, i),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.file(File(path), fit: BoxFit.cover),
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                              const PopupMenuItem(
-                                value: 'delete',
-                                child: Text('Delete Post'),
+                            ),
+
+                          // Interaction Bar (Instagram style like, comment, bookmark)
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(post.isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: post.isLiked ? Colors.red : cs.onSurfaceVariant),
+                                onPressed: () => ref.read(postsNotifierProvider.notifier).toggleLike(post),
+                              ),
+                              Text('${post.likesCount}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              const SizedBox(width: 16),
+                              IconButton(
+                                icon: const Icon(Icons.chat_bubble_outline_rounded),
+                                onPressed: () => _showInstagramCommentsSheet(post),
+                              ),
+                              Text('${post.comments.length}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              const Spacer(),
+                              IconButton(
+                                icon: Icon(post.isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded, color: post.isSaved ? cs.primary : cs.onSurfaceVariant),
+                                onPressed: () => ref.read(postsNotifierProvider.notifier).toggleSave(post),
                               ),
                             ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-
-                      if (post.title != null && post.title!.isNotEmpty) ...[
-                        Text(post.title!, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                      ],
-
-                      Text(post.content, style: theme.textTheme.bodyMedium?.copyWith(height: 1.4)),
-
-                      if (post.imagePaths.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: SizedBox(
-                            height: 160,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: post.imagePaths.length,
-                              itemBuilder: (context, i) {
-                                final path = post.imagePaths[i];
-                                final isVideo = path.endsWith('.mp4') || path.endsWith('.mov') || path.endsWith('.avi');
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      Image.file(
-                                        File(path),
-                                        width: 220,
-                                        height: 160,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => Container(
-                                          width: 180,
-                                          height: 160,
-                                          color: cs.surfaceContainerHighest,
-                                          child: Icon(isVideo ? Icons.movie_rounded : Icons.image_rounded, size: 40, color: cs.primary),
-                                        ),
-                                      ),
-                                      if (isVideo)
-                                        Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black.withValues(alpha: 0.5),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 32),
-                                        ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-
-                      if (post.tags.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 6,
-                          children: post.tags.map((t) => Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: cs.primary.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text('#$t', style: TextStyle(fontSize: 11, color: cs.primary, fontWeight: FontWeight.bold)),
-                              )).toList(),
-                        ),
-                      ],
-
-                      const SizedBox(height: 12),
-                      const Divider(height: 16),
-
-                      // Social Interaction Bar (Like, Comment, Save)
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              post.isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                              color: post.isLiked ? Colors.red : cs.onSurfaceVariant,
-                            ),
-                            onPressed: () => ref.read(postsNotifierProvider.notifier).toggleLike(post),
-                          ),
-                          Text('${post.likesCount}', style: TextStyle(fontWeight: FontWeight.bold, color: cs.onSurfaceVariant)),
-                          const SizedBox(width: 16),
-                          IconButton(
-                            icon: Icon(Icons.chat_bubble_outline_rounded, color: cs.onSurfaceVariant),
-                            onPressed: () => _showCommentDialog(post),
-                          ),
-                          Text('${post.comments.length}', style: TextStyle(fontWeight: FontWeight.bold, color: cs.onSurfaceVariant)),
-                          const Spacer(),
-                          IconButton(
-                            icon: Icon(
-                              post.isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                              color: post.isSaved ? cs.primary : cs.onSurfaceVariant,
-                            ),
-                            onPressed: () => ref.read(postsNotifierProvider.notifier).toggleSave(post),
-                          ),
-                        ],
-                      ),
-
-                      // Comments / AI Reactions Section
-                      if (post.comments.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: List.generate(post.comments.length, (i) {
-                              final isAI = post.commentAuthors[i].contains('AI');
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: RichText(
-                                  text: TextSpan(
-                                    style: theme.textTheme.bodySmall?.copyWith(height: 1.3),
-                                    children: [
-                                      TextSpan(
-                                        text: '${post.commentAuthors[i]}: ',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: isAI ? cs.primary : cs.onSurface,
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: post.comments[i],
-                                        style: TextStyle(color: cs.onSurface),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                    );
+                  },
+                  childCount: posts.length,
                 ),
               );
             },
-          );
-        },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showCreatePostModal,
-        child: const Icon(Icons.add_comment_rounded),
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }

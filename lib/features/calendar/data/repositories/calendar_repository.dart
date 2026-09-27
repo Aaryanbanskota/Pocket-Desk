@@ -67,6 +67,15 @@ class CalendarRepository {
     }
   }
 
+  Future<CalendarEventModel?> getEventById(int eventId) async {
+    try {
+      return await _isar.calendarEventModels.get(eventId);
+    } catch (e, st) {
+      AppLogger.e('Failed to get event by ID', tag: 'CalendarRepository', error: e, st: st);
+      return null;
+    }
+  }
+
   // --------------------------------------------------------------------------
   // Fetch Events
   // --------------------------------------------------------------------------

@@ -19,6 +19,7 @@ import '../../features/chat/presentation/pages/chat_page.dart';
 import '../../features/money_tracker/presentation/pages/money_tracker_page.dart';
 import '../../features/clock/presentation/pages/clock_page.dart';
 import '../../features/settings/presentation/pages/about_app_page.dart';
+import '../../features/trash/presentation/pages/trash_page.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -147,6 +148,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.aboutApp,
         builder: (context, state) => const AboutAppPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.trash,
+        builder: (context, state) => const TrashPage(),
       ),
       GoRoute(
         path: AppRoutes.notFound,

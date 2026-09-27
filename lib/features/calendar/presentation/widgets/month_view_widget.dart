@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/date_time_utils.dart';
+import '../../../../core/utils/nepali_date.dart';
 import '../../data/models/calendar_event_model.dart';
 
 class MonthViewWidget extends StatelessWidget {
@@ -10,44 +11,60 @@ class MonthViewWidget extends StatelessWidget {
     required this.events,
     required this.onDayTap,
     required this.onEventTap,
+    this.isBsCalendar = true,
   });
 
   final DateTime focusedDay;
   final List<CalendarEventModel> events;
   final ValueChanged<DateTime> onDayTap;
   final ValueChanged<CalendarEventModel> onEventTap;
+  final bool isBsCalendar;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final firstDayOfMonth = DateTime(focusedDay.year, focusedDay.month, 1);
-    final lastDayOfMonth = DateTime(focusedDay.year, focusedDay.month + 1, 0);
+    final List<DateTime> gridDays = [];
 
-    // Calculate padding days for the start of the week
-    final int leadingEmptyDays = firstDayOfMonth.weekday - 1; // 0 = Mon
-    final List<DateTime?> gridDays = [];
+    if (isBsCalendar) {
+      final nepaliFocused = NepaliDate.fromDateTime(focusedDay);
+      final firstDayOfBsMonth = NepaliDate(year: nepaliFocused.year, month: nepaliFocused.month, day: 1);
+      final daysInBsMonth = NepaliDate.getDaysInBsMonth(nepaliFocused.year, nepaliFocused.month);
 
-    // Prior month overflow days
-    final prevMonthLastDay = DateTime(focusedDay.year, focusedDay.month, 0);
-    for (int i = leadingEmptyDays - 1; i >= 0; i--) {
-      gridDays.add(prevMonthLastDay.subtract(Duration(days: i)));
+      final firstDayWeekday = firstDayOfBsMonth.weekday; // 1 = Mon, 7 = Sun
+      final int leadingEmptyDays = firstDayWeekday % 7;
+      final firstDayAd = firstDayOfBsMonth.toDateTime();
+
+      for (int i = leadingEmptyDays; i > 0; i--) {
+        gridDays.add(firstDayAd.subtract(Duration(days: i)));
+      }
+      for (int i = 0; i < daysInBsMonth; i++) {
+        gridDays.add(firstDayAd.add(Duration(days: i)));
+      }
+    } else {
+      final firstDayOfMonth = DateTime(focusedDay.year, focusedDay.month, 1);
+      final lastDayOfMonth = DateTime(focusedDay.year, focusedDay.month + 1, 0);
+
+      final int leadingEmptyDays = firstDayOfMonth.weekday % 7; // 0 = Sun
+      final prevMonthLastDay = DateTime(focusedDay.year, focusedDay.month, 0);
+
+      for (int i = leadingEmptyDays - 1; i >= 0; i--) {
+        gridDays.add(prevMonthLastDay.subtract(Duration(days: i)));
+      }
+      for (int i = 1; i <= lastDayOfMonth.day; i++) {
+        gridDays.add(DateTime(focusedDay.year, focusedDay.month, i));
+      }
     }
 
-    // Current month days
-    for (int i = 1; i <= lastDayOfMonth.day; i++) {
-      gridDays.add(DateTime(focusedDay.year, focusedDay.month, i));
-    }
-
-    // Future month overflow days to pad the grid to complete weeks
     final totalGridCells = ((gridDays.length / 7).ceil()) * 7;
     final remainingCells = totalGridCells - gridDays.length;
+    final lastDayAd = gridDays.last;
     for (int i = 1; i <= remainingCells; i++) {
-      gridDays.add(DateTime(focusedDay.year, focusedDay.month + 1, i));
+      gridDays.add(lastDayAd.add(Duration(days: i)));
     }
 
-    final weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return Column(
       children: [
@@ -88,9 +105,12 @@ class MonthViewWidget extends StatelessWidget {
                 itemCount: totalGridCells,
                 itemBuilder: (context, idx) {
                   final date = gridDays[idx];
-                  if (date == null) return const SizedBox.shrink();
 
-                  final isCurrentMonth = date.month == focusedDay.month;
+                  final isCurrentMonth = isBsCalendar
+                      ? (NepaliDate.fromDateTime(date).month == NepaliDate.fromDateTime(focusedDay).month &&
+                          NepaliDate.fromDateTime(date).year == NepaliDate.fromDateTime(focusedDay).year)
+                      : (date.month == focusedDay.month && date.year == focusedDay.year);
+                  final dayText = isBsCalendar ? NepaliDate.fromDateTime(date).day.toString() : date.day.toString();
                   final isToday = DateTimeUtils.isToday(date);
                   final isFocused = DateTimeUtils.isSameDay(date, focusedDay);
                   final dayEvents = events.where((e) => DateTimeUtils.isSameDay(e.startTime, date)).toList();
@@ -123,7 +143,7 @@ class MonthViewWidget extends StatelessWidget {
                                 shape: BoxShape.circle,
                               ),
                               child: Text(
-                                date.day.toString(),
+                                dayText,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: isToday

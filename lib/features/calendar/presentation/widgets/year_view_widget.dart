@@ -1,27 +1,33 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/date_time_utils.dart';
+import '../../../../core/utils/nepali_date.dart';
 
 class YearViewWidget extends StatelessWidget {
   const YearViewWidget({
     super.key,
     required this.focusedDay,
     required this.onMonthDayTap,
+    this.isBsCalendar = true,
   });
 
   final DateTime focusedDay;
   final ValueChanged<DateTime> onMonthDayTap;
+  final bool isBsCalendar;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final int currentYear = focusedDay.year;
 
-    final monthNames = [
+    final adMonthNames = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
+
+    final nepaliFocused = NepaliDate.fromDateTime(focusedDay);
+    final int currentBsYear = nepaliFocused.year;
+    final int currentAdYear = focusedDay.year;
 
     return GridView.builder(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -33,9 +39,22 @@ class YearViewWidget extends StatelessWidget {
       ),
       itemCount: 12,
       itemBuilder: (context, monthIdx) {
-        final monthFirstDay = DateTime(currentYear, monthIdx + 1, 1);
-        final monthDaysCount = DateTime(currentYear, monthIdx + 2, 0).day;
-        final startOffset = monthFirstDay.weekday - 1; // 0 = Monday
+        final monthNumber = monthIdx + 1;
+        late final String monthHeader;
+        late final int monthDaysCount;
+        late final int startOffset;
+
+        if (isBsCalendar) {
+          final monthFirstBs = NepaliDate(year: currentBsYear, month: monthNumber, day: 1);
+          monthDaysCount = NepaliDate.getDaysInBsMonth(currentBsYear, monthNumber);
+          startOffset = monthFirstBs.weekday % 7;
+          monthHeader = '${NepaliDate.monthNamesEn[monthIdx]} $currentBsYear';
+        } else {
+          final monthFirstAd = DateTime(currentAdYear, monthNumber, 1);
+          monthDaysCount = DateTime(currentAdYear, monthNumber + 1, 0).day;
+          startOffset = monthFirstAd.weekday % 7;
+          monthHeader = '${adMonthNames[monthIdx]} $currentAdYear';
+        }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,7 +62,7 @@ class YearViewWidget extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(left: 4, bottom: 4),
               child: Text(
-                monthNames[monthIdx],
+                monthHeader,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.primary,
@@ -60,14 +79,16 @@ class YearViewWidget extends StatelessWidget {
                   mainAxisSpacing: 2,
                   crossAxisSpacing: 2,
                 ),
-                itemCount: 42, // 6 weeks * 7 days placeholder cells
+                itemCount: 42,
                 itemBuilder: (context, dayIdx) {
                   final int dayNumber = dayIdx - startOffset + 1;
                   final isValidDay = dayNumber > 0 && dayNumber <= monthDaysCount;
 
                   if (!isValidDay) return const SizedBox.shrink();
 
-                  final cellDate = DateTime(currentYear, monthIdx + 1, dayNumber);
+                  final cellDate = isBsCalendar
+                      ? NepaliDate(year: currentBsYear, month: monthNumber, day: dayNumber).toDateTime()
+                      : DateTime(currentAdYear, monthNumber, dayNumber);
                   final isToday = DateTimeUtils.isToday(cellDate);
 
                   return GestureDetector(

@@ -37,6 +37,7 @@ abstract final class AppRoutes {
   static const String moneyTracker = '/money';
   static const String clock = '/clock';
   static const String aboutApp = '/about';
+  static const String trash = '/trash';
 
   // Error
   static const String notFound = '/404';

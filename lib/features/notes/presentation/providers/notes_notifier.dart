@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/isar_provider.dart';
 import '../../../../core/error/app_failure.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
+import '../../../trash/data/models/trash_item_model.dart';
+import '../../../trash/presentation/providers/trash_notifier.dart';
 import '../../data/models/note_model.dart';
 import '../../data/repositories/note_repository.dart';
 
@@ -140,6 +142,15 @@ class NotesNotifier extends AutoDisposeAsyncNotifier<NotesState> {
 
   Future<void> deleteNote(int noteId) async {
     final repo = await ref.read(noteRepositoryProvider.future);
+    final note = await repo.getNoteById(noteId);
+    if (note != null) {
+      await ref.read(trashNotifierProvider.notifier).moveToTrash(
+        itemType: TrashItemType.note,
+        originalId: note.id,
+        title: note.title,
+        snippet: note.content.length > 100 ? '${note.content.substring(0, 100)}...' : note.content,
+      );
+    }
     await repo.deleteNote(noteId);
     ref.invalidateSelf();
   }

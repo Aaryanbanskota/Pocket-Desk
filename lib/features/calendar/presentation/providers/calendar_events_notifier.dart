@@ -6,6 +6,8 @@ import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../data/models/calendar_event_model.dart';
 import '../../data/repositories/calendar_repository.dart';
+import '../../../trash/data/models/trash_item_model.dart';
+import '../../../trash/presentation/providers/trash_notifier.dart';
 
 
 // ---------------------------------------------------------------------------
@@ -92,6 +94,19 @@ class CalendarEventsNotifier extends AutoDisposeAsyncNotifier<List<CalendarEvent
     state = const AsyncValue.loading();
     try {
       final repo = await ref.read(calendarRepositoryProvider.future);
+      // Move to trash prior to permanent deletion from active collection
+      final event = await repo.getEventById(eventId);
+      if (event != null) {
+        await ref.read(trashNotifierProvider.notifier).moveToTrash(
+              itemType: TrashItemType.event,
+              originalId: event.id,
+              title: event.title,
+              snippet: event.description != null && event.description!.isNotEmpty
+                  ? (event.description!.length > 100 ? '${event.description!.substring(0, 100)}...' : event.description!)
+                  : 'Calendar Event',
+            );
+      }
+
       // Cancel notifications first
       await NotificationService.instance.cancelEventReminders(eventId);
       

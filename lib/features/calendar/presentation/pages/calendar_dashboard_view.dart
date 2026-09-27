@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/date_time_utils.dart';
+import '../../../../core/utils/nepali_date.dart';
 import '../../data/models/calendar_event_model.dart';
 import '../../data/models/recurrence_engine.dart';
 import '../providers/calendar_events_notifier.dart';
@@ -28,6 +29,7 @@ class CalendarDashboardView extends ConsumerStatefulWidget {
 class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
   DateTime _focusedDay = DateTime.now();
   CalendarViewType _currentView = CalendarViewType.month;
+  bool _isBsMode = true;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +41,14 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
       appBar: AppBar(
         title: const Text('Calendar'),
         actions: [
+          TextButton.icon(
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+            icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+            label: Text(_isBsMode ? 'BS' : 'AD', style: const TextStyle(fontWeight: FontWeight.bold)),
+            onPressed: () => setState(() => _isBsMode = !_isBsMode),
+          ),
           IconButton(
             icon: const Icon(Icons.search_rounded),
             tooltip: 'Search Events',
@@ -164,6 +174,7 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
                     return MonthViewWidget(
                       focusedDay: _focusedDay,
                       events: expandedEvents,
+                      isBsCalendar: _isBsMode,
                       onDayTap: (date) => setState(() {
                         _focusedDay = date;
                       }),
@@ -172,6 +183,7 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
                   case CalendarViewType.year:
                     return YearViewWidget(
                       focusedDay: _focusedDay,
+                      isBsCalendar: _isBsMode,
                       onMonthDayTap: (date) => setState(() {
                         _focusedDay = date;
                         _currentView = CalendarViewType.day; // switch to day view for tapped date
@@ -192,13 +204,16 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
   }
 
   Widget _buildMonthHeader(ThemeData theme) {
+    final nepaliFocused = NepaliDate.fromDateTime(_focusedDay);
+    final headerText = _isBsMode ? nepaliFocused.monthYearEn : DateTimeUtils.toMonthYear(_focusedDay);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            DateTimeUtils.toMonthYear(_focusedDay),
+            headerText,
             style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           Row(
@@ -211,10 +226,15 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
                   } else if (_currentView == CalendarViewType.week) {
                     _focusedDay = _focusedDay.subtract(const Duration(days: 7));
                   } else {
-                    final prevMonth = DateTime(_focusedDay.year, _focusedDay.month - 1, 1);
-                    final lastDayOfPrevMonth = DateTime(_focusedDay.year, _focusedDay.month, 0).day;
-                    final targetDay = _focusedDay.day > lastDayOfPrevMonth ? lastDayOfPrevMonth : _focusedDay.day;
-                    _focusedDay = DateTime(prevMonth.year, prevMonth.month, targetDay);
+                    if (_isBsMode) {
+                      final prevBs = nepaliFocused.addMonths(-1);
+                      _focusedDay = prevBs.toDateTime();
+                    } else {
+                      final prevMonth = DateTime(_focusedDay.year, _focusedDay.month - 1, 1);
+                      final lastDayOfPrevMonth = DateTime(_focusedDay.year, _focusedDay.month, 0).day;
+                      final targetDay = _focusedDay.day > lastDayOfPrevMonth ? lastDayOfPrevMonth : _focusedDay.day;
+                      _focusedDay = DateTime(prevMonth.year, prevMonth.month, targetDay);
+                    }
                   }
                 }),
               ),
@@ -226,10 +246,15 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
                   } else if (_currentView == CalendarViewType.week) {
                     _focusedDay = _focusedDay.add(const Duration(days: 7));
                   } else {
-                    final nextMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 1);
-                    final lastDayOfNextMonth = DateTime(_focusedDay.year, _focusedDay.month + 2, 0).day;
-                    final targetDay = _focusedDay.day > lastDayOfNextMonth ? lastDayOfNextMonth : _focusedDay.day;
-                    _focusedDay = DateTime(nextMonth.year, nextMonth.month, targetDay);
+                    if (_isBsMode) {
+                      final nextBs = nepaliFocused.addMonths(1);
+                      _focusedDay = nextBs.toDateTime();
+                    } else {
+                      final nextMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 1);
+                      final lastDayOfNextMonth = DateTime(_focusedDay.year, _focusedDay.month + 2, 0).day;
+                      final targetDay = _focusedDay.day > lastDayOfNextMonth ? lastDayOfNextMonth : _focusedDay.day;
+                      _focusedDay = DateTime(nextMonth.year, nextMonth.month, targetDay);
+                    }
                   }
                 }),
               ),

@@ -1,9 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketdesk/core/services/p2p_sync_service.dart';
 import 'package:pocketdesk/core/theme/app_spacing.dart';
 import 'package:pocketdesk/features/auth/presentation/providers/auth_notifier.dart';
+import 'package:pocketdesk/features/calendar/presentation/providers/calendar_events_notifier.dart';
+import 'package:pocketdesk/features/money_tracker/presentation/providers/money_notifier.dart';
+import 'package:pocketdesk/features/notes/presentation/providers/notes_notifier.dart';
 import 'package:pocketdesk/features/settings/presentation/providers/ai_settings_notifier.dart';
+import 'package:pocketdesk/features/tasks/presentation/providers/tasks_notifier.dart';
 import 'package:pocketdesk/features/dashboard/presentation/widgets/app_hamburger_drawer.dart';
 import 'package:pocketdesk/features/chat/presentation/widgets/ai_cardano_dots_widget.dart';
 
@@ -129,15 +134,29 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     const systemPrompt = '''
 You are Pocketdesk AI, the official built-in companion and assistant for Pocketdesk. Always address the user warmly (e.g. "yo <username>"). Be casual, helpful, clear, and friendly!
 
-You have complete knowledge of Pocketdesk's capabilities:
-1. Calendar & Events: View day/week/month/year/agenda layouts, create recurring events, search events, set custom reminders.
-2. Clock & Timers: Set custom time alarms, minute/second countdown timers with notifications, world clock, and high-precision stopwatch.
-3. Money Tracker: Manage wallet balance, record expenses by category/tags, view Spending Score (out of 100), spending status, and generate AI Money Reports.
-4. P2P File Share: Send files directly between paired phones, tablets, and computers over local Wi-Fi or device IDs without cloud limits.
-5. Notes & Tasks: Create rich notes, filter by folder/tags, track task deadlines, priority levels, and completion status.
-6. Settings & AI Setup: Users can enable AI in Settings → AI, enter their OpenRouter API key, test connectivity, and toggle permissions.
+You have full authority to perform actions on behalf of the user across Pocketdesk features (EXCEPT Personal Feed):
+1. Tasks: Create or edit tasks.
+2. Notes: Create or edit notes.
+3. Calendar & Events: Create or edit calendar events.
+4. Money Tracker: Log expenses or update wallet.
 
-If the user asks how to use any feature, locate a page, or set up AI, guide them step-by-step in 1-3 casual, easy-to-follow sentences.
+IF THE USER ASKS YOU TO CREATE, ADD, OR LOG SOMETHING (e.g. "Add a task to buy groceries", "Remind me to call John tomorrow", "Log 50 rs expense for coffee", "Create note about project ideas"):
+You MUST return a JSON action block at the END of your response formatted exactly like this:
+```json
+{
+  "action": "create_task" | "create_note" | "create_event" | "add_expense",
+  "data": { ... }
+}
+```
+
+Field details for action data:
+- create_task: {"title": "...", "description": "...", "dueDate": "YYYY-MM-DD HH:mm"}
+- create_note: {"title": "...", "content": "...", "folder": "..."}
+- create_event: {"title": "...", "startTime": "YYYY-MM-DD HH:mm", "endTime": "YYYY-MM-DD HH:mm", "location": "..."}
+- add_expense: {"title": "...", "amount": 100.0, "category": "Food/Bills/etc", "date": "YYYY-MM-DD"}
+
+DO NOT outputs malicious code or scripts in data fields. Make sure title/content are clean text.
+Always include a friendly confirmation sentence before the JSON block explaining what you did!
 ''';
 
     final reply = await ref.read(aiSettingsProvider.notifier).generateCompletion(
@@ -146,17 +165,104 @@ If the user asks how to use any feature, locate a page, or set up AI, guide them
     );
 
     if (!mounted) return;
+
+    String cleanText = reply ?? 'yo $username! Something went wrong reaching OpenRouter, but I am still right here for you buddy!';
+    
+    // Check if reply contains a JSON action block to execute on user's behalf
+    if (reply != null && reply.contains('```json')) {
+      try {
+        final jsonMatch = RegExp(r'```json\s*(\{.*?\})\s*```', dotAll: true).firstMatch(reply);
+        if (jsonMatch != null) {
+          final jsonStr = jsonMatch.group(1);
+          if (jsonStr != null) {
+            final Map<String, dynamic> actionMap = Map<String, dynamic>.from(jsonDecode(jsonStr) as Map);
+            final String? action = actionMap['action'] as String?;
+            final Map<String, dynamic>? data = actionMap['data'] != null ? Map<String, dynamic>.from(actionMap['data'] as Map) : null;
+
+            if (action != null && data != null) {
+              await _executeAIAction(action, data);
+            }
+          }
+        }
+      } catch (e) {
+        // Safe handling: ignore invalid JSON without crashing
+      }
+      cleanText = cleanText.replaceAll(RegExp(r'```json\s*\{.*?\}\s*```', dotAll: true), '').trim();
+    }
+
     setState(() {
       _isAITyping = false;
       _messages.add(ChatMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         senderId: 'ai',
         senderName: 'Pocketdesk AI',
-        text: reply ?? 'yo $username! Something went wrong reaching OpenRouter, but I am still right here for you buddy!',
+        text: cleanText.isEmpty ? 'Action performed successfully!' : cleanText,
         timestamp: DateTime.now(),
         isMe: false,
       ));
     });
+  }
+
+  Future<void> _executeAIAction(String action, Map<String, dynamic> data) async {
+    // Sanitize title / string inputs to ensure no unsafe scripts or malformed data
+    String sanitize(dynamic val) => (val ?? '').toString().replaceAll(RegExp(r'<script.*?>.*?</script>', caseSensitive: false), '').trim();
+
+    try {
+      if (action == 'create_task') {
+        final title = sanitize(data['title']);
+        if (title.isNotEmpty) {
+          final desc = sanitize(data['description']);
+          DateTime? dueDate;
+          if (data['dueDate'] != null) {
+            dueDate = DateTime.tryParse(data['dueDate'].toString());
+          }
+          await ref.read(tasksProvider.notifier).addOrUpdateTask(
+            title: title,
+            description: desc.isEmpty ? null : desc,
+            dueDate: dueDate,
+          );
+        }
+      } else if (action == 'create_note') {
+        final title = sanitize(data['title']);
+        if (title.isNotEmpty) {
+          final content = sanitize(data['content']);
+          final folder = sanitize(data['folder']);
+          await ref.read(notesProvider.notifier).saveNote(
+            title: title,
+            content: content,
+            folderName: folder.isEmpty ? null : folder,
+          );
+        }
+      } else if (action == 'create_event') {
+        final title = sanitize(data['title']);
+        if (title.isNotEmpty) {
+          final start = DateTime.tryParse(data['startTime'].toString()) ?? DateTime.now().add(const Duration(hours: 1));
+          final end = DateTime.tryParse(data['endTime'].toString()) ?? start.add(const Duration(hours: 1));
+          final loc = sanitize(data['location']);
+          await ref.read(calendarEventsProvider.notifier).addOrUpdateEvent(
+            title: title,
+            startTime: start,
+            endTime: end,
+            location: loc.isEmpty ? null : loc,
+          );
+        }
+      } else if (action == 'add_expense') {
+        final title = sanitize(data['title']);
+        final amt = double.tryParse(data['amount'].toString()) ?? 0.0;
+        if (title.isNotEmpty && amt > 0) {
+          final cat = sanitize(data['category']);
+          final date = DateTime.tryParse(data['date'].toString()) ?? DateTime.now();
+          await ref.read(moneyProvider.notifier).addExpense(
+            title: title,
+            amount: amt,
+            category: cat.isEmpty ? 'General' : cat,
+            date: date,
+          );
+        }
+      }
+    } catch (e) {
+      // Safe fallback preventing app crash on malformed AI parameters
+    }
   }
 
   @override
@@ -176,15 +282,24 @@ If the user asks how to use any feature, locate a page, or set up AI, guide them
               AiCardanoDotsWidget(size: 28, color: colorScheme.primary, animate: _isAITyping),
               const SizedBox(width: 10),
             ],
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(_activePeerName ?? 'Pocketdesk AI'),
-                Text(
-                  _activePeerName != null ? 'P2P Connected • Code: $_myFriendCode' : 'AI Matrix Companion Mode (yo $username)',
-                  style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 11),
-                ),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _activePeerName ?? 'Pocketdesk AI',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    _activePeerName != null ? 'P2P Connected • Code: $_myFriendCode' : 'AI Matrix Companion Mode (yo $username)',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 11),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

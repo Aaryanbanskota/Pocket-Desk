@@ -385,29 +385,42 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                         fontWeight: FontWeight.bold,
                       ),
                       border: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
                     ),
                   ),
 
-                  // Folder & Tag metadata bar
-                  Row(
-                    children: [
-                      Icon(Icons.folder_outlined, size: 16, color: cs.primary),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: TextField(
-                          controller: _folderCtrl,
-                          style: tt.bodySmall?.copyWith(color: cs.primary, fontWeight: FontWeight.bold),
-                          decoration: InputDecoration(
-                            hintText: 'Folder (e.g. Work, Ideas)',
-                            hintStyle: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
-                            border: InputBorder.none,
-                            isDense: true,
+                  const SizedBox(height: 14),
+
+                  // Folder Metadata Bar with Clean Chip Styling & Spacing
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHigh.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.folder_outlined, size: 18, color: cs.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _folderCtrl,
+                            style: tt.bodyMedium?.copyWith(color: cs.primary, fontWeight: FontWeight.w600),
+                            decoration: InputDecoration(
+                              hintText: 'Folder (e.g. Work, Ideas)',
+                              hintStyle: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  const Divider(height: 20),
+
+                  const SizedBox(height: 16),
 
                   // Attached Images Row
                   if (_imagePaths.isNotEmpty) ...[

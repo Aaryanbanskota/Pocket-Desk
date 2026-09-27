@@ -261,31 +261,18 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
             const SizedBox(height: AppSpacing.md),
 
             FilledButton.tonal(
-              onPressed: () {
-                _showConfirmDialog(
-                  context,
-                  'Delete Account',
-                  'Are you sure? This action cannot be undone.',
-                  () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Account deletion initiated'),
-                      ),
-                    );
-                  },
-                  isDangerous: true,
-                );
-              },
+              onPressed: () => _showDeleteAccountTwoStepDialog(context),
               style: FilledButton.styleFrom(
                 backgroundColor: colorScheme.error,
                 foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(50),
               ),
               child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.delete_forever_rounded),
                   SizedBox(width: AppSpacing.md),
-                  Text('Delete Account'),
+                  Text('Delete Account', style: TextStyle(fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -471,6 +458,133 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
             child: const Text('Save Password'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showDeleteAccountTwoStepDialog(BuildContext context) {
+    final confirmCtrl = TextEditingController();
+    bool isStepTwo = false;
+    bool isDeleting = false;
+    String? errorMsg;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Row(
+              children: [
+                const Icon(Icons.delete_forever_rounded, color: Colors.red, size: 28),
+                const SizedBox(width: 8),
+                Text(isStepTwo ? 'Confirm Account Deletion' : 'Delete Account?'),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (errorMsg != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.withOpacity(0.5)),
+                      ),
+                      child: Text(
+                        errorMsg!,
+                        style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                  if (!isStepTwo) ...[
+                    const Text(
+                      'Are you sure you want to delete your account?',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'This will permanently delete all your data, including notes, tasks, calendar events, expenses, settings, and API keys. This action CANNOT be undone.',
+                      style: TextStyle(fontSize: 13),
+                    ),
+                  ] else ...[
+                    const Text(
+                      'To confirm permanent deletion of ALL app data, type DELETE in the box below:',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: confirmCtrl,
+                      autofocus: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Type DELETE',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.warning_amber_rounded, color: Colors.red),
+                      ),
+                      onChanged: (_) => setDialogState(() {}),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isDeleting ? null : () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              if (!isStepTwo)
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                  onPressed: () {
+                    setDialogState(() {
+                      isStepTwo = true;
+                    });
+                  },
+                  child: const Text('Yes, Continue'),
+                )
+              else
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                  onPressed: (confirmCtrl.text.trim() != 'DELETE' || isDeleting)
+                      ? null
+                      : () async {
+                          setDialogState(() {
+                            isDeleting = true;
+                            errorMsg = null;
+                          });
+
+                          final err = await ref.read(authNotifierProvider.notifier).deleteAccount();
+
+                          if (ctx.mounted) {
+                            if (err != null) {
+                              setDialogState(() {
+                                isDeleting = false;
+                                errorMsg = err.message;
+                              });
+                            } else {
+                              Navigator.pop(ctx);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Account and all app data erased completely. Starting fresh!'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        },
+                  child: isDeleting
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Delete Everything'),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

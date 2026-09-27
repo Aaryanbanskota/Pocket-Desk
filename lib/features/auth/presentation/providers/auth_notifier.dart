@@ -96,6 +96,8 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     required String username,
     required String password,
     String? displayName,
+    String? securityQuestion,
+    String? securityAnswer,
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -104,6 +106,8 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         username: username,
         password: password,
         displayName: displayName,
+        securityQuestion: securityQuestion,
+        securityAnswer: securityAnswer,
       );
       if (result.error != null) {
         state = AsyncValue.data(AuthError(result.error!));
@@ -115,6 +119,39 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         AuthError(UnexpectedFailure('Registration failed', error: e, stackTrace: st)),
       );
     }
+  }
+
+  Future<AppFailure?> deleteAccount() async {
+    final current = state.valueOrNull;
+    if (current is! AuthAuthenticated) return const AuthFailure('Not logged in');
+    try {
+      final repo = await ref.read(authRepositoryProvider.future);
+      final err = await repo.deleteAccount(current.user.id);
+      if (err == null) {
+        state = const AsyncValue.data(AuthUnauthenticated());
+      }
+      return err;
+    } catch (e, st) {
+      return UnexpectedFailure('Account deletion failed', error: e, stackTrace: st);
+    }
+  }
+
+  Future<String?> getSecurityQuestion(String username) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    return repo.getSecurityQuestion(username);
+  }
+
+  Future<AppFailure?> resetPasswordWithSecurityAnswer({
+    required String username,
+    required String securityAnswer,
+    required String newPassword,
+  }) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    return repo.resetPasswordWithSecurityAnswer(
+      username: username,
+      securityAnswer: securityAnswer,
+      newPassword: newPassword,
+    );
   }
 
   // --------------------------------------------------------------------------

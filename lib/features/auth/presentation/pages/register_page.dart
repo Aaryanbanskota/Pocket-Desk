@@ -27,6 +27,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
   bool _obscurePass = true;
   bool _obscureConfirm = true;
   bool _submitting = false;
+  final _securityAnswerCtrl = TextEditingController();
+  String _selectedQuestion = 'What was the name of your first pet?';
+  final List<String> _securityQuestions = [
+    'What was the name of your first pet?',
+    'What city were you born in?',
+    'What is your favorite book or movie?',
+    'What is your mother\'s maiden name?',
+    'What was the model of your first car?',
+  ];
   late AnimationController _fadeCtrl;
   late Animation<double> _fadeAnim;
 
@@ -48,6 +57,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
     _userCtrl.dispose();
     _passCtrl.dispose();
     _confirmCtrl.dispose();
+    _securityAnswerCtrl.dispose();
     super.dispose();
   }
 
@@ -60,6 +70,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
           password: _passCtrl.text,
           displayName:
               _nameCtrl.text.trim().isEmpty ? null : _nameCtrl.text.trim(),
+          securityQuestion: _selectedQuestion,
+          securityAnswer: _securityAnswerCtrl.text.trim(),
         );
 
     if (!mounted) return;
@@ -231,11 +243,42 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
               ),
               validator: (v) =>
                   Validators.confirmPassword(v, _passCtrl.text),
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => _submit(),
+              textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: AppSpacing.sm),
             _PasswordStrengthIndicator(password: _passCtrl),
+            const SizedBox(height: AppSpacing.lg),
+            const Divider(height: 1),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Security Question for Recovery',
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            DropdownButtonFormField<String>(
+              value: _selectedQuestion,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Security Question',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.help_outline_rounded),
+              ),
+              items: _securityQuestions
+                  .map((q) => DropdownMenuItem(value: q, child: Text(q, overflow: TextOverflow.ellipsis)))
+                  .toList(),
+              onChanged: (val) {
+                if (val != null) setState(() => _selectedQuestion = val);
+              },
+            ),
+            const SizedBox(height: AppSpacing.md),
+            PDTextField(
+              controller: _securityAnswerCtrl,
+              label: 'Security Answer',
+              prefixIcon: Icons.verified_user_outlined,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Security answer is required for recovery' : null,
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) => _submit(),
+            ),
             const SizedBox(height: AppSpacing.xl),
             _SubmitButton(
               submitting: _submitting,

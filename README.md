@@ -51,6 +51,12 @@ It combines a full-featured **Calendar**, **Task Manager**, **Notes** app, and *
 
 ## ⚡ Recent Updates & Fixes (v1.2.0)
 
+- 🔐 **Security Questions & Forgot Password Reset**:
+  - Registration flow now prompts users to set custom security questions and answers.
+  - Forgot Password flow allows offline account recovery by verifying security answers locally with Argon2id hashing.
+- 🗑️ **2-Step Complete Delete Account & Data Purge**:
+  - Complete account deletion workflow with 2-step verification ("Are you sure?" -> Type "DELETE").
+  - Fully wipes all Isar database tables, secure storage keys, user preferences, and app state so the user starts 100% fresh.
 - 🔄 **Self-Hosted In-App Update System**:
   - Offline-first background update checks against raw `update.json` hosted on GitHub.
   - Automatic download progress modal and seamless launch of Android's native package installer (`FileProvider` / `REQUEST_INSTALL_PACKAGES`).

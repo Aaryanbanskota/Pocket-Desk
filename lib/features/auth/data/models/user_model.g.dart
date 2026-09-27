@@ -57,13 +57,28 @@ const UserModelSchema = CollectionSchema(
       name: r'passwordSalt',
       type: IsarType.string,
     ),
-    r'themePreference': PropertySchema(
+    r'securityAnswerHash': PropertySchema(
       id: 8,
+      name: r'securityAnswerHash',
+      type: IsarType.string,
+    ),
+    r'securityAnswerSalt': PropertySchema(
+      id: 9,
+      name: r'securityAnswerSalt',
+      type: IsarType.string,
+    ),
+    r'securityQuestion': PropertySchema(
+      id: 10,
+      name: r'securityQuestion',
+      type: IsarType.string,
+    ),
+    r'themePreference': PropertySchema(
+      id: 11,
       name: r'themePreference',
       type: IsarType.string,
     ),
     r'username': PropertySchema(
-      id: 9,
+      id: 12,
       name: r'username',
       type: IsarType.string,
     )
@@ -130,6 +145,24 @@ int _userModelEstimateSize(
   }
   bytesCount += 3 + object.passwordHash.length * 3;
   bytesCount += 3 + object.passwordSalt.length * 3;
+  {
+    final value = object.securityAnswerHash;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.securityAnswerSalt;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.securityQuestion;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.themePreference.length * 3;
   bytesCount += 3 + object.username.length * 3;
   return bytesCount;
@@ -149,8 +182,11 @@ void _userModelSerialize(
   writer.writeBool(offsets[5], object.notificationsEnabled);
   writer.writeString(offsets[6], object.passwordHash);
   writer.writeString(offsets[7], object.passwordSalt);
-  writer.writeString(offsets[8], object.themePreference);
-  writer.writeString(offsets[9], object.username);
+  writer.writeString(offsets[8], object.securityAnswerHash);
+  writer.writeString(offsets[9], object.securityAnswerSalt);
+  writer.writeString(offsets[10], object.securityQuestion);
+  writer.writeString(offsets[11], object.themePreference);
+  writer.writeString(offsets[12], object.username);
 }
 
 UserModel _userModelDeserialize(
@@ -169,8 +205,11 @@ UserModel _userModelDeserialize(
   object.notificationsEnabled = reader.readBool(offsets[5]);
   object.passwordHash = reader.readString(offsets[6]);
   object.passwordSalt = reader.readString(offsets[7]);
-  object.themePreference = reader.readString(offsets[8]);
-  object.username = reader.readString(offsets[9]);
+  object.securityAnswerHash = reader.readStringOrNull(offsets[8]);
+  object.securityAnswerSalt = reader.readStringOrNull(offsets[9]);
+  object.securityQuestion = reader.readStringOrNull(offsets[10]);
+  object.themePreference = reader.readString(offsets[11]);
+  object.username = reader.readString(offsets[12]);
   return object;
 }
 
@@ -198,8 +237,14 @@ P _userModelDeserializeProp<P>(
     case 7:
       return (reader.readString(offset)) as P;
     case 8:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 9:
+      return (reader.readStringOrNull(offset)) as P;
+    case 10:
+      return (reader.readStringOrNull(offset)) as P;
+    case 11:
+      return (reader.readString(offset)) as P;
+    case 12:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1338,6 +1383,468 @@ extension UserModelQueryFilter
   }
 
   QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerHashIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'securityAnswerHash',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerHashIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'securityAnswerHash',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerHashEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'securityAnswerHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerHashGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'securityAnswerHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerHashLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'securityAnswerHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerHashBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'securityAnswerHash',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerHashStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'securityAnswerHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerHashEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'securityAnswerHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerHashContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'securityAnswerHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerHashMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'securityAnswerHash',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerHashIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'securityAnswerHash',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerHashIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'securityAnswerHash',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerSaltIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'securityAnswerSalt',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerSaltIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'securityAnswerSalt',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerSaltEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'securityAnswerSalt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerSaltGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'securityAnswerSalt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerSaltLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'securityAnswerSalt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerSaltBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'securityAnswerSalt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerSaltStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'securityAnswerSalt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerSaltEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'securityAnswerSalt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerSaltContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'securityAnswerSalt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerSaltMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'securityAnswerSalt',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerSaltIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'securityAnswerSalt',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityAnswerSaltIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'securityAnswerSalt',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityQuestionIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'securityQuestion',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityQuestionIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'securityQuestion',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityQuestionEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'securityQuestion',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityQuestionGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'securityQuestion',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityQuestionLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'securityQuestion',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityQuestionBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'securityQuestion',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityQuestionStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'securityQuestion',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityQuestionEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'securityQuestion',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityQuestionContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'securityQuestion',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityQuestionMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'securityQuestion',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityQuestionIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'securityQuestion',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      securityQuestionIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'securityQuestion',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
       themePreferenceEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1710,6 +2217,45 @@ extension UserModelQuerySortBy on QueryBuilder<UserModel, UserModel, QSortBy> {
     });
   }
 
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> sortBySecurityAnswerHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'securityAnswerHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy>
+      sortBySecurityAnswerHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'securityAnswerHash', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> sortBySecurityAnswerSalt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'securityAnswerSalt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy>
+      sortBySecurityAnswerSaltDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'securityAnswerSalt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> sortBySecurityQuestion() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'securityQuestion', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy>
+      sortBySecurityQuestionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'securityQuestion', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserModel, UserModel, QAfterSortBy> sortByThemePreference() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'themePreference', Sort.asc);
@@ -1847,6 +2393,45 @@ extension UserModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> thenBySecurityAnswerHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'securityAnswerHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy>
+      thenBySecurityAnswerHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'securityAnswerHash', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> thenBySecurityAnswerSalt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'securityAnswerSalt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy>
+      thenBySecurityAnswerSaltDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'securityAnswerSalt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> thenBySecurityQuestion() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'securityQuestion', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy>
+      thenBySecurityQuestionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'securityQuestion', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserModel, UserModel, QAfterSortBy> thenByThemePreference() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'themePreference', Sort.asc);
@@ -1928,6 +2513,30 @@ extension UserModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<UserModel, UserModel, QDistinct> distinctBySecurityAnswerHash(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'securityAnswerHash',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QDistinct> distinctBySecurityAnswerSalt(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'securityAnswerSalt',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QDistinct> distinctBySecurityQuestion(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'securityQuestion',
+          caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<UserModel, UserModel, QDistinct> distinctByThemePreference(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1998,6 +2607,27 @@ extension UserModelQueryProperty
   QueryBuilder<UserModel, String, QQueryOperations> passwordSaltProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'passwordSalt');
+    });
+  }
+
+  QueryBuilder<UserModel, String?, QQueryOperations>
+      securityAnswerHashProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'securityAnswerHash');
+    });
+  }
+
+  QueryBuilder<UserModel, String?, QQueryOperations>
+      securityAnswerSaltProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'securityAnswerSalt');
+    });
+  }
+
+  QueryBuilder<UserModel, String?, QQueryOperations>
+      securityQuestionProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'securityQuestion');
     });
   }
 

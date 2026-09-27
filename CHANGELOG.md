@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.2.0] — 2026-09-27 — Production Release
+
+### Added
+- **Self-Hosted In-App Update System**:
+  - Background update checker fetching raw `update.json` from GitHub releases.
+  - Interactive download progress modal with seamless launch of Android's native package installer.
+  - Zero cloud dependency — completely offline-first with silent fallback when offline.
+- **Security Recovery Questions & Password Reset**:
+  - 2-Step Sign-up wizard allowing users to set 2 security questions (preset options or custom questions).
+  - Offline account password reset via local Argon2id security answer verification.
+  - Update Security Questions dialog in Settings with current password verification.
+- **2-Step Complete Account Deletion & Isar Data Purge**:
+  - Account wipe workflow requiring double confirmation (typing "DELETE").
+  - Complete purge of all Isar database tables, encryption keys, and secure storage items.
+- **Universal AI Companion & Security**:
+  - Direct Isar database querying (`AISettingsRepository`) powering AI across Money Health, Note Formatting, Feed Comments, and Chat Buddy.
+  - Argon2id Password Lock in Settings to protect saved OpenRouter API Keys.
+- **About App Page & System Logs**:
+  - Redesigned `AboutAppPage` integrated into drawer and settings.
+  - Dynamic Theme styling (light & dark mode support).
+  - Direct links to raw `TERMS_OF_SERVICE.md`, `PRIVACY_POLICY.md`, and online Live System Logs viewer.
+- **Input Length Caps & Mobile Biometrics**:
+  - `maxLength: 64` input caps across all password fields to prevent text overflow.
+  - Mobile biometric hardware check fallback for Android/iOS devices.
+
+---
+
 ## [v1.0.0] — 2026-07-24 — Release Build
 
 ### Release Artifacts

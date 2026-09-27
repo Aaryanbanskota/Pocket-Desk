@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/isar_provider.dart';
 import '../../../../core/error/app_failure.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
+import '../../../trash/data/models/trash_item_model.dart';
+import '../../../trash/presentation/providers/trash_notifier.dart';
 import '../../data/models/task_model.dart';
 import '../../data/repositories/task_repository.dart';
 import '../../../../core/services/notification_service.dart';
@@ -117,6 +119,15 @@ class TasksNotifier extends AutoDisposeAsyncNotifier<TasksState> {
 
   Future<void> deleteTask(int taskId) async {
     final repo = await ref.read(taskRepositoryProvider.future);
+    final task = await repo.getTaskById(taskId);
+    if (task != null) {
+      await ref.read(trashNotifierProvider.notifier).moveToTrash(
+        itemType: TrashItemType.task,
+        originalId: task.id,
+        title: task.title,
+        snippet: task.description,
+      );
+    }
     final error = await repo.deleteTask(taskId);
     if (error != null) {
       state = AsyncValue.data((state.valueOrNull ?? const TasksState()).copyWith(error: error));

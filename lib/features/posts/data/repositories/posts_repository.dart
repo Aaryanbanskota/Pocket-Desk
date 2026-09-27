@@ -32,6 +32,15 @@ class PostsRepository {
     return post;
   }
 
+  Future<PostModel?> getPostById(int postId) async {
+    try {
+      return await _isar.postModels.get(postId);
+    } catch (e, st) {
+      AppLogger.e('Failed to fetch post by ID', tag: 'PostsRepo', error: e, st: st);
+      return null;
+    }
+  }
+
   Future<void> deletePost(int postId) async {
     await _isar.writeTxn(() => _isar.postModels.delete(postId));
   }

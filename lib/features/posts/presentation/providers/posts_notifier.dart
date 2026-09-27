@@ -4,6 +4,8 @@ import 'package:pocketdesk/features/auth/presentation/providers/auth_notifier.da
 import 'package:pocketdesk/features/settings/presentation/providers/ai_settings_notifier.dart';
 import 'package:pocketdesk/features/posts/data/models/post_model.dart';
 import 'package:pocketdesk/features/posts/data/repositories/posts_repository.dart';
+import 'package:pocketdesk/features/trash/data/models/trash_item_model.dart';
+import 'package:pocketdesk/features/trash/presentation/providers/trash_notifier.dart';
 
 final postsRepositoryProvider = FutureProvider<PostsRepository>((ref) async {
   final isar = await ref.watch(isarProvider.future);
@@ -115,6 +117,15 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
 
   Future<void> deletePost(int postId) async {
     final repo = await ref.read(postsRepositoryProvider.future);
+    final post = await repo.getPostById(postId);
+    if (post != null) {
+      await ref.read(trashNotifierProvider.notifier).moveToTrash(
+            itemType: TrashItemType.post,
+            originalId: post.id,
+            title: post.title ?? 'Post',
+            snippet: post.content.length > 100 ? '${post.content.substring(0, 100)}...' : post.content,
+          );
+    }
     await repo.deletePost(postId);
     ref.invalidateSelf();
   }

@@ -7,6 +7,14 @@ class TaskRepository {
   TaskRepository({required Isar isar}) : _isar = isar;
   final Isar _isar;
 
+  Future<TaskModel?> getTaskById(int taskId) async {
+    try {
+      return await _isar.taskModels.get(taskId);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<List<TaskModel>> getTasksForUser(int userId, {TaskStatus? status}) async {
     try {
       var q = _isar.taskModels.where().userIdEqualTo(userId);

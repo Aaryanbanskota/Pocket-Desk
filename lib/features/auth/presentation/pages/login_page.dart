@@ -62,9 +62,9 @@ class _LoginPageState extends ConsumerState<LoginPage>
     });
 
     // Auto-trigger biometric login if enabled
-    if (available && enabled) {
+    if (available && enabled && lastUser != null) {
       await Future<void>.delayed(const Duration(milliseconds: 400));
-      if (mounted) _biometricLogin();
+      if (mounted) await _biometricLogin();
     }
   }
 
@@ -98,20 +98,25 @@ class _LoginPageState extends ConsumerState<LoginPage>
 
   Future<void> _biometricLogin() async {
     setState(() => _biometricLoading = true);
-    final authenticated = await _biometricService.authenticate();
-    if (!mounted) return;
-    if (authenticated) {
-      // Restore session — if a session exists the user is logged in.
-      await ref.read(authNotifierProvider.notifier).restoreSession();
+    try {
+      final authenticated = await _biometricService.authenticate();
+      if (!mounted || !authenticated) return;
+      await ref
+          .read(authNotifierProvider.notifier)
+          .restoreSession(biometricAuthenticated: true);
       if (!mounted) return;
       final authState = ref.read(authNotifierProvider).valueOrNull;
-      if (authState is! AuthAuthenticated) {
-        _showError('No saved session. Please sign in with your password first.');
+      if (authState is AuthAuthenticated) {
+        context.go(AppRoutes.dashboard);
+      } else {
+        _showError(
+            'No saved session. Please sign in with your password first.');
       }
-    } else {
-      _showError('Biometric authentication failed or was cancelled.');
+    } catch (e) {
+      if (mounted) _showError(e.toString());
+    } finally {
+      if (mounted) setState(() => _biometricLoading = false);
     }
-    if (mounted) setState(() => _biometricLoading = false);
   }
 
   void _showError(String message) {
@@ -163,16 +168,21 @@ class _LoginPageState extends ConsumerState<LoginPage>
                       decoration: BoxDecoration(
                         color: Colors.red.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+                        border: Border.all(
+                            color: Colors.red.withValues(alpha: 0.5)),
                       ),
                       child: Text(
                         dialogError!,
-                        style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
                   if (foundQuestion == null) ...[
-                    const Text('Enter your username to look up your security question:'),
+                    const Text(
+                        'Enter your username to look up your security question:'),
                     const SizedBox(height: 12),
                     TextField(
                       controller: resetUserCtrl,
@@ -183,7 +193,8 @@ class _LoginPageState extends ConsumerState<LoginPage>
                       ),
                     ),
                   ] else ...[
-                    Text('User: ${resetUserCtrl.text.trim()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text('User: ${resetUserCtrl.text.trim()}',
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
                     if (foundQuestion!.contains(' | ')) ...[
                       // 2 Questions
@@ -196,15 +207,24 @@ class _LoginPageState extends ConsumerState<LoginPage>
                               width: double.infinity,
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primaryContainer.withAlpha(100),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer
+                                    .withAlpha(100),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Question 1:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                  const Text('Question 1:',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600)),
                                   const SizedBox(height: 4),
-                                  Text(qList[0], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                  Text(qList[0],
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13)),
                                 ],
                               ),
                             ),
@@ -222,21 +242,31 @@ class _LoginPageState extends ConsumerState<LoginPage>
                               width: double.infinity,
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primaryContainer.withAlpha(100),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer
+                                    .withAlpha(100),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Question 2:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                  const Text('Question 2:',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600)),
                                   const SizedBox(height: 4),
-                                  Text(qList[1], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                  Text(qList[1],
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13)),
                                 ],
                               ),
                             ),
                             const SizedBox(height: 8),
                             TextField(
-                              controller: confirmPassCtrl, // reused for Answer 2 in 2-Q mode
+                              controller:
+                                  confirmPassCtrl, // reused for Answer 2 in 2-Q mode
                               decoration: const InputDecoration(
                                 labelText: 'Answer 2',
                                 border: OutlineInputBorder(),
@@ -261,15 +291,22 @@ class _LoginPageState extends ConsumerState<LoginPage>
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primaryContainer.withAlpha(100),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primaryContainer
+                              .withAlpha(100),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Security Question:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                            const Text('Security Question:',
+                                style: TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.w600)),
                             const SizedBox(height: 4),
-                            Text(foundQuestion!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            Text(foundQuestion!,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 14)),
                           ],
                         ),
                       ),
@@ -319,25 +356,32 @@ class _LoginPageState extends ConsumerState<LoginPage>
                       : () async {
                           final user = resetUserCtrl.text.trim();
                           if (user.isEmpty) {
-                            setDialogState(() => dialogError = 'Please enter username');
+                            setDialogState(
+                                () => dialogError = 'Please enter username');
                             return;
                           }
                           setDialogState(() {
                             checkingUser = true;
                             dialogError = null;
                           });
-                          final q = await ref.read(authNotifierProvider.notifier).getSecurityQuestion(user);
+                          final q = await ref
+                              .read(authNotifierProvider.notifier)
+                              .getSecurityQuestion(user);
                           setDialogState(() {
                             checkingUser = false;
                             if (q == null || q.isEmpty) {
-                              dialogError = 'No security question found for user "$user".';
+                              dialogError =
+                                  'No security question found for user "$user".';
                             } else {
                               foundQuestion = q;
                             }
                           });
                         },
                   child: checkingUser
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
                       : const Text('Next'),
                 )
               else
@@ -352,18 +396,21 @@ class _LoginPageState extends ConsumerState<LoginPage>
 
                           if (isMulti) {
                             if (ans1.isEmpty || ans2.isEmpty) {
-                              setDialogState(() => dialogError = 'Both security answers are required.');
+                              setDialogState(() => dialogError =
+                                  'Both security answers are required.');
                               return;
                             }
                           } else {
                             if (ans1.isEmpty) {
-                              setDialogState(() => dialogError = 'Security answer is required.');
+                              setDialogState(() =>
+                                  dialogError = 'Security answer is required.');
                               return;
                             }
                           }
 
                           if (newP.length < 6) {
-                            setDialogState(() => dialogError = 'Password must be at least 6 characters.');
+                            setDialogState(() => dialogError =
+                                'Password must be at least 6 characters.');
                             return;
                           }
 
@@ -374,7 +421,9 @@ class _LoginPageState extends ConsumerState<LoginPage>
                             dialogError = null;
                           });
 
-                          final err = await ref.read(authNotifierProvider.notifier).resetPasswordWithSecurityAnswer(
+                          final err = await ref
+                              .read(authNotifierProvider.notifier)
+                              .resetPasswordWithSecurityAnswer(
                                 username: resetUserCtrl.text.trim(),
                                 securityAnswer: combinedAns,
                                 newPassword: newP,
@@ -394,7 +443,8 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                 });
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Password reset successfully! Please sign in with your new password.'),
+                                    content: Text(
+                                        'Password reset successfully! Please sign in with your new password.'),
                                     backgroundColor: Colors.green,
                                   ),
                                 );
@@ -403,7 +453,10 @@ class _LoginPageState extends ConsumerState<LoginPage>
                           }
                         },
                   child: resetting
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
                       : const Text('Reset Password'),
                 ),
             ],
@@ -487,12 +540,23 @@ class _LoginPageState extends ConsumerState<LoginPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Sign In',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: colorScheme.onSurface,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Sign In',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Sign in with QR',
+                  onPressed: () => context.push(AppRoutes.qrLogin),
+                  icon: const Icon(Icons.qr_code_scanner_rounded),
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
@@ -541,8 +605,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                           color: colorScheme.primary,
                           fontWeight: FontWeight.w600,
                         ),
-                        backgroundColor:
-                            colorScheme.primary.withAlpha(20),
+                        backgroundColor: colorScheme.primary.withAlpha(20),
                         side: BorderSide(
                           color: colorScheme.primary.withAlpha(60),
                         ),
@@ -566,8 +629,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                       : Icons.visibility_off_outlined,
                   color: Colors.grey,
                 ),
-                onPressed: () =>
-                    setState(() => _obscurePass = !_obscurePass),
+                onPressed: () => setState(() => _obscurePass = !_obscurePass),
               ),
               validator: (v) =>
                   v == null || v.isEmpty ? 'Password is required' : null,
@@ -674,8 +736,7 @@ class _SubmitButton extends StatelessWidget {
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(60),
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSpacing.radiusMd),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
               ),

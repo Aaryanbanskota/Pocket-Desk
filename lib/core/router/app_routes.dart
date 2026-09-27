@@ -4,6 +4,7 @@ abstract final class AppRoutes {
   // Auth
   static const String splash = '/';
   static const String login = '/login';
+  static const String qrLogin = '/login/qr';
   static const String register = '/register';
   static const String setupOnboarding = '/setup';
 

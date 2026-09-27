@@ -16,6 +16,10 @@ import 'package:pocketdesk/features/tasks/presentation/providers/tasks_notifier.
 import 'package:isar/isar.dart';
 
 final _deletedRecords = <String>[];
+final _createdNotes = <String>[];
+final _chatPrompts = <String>[];
+final _chatSystemPrompts = <String>[];
+final _chatReplies = <String?>[];
 
 class _ImmediateUnauthNotifier extends AuthNotifier {
   @override
@@ -50,6 +54,25 @@ class _NotesNotifierWithData extends NotesNotifier {
   }
 }
 
+class _CreatableNotesNotifier extends _NotesNotifierWithData {
+  @override
+  Future<void> saveNote({
+    required String title,
+    String content = '',
+    String? folderName,
+    List<String> tags = const [],
+    bool isPinned = false,
+    bool isFavorite = false,
+    bool hasChecklist = false,
+    List<String> checklistItems = const [],
+    List<bool> checklistDone = const [],
+    List<String> imagePaths = const [],
+    int? noteId,
+  }) async {
+    _createdNotes.add('$title:$content');
+  }
+}
+
 class _DeletableTasksNotifier extends _TasksNotifierWithData {
   @override
   Future<void> deleteTask(int taskId) async {
@@ -77,6 +100,34 @@ class _AISettingsRepositoryWithMasterControl extends AISettingsRepository {
     return AISettingsModel()
       ..userId = userId
       ..masterControlEnabled = true;
+  }
+}
+
+class _AISettingsRepositoryWithConfiguredAI extends AISettingsRepository {
+  _AISettingsRepositoryWithConfiguredAI() : super(isar: _UnusedIsar());
+
+  @override
+  Future<AISettingsModel> getOrCreateSettings(int userId) async {
+    return AISettingsModel()
+      ..userId = userId
+      ..apiKey = 'test-key';
+  }
+}
+
+class _ChatAISettingsNotifier extends AISettingsNotifier {
+  @override
+  Future<AISettingsModel> build() async =>
+      AISettingsModel()..apiKey = 'test-key';
+
+  @override
+  Future<String?> generateCompletion({
+    required String prompt,
+    required String systemPrompt,
+    int? userId,
+  }) async {
+    _chatPrompts.add(prompt);
+    _chatSystemPrompts.add(systemPrompt);
+    return _chatReplies.removeAt(0);
   }
 }
 
@@ -137,7 +188,8 @@ void main() {
     expect(input, findsOneWidget);
   });
 
-  testWidgets('AI lists local task and event names on request', (tester) async {
+  testWidgets('send keeps input focused for consecutive messages',
+      (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await P2PSyncService().initialize(deviceId: 'test-device');
@@ -162,8 +214,73 @@ void main() {
     await tester.tap(find.byIcon(Icons.send_rounded));
     await tester.pumpAndSettle();
 
+    expect(tester.widget<TextField>(input).focusNode!.hasPrimaryFocus, isTrue);
     expect(find.textContaining('- Finish report'), findsOneWidget);
     expect(find.textContaining('- Team meeting'), findsOneWidget);
+
+    await tester.enterText(input, 'tell me all event task name');
+    await tester.tap(find.byIcon(Icons.send_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.text('tell me all event task name'), findsNWidgets(2));
+    expect(tester.widget<TextField>(input).focusNode!.hasPrimaryFocus, isTrue);
+  });
+
+  testWidgets('yes follow-up executes the pending create once', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await P2PSyncService().initialize(deviceId: 'test-device');
+    _chatPrompts.clear();
+    _chatSystemPrompts.clear();
+    _createdNotes.clear();
+    _chatReplies
+      ..clear()
+      ..addAll([
+        'Are you sure?',
+        'Done.\n```json\n{"action":"create_note","data":{"title":"Shopping list","content":"milk"}}\n```',
+      ]);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authNotifierProvider.overrideWith(_ImmediateUnauthNotifier.new),
+          aiSettingsRepositoryProvider.overrideWith(
+            (ref) async => _AISettingsRepositoryWithConfiguredAI(),
+          ),
+          aiSettingsProvider.overrideWith(_ChatAISettingsNotifier.new),
+          notesProvider.overrideWith(_CreatableNotesNotifier.new),
+        ],
+        child: MaterialApp(
+          theme: ThemeData(useMaterial3: false),
+          home: const ChatPage(),
+        ),
+      ),
+    );
+
+    final input = find.byType(TextField);
+    await tester.showKeyboard(input);
+    await tester.enterText(
+        input, 'create a note named Shopping list with milk');
+    await tester.tap(find.byIcon(Icons.send_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('Are you sure?'), findsOneWidget);
+
+    await tester.enterText(input, 'yes');
+    await tester.tap(find.byIcon(Icons.send_rounded));
+    await tester.pumpAndSettle();
+
+    expect(_chatPrompts, hasLength(2));
+    expect(_chatPrompts.last, contains('Pocketdesk AI: Are you sure?'));
+    expect(_chatPrompts.last.split('User: yes'), hasLength(2));
+    expect(_chatSystemPrompts.last, contains('do not ask "are you sure?"'));
+    expect(
+      _chatSystemPrompts.last,
+      contains(
+          'Never repeat an action that the recent conversation already confirms was completed.'),
+    );
+    expect(_createdNotes, ['Shopping list:milk']);
+    expect(find.text('Created note "Shopping list".'), findsOneWidget);
+    expect(find.text('Confirm Calendar Event'), findsNothing);
   });
 
   testWidgets('named task, event, and note deletions need one confirmation', (

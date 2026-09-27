@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -9,8 +12,10 @@ class NotificationService {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
 
-  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
+  static const _timezoneChannel = MethodChannel('pocketdesk/device');
 
   /// Initializes the local notification plugin and configures timezone database.
   Future<void> initialize() async {
@@ -20,17 +25,29 @@ class NotificationService {
       // 1. Initialize timezone database
       tz.initializeTimeZones();
       try {
-        final String localName = DateTime.now().timeZoneName;
+        final String localName = Platform.isAndroid
+            ? (await _timezoneChannel.invokeMethod<String>('localTimezone') ??
+                DateTime.now().timeZoneName)
+            : DateTime.now().timeZoneName;
         tz.setLocalLocation(tz.getLocation(localName));
       } catch (_) {
-        tz.setLocalLocation(tz.getLocation('UTC'));
+        final offset = DateTime.now().timeZoneOffset.inMilliseconds;
+        tz.setLocalLocation(
+          tz.Location(
+            'device-local',
+            const [],
+            const [],
+            [tz.TimeZone(offset, isDst: false, abbreviation: 'local')],
+          ),
+        );
       }
 
       // 2. Setup initialization settings
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/ic_launcher');
 
-      const InitializationSettings initializationSettings = InitializationSettings(
+      const InitializationSettings initializationSettings =
+          InitializationSettings(
         android: initializationSettingsAndroid,
         iOS: DarwinInitializationSettings(),
         macOS: DarwinInitializationSettings(),
@@ -43,25 +60,200 @@ class NotificationService {
       final bool? initialized = await _notificationsPlugin.initialize(
         initializationSettings,
         onDidReceiveNotificationResponse: (NotificationResponse response) {
-          AppLogger.i('Notification clicked: ${response.payload}', tag: 'NotificationService');
+          AppLogger.i('Notification clicked: ${response.payload}',
+              tag: 'NotificationService');
         },
       );
 
       _isInitialized = initialized ?? false;
 
-      // Request Android 13+ permission & Android 12+ exact alarm permission
-      final androidImpl = _notificationsPlugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
-      if (androidImpl != null) {
-        await androidImpl.requestNotificationsPermission();
-        await androidImpl.requestExactAlarmsPermission();
-      }
-
-      AppLogger.i('NotificationService initialized: $_isInitialized', tag: 'NotificationService');
+      AppLogger.i('NotificationService initialized: $_isInitialized',
+          tag: 'NotificationService');
     } catch (e, st) {
-      AppLogger.e('Failed to initialize NotificationService', tag: 'NotificationService', error: e, st: st);
+      AppLogger.e('Failed to initialize NotificationService',
+          tag: 'NotificationService', error: e, st: st);
+      _isInitialized = false;
     }
   }
+
+  Future<bool> requestNotificationPermission() async {
+    if (!_isInitialized) await initialize();
+    final androidImpl =
+        _notificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImpl == null) return true;
+
+    try {
+      await androidImpl.requestNotificationsPermission();
+      return await androidImpl.areNotificationsEnabled() ?? false;
+    } catch (e, st) {
+      AppLogger.w(
+        'Notification permission request failed: $e',
+        tag: 'NotificationService',
+      );
+      AppLogger.e('Notification permission request exception',
+          tag: 'NotificationService', error: e, st: st);
+      return false;
+    }
+  }
+
+  Future<AndroidScheduleMode> _scheduleMode() async {
+    if (!Platform.isAndroid) return AndroidScheduleMode.inexactAllowWhileIdle;
+    final androidImpl =
+        _notificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImpl == null) return AndroidScheduleMode.inexactAllowWhileIdle;
+
+    try {
+      var canScheduleExact = await androidImpl.canScheduleExactNotifications();
+      if (canScheduleExact != true) {
+        await androidImpl.requestExactAlarmsPermission();
+        canScheduleExact = await androidImpl.canScheduleExactNotifications();
+      }
+      if (canScheduleExact != true) {
+        AppLogger.w(
+          'Exact alarm access is disabled; scheduling reminders with inexact timing.',
+          tag: 'NotificationService',
+        );
+        return AndroidScheduleMode.inexactAllowWhileIdle;
+      }
+      return AndroidScheduleMode.exactAllowWhileIdle;
+    } catch (e, st) {
+      AppLogger.w(
+        'Exact alarm permission check failed: $e',
+        tag: 'NotificationService',
+      );
+      AppLogger.e('Exact alarm permission check exception',
+          tag: 'NotificationService', error: e, st: st);
+      return AndroidScheduleMode.inexactAllowWhileIdle;
+    }
+  }
+
+  Future<bool> scheduleAlarm({
+    required int id,
+    required String title,
+    required String days,
+    required int hour,
+    required int minute,
+  }) async {
+    if (!Platform.isAndroid) return false;
+    if (!_isInitialized) await initialize();
+    await cancelAlarm(id);
+    if (!await requestNotificationPermission()) return false;
+
+    final mode = await _scheduleMode();
+    final now = DateTime.now();
+    final occurrences = days == 'Weekdays'
+        ? [
+            DateTime.monday,
+            DateTime.tuesday,
+            DateTime.wednesday,
+            DateTime.thursday,
+            DateTime.friday
+          ]
+        : days == 'Weekends'
+            ? [DateTime.saturday, DateTime.sunday]
+            : days == 'Daily'
+                ? [null]
+                : [0];
+    try {
+      for (final weekday in occurrences) {
+        var next = DateTime(now.year, now.month, now.day, hour, minute);
+        while (next.isBefore(now) ||
+            (weekday != null && weekday != 0 && next.weekday != weekday)) {
+          next = next.add(const Duration(days: 1));
+        }
+        final notificationId = _alarmNotificationId(id, weekday);
+        await _notificationsPlugin.zonedSchedule(
+          notificationId,
+          title,
+          'Alarm',
+          tz.TZDateTime.from(next, tz.local),
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'pocketdesk_alarms_channel',
+              'Alarms & Timers',
+              channelDescription: 'Alerts for alarms, timers, and countdowns',
+              importance: Importance.max,
+              priority: Priority.high,
+              playSound: true,
+              enableVibration: true,
+            ),
+          ),
+          androidScheduleMode: mode,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: weekday == null
+              ? DateTimeComponents.time
+              : weekday > 0
+                  ? DateTimeComponents.dayOfWeekAndTime
+                  : null,
+          payload: 'alarm_id=$id',
+        );
+      }
+      return true;
+    } catch (e, st) {
+      AppLogger.e('Failed to schedule alarm $id',
+          tag: 'NotificationService', error: e, st: st);
+      return false;
+    }
+  }
+
+  Future<void> cancelAlarm(int id) async {
+    if (!_isInitialized) await initialize();
+    for (var weekday = 0; weekday <= 8; weekday++) {
+      await _notificationsPlugin.cancel(_alarmNotificationId(
+        id,
+        weekday == 8 ? null : weekday,
+      ));
+    }
+  }
+
+  Future<bool> scheduleTimer({
+    required int id,
+    required Duration duration,
+  }) async {
+    if (!Platform.isAndroid) return true;
+    if (!_isInitialized) await initialize();
+    await cancelTimer(id);
+    if (!await requestNotificationPermission()) return false;
+    final mode = await _scheduleMode();
+    try {
+      await _notificationsPlugin.zonedSchedule(
+        id,
+        'Timer finished',
+        'Your countdown timer has ended.',
+        tz.TZDateTime.now(tz.local).add(duration),
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'pocketdesk_alarms_channel',
+            'Alarms & Timers',
+            channelDescription: 'Alerts for alarms, timers, and countdowns',
+            importance: Importance.max,
+            priority: Priority.high,
+            playSound: true,
+            enableVibration: true,
+          ),
+        ),
+        androidScheduleMode: mode,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+      return true;
+    } catch (e, st) {
+      AppLogger.e('Failed to schedule timer notification',
+          tag: 'NotificationService', error: e, st: st);
+      return false;
+    }
+  }
+
+  Future<void> cancelTimer(int id) async {
+    if (!_isInitialized) await initialize();
+    await _notificationsPlugin.cancel(id);
+  }
+
+  int _alarmNotificationId(int id, int? weekday) =>
+      2000000 + id * 10 + (weekday ?? 8);
 
   /// Shows an instant notification alert (used for alarms and timers on Android & Linux).
   Future<void> showNotification({
@@ -71,8 +263,16 @@ class NotificationService {
     String? payload,
   }) async {
     if (!_isInitialized) await initialize();
+    if (!await requestNotificationPermission()) {
+      AppLogger.w(
+        'Notification permission denied; "$title" was not shown.',
+        tag: 'NotificationService',
+      );
+      return;
+    }
     try {
-      const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      const AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
         'pocketdesk_alarms_channel',
         'Alarms & Timers',
         channelDescription: 'Alerts for alarms, timers, and countdowns',
@@ -87,9 +287,11 @@ class NotificationService {
         linux: LinuxNotificationDetails(),
       );
 
-      await _notificationsPlugin.show(id, title, body, platformDetails, payload: payload);
+      await _notificationsPlugin.show(id, title, body, platformDetails,
+          payload: payload);
     } catch (e, st) {
-      AppLogger.e('Failed to show notification', tag: 'NotificationService', error: e, st: st);
+      AppLogger.e('Failed to show notification',
+          tag: 'NotificationService', error: e, st: st);
     }
   }
 
@@ -103,9 +305,11 @@ class NotificationService {
         final notificationId = _generateNotificationId(eventId, i);
         await _notificationsPlugin.cancel(notificationId);
       }
-      AppLogger.d('Cancelled notifications for event ID: $eventId', tag: 'NotificationService');
+      AppLogger.d('Cancelled notifications for event ID: $eventId',
+          tag: 'NotificationService');
     } catch (e, st) {
-      AppLogger.e('Failed to cancel notifications for event ID: $eventId', tag: 'NotificationService', error: e, st: st);
+      AppLogger.e('Failed to cancel notifications for event ID: $eventId',
+          tag: 'NotificationService', error: e, st: st);
     }
   }
 
@@ -117,12 +321,21 @@ class NotificationService {
     await cancelEventReminders(event.id);
 
     if (event.reminderMinutes.isEmpty) return;
+    if (!await requestNotificationPermission()) {
+      AppLogger.w(
+        'Notification permission denied; reminders for "${event.title}" were not scheduled.',
+        tag: 'NotificationService',
+      );
+      return;
+    }
 
     try {
+      final scheduleMode = await _scheduleMode();
       final now = DateTime.now();
 
       // Setup Android notification channel details
-      const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      const AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
         'pocketdesk_calendar_channel',
         'Calendar Events',
         channelDescription: 'Reminders and notifications for calendar events',
@@ -138,7 +351,8 @@ class NotificationService {
 
       for (int i = 0; i < event.reminderMinutes.length; i++) {
         final minutesBefore = event.reminderMinutes[i];
-        final reminderTime = event.startTime.subtract(Duration(minutes: minutesBefore));
+        final reminderTime =
+            event.startTime.subtract(Duration(minutes: minutesBefore));
 
         if (reminderTime.isBefore(now)) {
           // Skip if the reminder time is in the past
@@ -148,7 +362,8 @@ class NotificationService {
         // Resolve event's timezone, fallback to local
         tz.Location location;
         try {
-          location = tz.getLocation(event.timeZone.isEmpty ? 'UTC' : event.timeZone);
+          location =
+              tz.getLocation(event.timeZone.isEmpty ? 'UTC' : event.timeZone);
         } catch (_) {
           location = tz.local;
         }
@@ -166,7 +381,7 @@ class NotificationService {
           '${event.location != null ? "@ ${event.location} - " : ""}$label',
           tzReminderTime,
           platformDetails,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          androidScheduleMode: scheduleMode,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
           payload: 'event_id=${event.id}',
@@ -178,7 +393,8 @@ class NotificationService {
         );
       }
     } catch (e, st) {
-      AppLogger.e('Failed to schedule notifications for event "${event.title}"', tag: 'NotificationService', error: e, st: st);
+      AppLogger.e('Failed to schedule notifications for event "${event.title}"',
+          tag: 'NotificationService', error: e, st: st);
     }
   }
 
@@ -217,8 +433,17 @@ class NotificationService {
     await cancelTaskReminder(task.id);
 
     if (task.dueDate == null || task.reminderMinutesRaw.isEmpty) return;
+    if (!await requestNotificationPermission()) {
+      AppLogger.w(
+        'Notification permission denied; reminder for "${task.title}" was not scheduled.',
+        tag: 'NotificationService',
+      );
+      return;
+    }
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    final scheduleMode = await _scheduleMode();
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
       'pocketdesk_tasks_channel',
       'Task Reminders',
       channelDescription: 'Reminders for upcoming tasks and deadlines',
@@ -245,9 +470,7 @@ class NotificationService {
         final tzReminderTime = tz.TZDateTime.from(reminderTime, tz.local);
         final notificationId = 1000000 + (task.id * 10) + i;
 
-        final label = minutes == 0
-            ? 'Task due now'
-            : 'Due in $minutes minutes';
+        final label = minutes == 0 ? 'Task due now' : 'Due in $minutes minutes';
 
         await _notificationsPlugin.zonedSchedule(
           notificationId,
@@ -255,7 +478,7 @@ class NotificationService {
           '${task.description != null ? "${task.description} — " : ""}$label',
           tzReminderTime,
           platformDetails,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          androidScheduleMode: scheduleMode,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
           payload: 'task_id=${task.id}',

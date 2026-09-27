@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/qr_login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/setup_onboarding_page.dart';
 import '../../features/auth/presentation/pages/profile_page.dart';
@@ -36,8 +37,6 @@ class _SplashPage extends StatelessWidget {
         body: Center(child: CircularProgressIndicator()),
       );
 }
-
-
 
 class _NotFoundPage extends StatelessWidget {
   const _NotFoundPage();
@@ -93,6 +92,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.qrLogin,
+        builder: (context, state) => const QrLoginPage(),
       ),
       GoRoute(
         path: AppRoutes.register,
@@ -176,9 +179,12 @@ GoRouter appRouter(Ref ref) {
 
       final location = state.matchedLocation;
       final authState = authAsync.valueOrNull;
-      final isNewRegistration = authState is AuthAuthenticated && authState.isNewRegistration;
+      final isNewRegistration =
+          authState is AuthAuthenticated && authState.isNewRegistration;
 
-      final onAuthPage = location == AppRoutes.login || location == AppRoutes.register;
+      final onAuthPage = location == AppRoutes.login ||
+          location == AppRoutes.qrLogin ||
+          location == AppRoutes.register;
 
       // 1. Unauthenticated users must be on login or register
       if (!isAuthenticated) {
@@ -188,12 +194,16 @@ GoRouter appRouter(Ref ref) {
 
       // 2. Authenticated users on splash screen
       if (location == AppRoutes.splash) {
-        return isNewRegistration ? AppRoutes.setupOnboarding : AppRoutes.dashboard;
+        return isNewRegistration
+            ? AppRoutes.setupOnboarding
+            : AppRoutes.dashboard;
       }
 
       // 3. Authenticated users submitting login or register forms
       if (onAuthPage) {
-        return isNewRegistration ? AppRoutes.setupOnboarding : AppRoutes.dashboard;
+        return isNewRegistration
+            ? AppRoutes.setupOnboarding
+            : AppRoutes.dashboard;
       }
 
       // 4. Authenticated users already on setup page or inner dashboard pages

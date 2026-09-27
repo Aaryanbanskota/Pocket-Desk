@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocketdesk/core/logging/app_logger.dart';
 import 'package:pocketdesk/core/router/app_routes.dart';
 import 'package:pocketdesk/core/services/p2p_sync_service.dart';
 import 'package:pocketdesk/core/theme/app_spacing.dart';
@@ -46,6 +47,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   String? _myFriendCode;
   String? _activePeerName;
   bool _isAITyping = false;
+  bool _isSending = false;
 
   final List<ChatMessage> _messages = [];
 
@@ -70,7 +72,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
   Future<void> _sendMessage() async {
     final text = _msgCtrl.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _isSending) return;
+    _isSending = true;
 
     final authState = ref.read(authNotifierProvider).valueOrNull;
     final user = authState is AuthAuthenticated ? authState.user : null;
@@ -88,27 +91,54 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     setState(() {
       _messages.add(userMsg);
       _showSlashOverlay = false;
+      _filteredActions = const [];
     });
 
     _msgCtrl.clear();
+    _keepMessageInputFocused();
 
-    final p2pService = P2PSyncService();
-    if (p2pService.deviceId == null) {
-      await p2pService.initialize(
-          deviceId: _myFriendCode, deviceName: username);
+    try {
+      final p2pService = P2PSyncService();
+      if (p2pService.deviceId == null) {
+        await p2pService.initialize(
+            deviceId: _myFriendCode, deviceName: username);
+      }
+      await p2pService.queueSyncEvent(
+        type: 'chat',
+        payload: {
+          'id': userMsg.id,
+          'sender': userMsg.senderId,
+          'text': userMsg.text,
+        },
+      );
+    } catch (e, st) {
+      AppLogger.e('Failed to queue chat sync event',
+          tag: 'ChatPage', error: e, st: st);
     }
-    await p2pService.queueSyncEvent(
-      type: 'chat',
-      payload: {
-        'id': userMsg.id,
-        'sender': userMsg.senderId,
-        'text': userMsg.text,
-      },
-    );
 
-    // If no active peer is connected, Pocketdesk AI acts as a friend!
-    if (_activePeerName == null) {
-      await _generateAIReply(userMsg, username);
+    try {
+      if (_activePeerName == null) {
+        await _generateAIReply(userMsg, username);
+      }
+    } catch (e, st) {
+      AppLogger.e('Failed to generate chat reply',
+          tag: 'ChatPage', error: e, st: st);
+      if (mounted) {
+        setState(() {
+          _isAITyping = false;
+          _messages.add(ChatMessage(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            senderId: 'ai',
+            senderName: 'Pocketdesk AI',
+            text: 'I could not complete that request. Please try again.',
+            timestamp: DateTime.now(),
+            isMe: false,
+          ));
+        });
+      }
+    } finally {
+      _isSending = false;
+      _keepMessageInputFocused();
     }
   }
 
@@ -173,14 +203,20 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
     setState(() => _isAITyping = true);
 
-    final historyContext =
-        _messages.take(6).map((m) => '${m.senderName}: ${m.text}').join('\n');
-    final prompt = 'Chat history:\n$historyContext\n$username: ${userMsg.text}';
+    final recentMessages = _messages.length <= 10
+        ? _messages
+        : _messages.sublist(_messages.length - 10);
+    final historyContext = recentMessages
+        .map((message) =>
+            '${message.isMe ? username : message.senderName}: ${message.text}')
+        .join('\n');
+    final prompt =
+        'Recent conversation (latest message is the current request):\n$historyContext';
     final nowStr = DateTime.now().toString();
     final systemPrompt = '''
 You are Pocketdesk AI, the official built-in universal action agent for Pocketdesk. Always address the user warmly (e.g. "yo <username>"). Be casual, helpful, clear, and friendly!
 Current timestamp: $nowStr
-AI Master Control: ${aiSettings.masterControlEnabled ? 'ON. You may open app sections and perform supported user-requested task/event/note deletions, but always ask for confirmation before deleting. Feed and Trash content remain read-only.' : 'OFF. Do not open app sections or delete records; tell the user to enable AI Master Control in Settings > AI.'}
+AI Master Control: ${aiSettings.masterControlEnabled ? 'ON. You may open app sections and perform supported user-requested task/event/note deletions. The app will show exactly one confirmation dialog before deletion; do not ask for a second confirmation in chat. Feed and Trash content remain read-only.' : 'OFF. Do not open app sections or delete records; tell the user to enable AI Master Control in Settings > AI.'}
 
 SLASH ACTION SYSTEM:
 The user input may start with a slash command defining the intended action type:
@@ -203,11 +239,13 @@ CAPABILITY & PERMISSION MATRIX:
 6. Trash: READ-ONLY. AI cannot restore or permanently purge trash items.
 7. Deletion Rule: Task, event, and note deletion is available only when AI Master Control is enabled and the user confirms the specific deletion. Feed and Trash remain read-only; never create, edit, or delete feed content or restore/purge trash.
 
+When the user requests a supported create or edit and all required details are present, execute it immediately and include the JSON action block; do not ask "are you sure?" or request a second confirmation. For deletions, return the JSON action immediately because the app itself will ask once before deleting. Ask only for essential missing information, and do not include an action block until it is provided. If a prior assistant message asked for missing information and the user answers it (including a short answer such as "yes"), use the recent conversation to complete the pending request. Never repeat an action that the recent conversation already confirms was completed.
+
 IF EXECUTING A CREATE OR EDIT ACTION, OR AN OPEN/DELETE ACTION WHILE MASTER CONTROL IS ON:
 You MUST output a JSON action block at the END of your response:
 ```json
 {
-  "action": "create_task" | "create_note" | "create_event" | "add_expense" | "edit_note" | "edit_task" | "delete_task" | "delete_event" | "open_page" | "ask_confirmation",
+  "action": "create_task" | "create_note" | "create_event" | "add_expense" | "edit_note" | "edit_task" | "delete_task" | "delete_event" | "open_page",
   "data": { ... }
 }
 ```
@@ -221,7 +259,7 @@ Field specifications:
 - add_expense: {"title": "...", "amount": 100.0, "category": "...", "date": "YYYY-MM-DD"}
 
 The app asks the user to confirm each task/event deletion. Do not claim that deletion happened before confirmation. If Master Control is off, explain how to enable it instead of returning an action.
-If essential details are missing (e.g. event time or task title), ask a quick clarifying question instead of guessing!
+If essential details are missing (e.g. event time or task title), ask one quick clarifying question instead of guessing.
 Sanitize all inputs: NEVER include executable code or script tags.
 ''';
 
@@ -493,127 +531,105 @@ Sanitize all inputs: NEVER include executable code or script tags.
 
       if (action == 'create_task') {
         final title = sanitize(data['title']);
-        if (title.isNotEmpty) {
-          final desc = sanitize(data['description']);
-          DateTime? dueDate;
-          if (data['dueDate'] != null) {
-            dueDate = DateTime.tryParse(data['dueDate'].toString());
-          }
-          await ref.read(tasksProvider.notifier).addOrUpdateTask(
-                title: title,
-                description: desc.isEmpty ? null : desc,
-                dueDate: dueDate,
-              );
+        if (title.isEmpty) return 'Tell me the task name to create.';
+        final desc = sanitize(data['description']);
+        DateTime? dueDate;
+        if (data['dueDate'] != null) {
+          dueDate = DateTime.tryParse(data['dueDate'].toString());
         }
+        await ref.read(tasksProvider.notifier).addOrUpdateTask(
+              title: title,
+              description: desc.isEmpty ? null : desc,
+              dueDate: dueDate,
+            );
+        return 'Created task "$title".';
       } else if (action == 'create_note') {
         final title = sanitize(data['title']);
-        if (title.isNotEmpty) {
-          final content = sanitize(data['content']);
-          final folder = sanitize(data['folder']);
-          await ref.read(notesProvider.notifier).saveNote(
-                title: title,
-                content: content,
-                folderName: folder.isEmpty ? null : folder,
-              );
-        }
+        if (title.isEmpty) return 'Tell me the note name to create.';
+        final content = sanitize(data['content']);
+        final folder = sanitize(data['folder']);
+        await ref.read(notesProvider.notifier).saveNote(
+              title: title,
+              content: content,
+              folderName: folder.isEmpty ? null : folder,
+            );
+        return 'Created note "$title".';
       } else if (action == 'create_event') {
         final title = sanitize(data['title']);
-        if (title.isNotEmpty) {
-          final start = DateTime.tryParse(data['startTime'].toString()) ??
-              DateTime.now().add(const Duration(hours: 1));
-          final end = DateTime.tryParse(data['endTime'].toString()) ??
-              start.add(const Duration(hours: 1));
-          final loc = sanitize(data['location']);
-
-          if (mounted) {
-            final confirm = await showDialog<bool>(
-              context: context,
-              builder: (dialogCtx) => AlertDialog(
-                title: const Text('Confirm Calendar Event'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Title: $title',
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text('Start: ${start.toString().substring(0, 16)}'),
-                    Text('End: ${end.toString().substring(0, 16)}'),
-                    if (loc.isNotEmpty) Text('Location: $loc'),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(dialogCtx, false),
-                      child: const Text('Cancel')),
-                  FilledButton(
-                      onPressed: () => Navigator.pop(dialogCtx, true),
-                      child: const Text('Confirm & Save')),
-                ],
-              ),
-            );
-
-            if (confirm == true) {
-              await ref.read(calendarEventsProvider.notifier).addOrUpdateEvent(
-                    title: title,
-                    startTime: start,
-                    endTime: end,
-                    location: loc.isEmpty ? null : loc,
-                  );
-            }
-          }
+        if (title.isEmpty) return 'Tell me the event name to create.';
+        final start = DateTime.tryParse(data['startTime']?.toString() ?? '');
+        final end = DateTime.tryParse(data['endTime']?.toString() ?? '');
+        if (start == null || end == null) {
+          return 'I need the event start and end time before I can create it.';
         }
+        if (!end.isAfter(start)) {
+          return 'The event end time must be after its start time.';
+        }
+        final loc = sanitize(data['location']);
+        await ref.read(calendarEventsProvider.notifier).addOrUpdateEvent(
+              title: title,
+              startTime: start,
+              endTime: end,
+              location: loc.isEmpty ? null : loc,
+            );
+        return 'Created event "$title".';
       } else if (action == 'edit_note') {
         final targetTitle = sanitize(data['targetTitle']);
         final newTitle = sanitize(data['title']);
         final newContent = sanitize(data['content']);
         final searchQ = targetTitle.isNotEmpty ? targetTitle : newTitle;
-        if (searchQ.isNotEmpty) {
-          final matches =
-              await ref.read(notesProvider.notifier).searchNotes(searchQ);
-          if (matches.isNotEmpty) {
-            final existing = matches.first;
-            await ref.read(notesProvider.notifier).saveNote(
-                  noteId: existing.id,
-                  title: newTitle.isNotEmpty ? newTitle : existing.title,
-                  content:
-                      newContent.isNotEmpty ? newContent : existing.content,
-                  folderName: existing.folderName,
-                );
-          }
+        if (searchQ.isEmpty) return 'Tell me which note you want to edit.';
+        final matches =
+            await ref.read(notesProvider.notifier).searchNotes(searchQ);
+        if (matches.length != 1) {
+          return matches.isEmpty
+              ? 'I could not find a note named "$searchQ".'
+              : 'More than one note matches "$searchQ". Please specify its exact name.';
         }
+        final existing = matches.single;
+        await ref.read(notesProvider.notifier).saveNote(
+              noteId: existing.id,
+              title: newTitle.isNotEmpty ? newTitle : existing.title,
+              content: newContent.isNotEmpty ? newContent : existing.content,
+              folderName: existing.folderName,
+            );
+        return 'Updated note "${newTitle.isNotEmpty ? newTitle : existing.title}".';
       } else if (action == 'edit_task') {
         final targetTitle = sanitize(data['targetTitle']);
         final newTitle = sanitize(data['title']);
         final newDesc = sanitize(data['description']);
         final searchQ = targetTitle.isNotEmpty ? targetTitle : newTitle;
-        if (searchQ.isNotEmpty) {
-          final matches =
-              await ref.read(tasksProvider.notifier).searchTasks(searchQ);
-          if (matches.isNotEmpty) {
-            final existing = matches.first;
-            await ref.read(tasksProvider.notifier).addOrUpdateTask(
-                  taskId: existing.id,
-                  title: newTitle.isNotEmpty ? newTitle : existing.title,
-                  description:
-                      newDesc.isNotEmpty ? newDesc : existing.description,
-                );
-          }
+        if (searchQ.isEmpty) return 'Tell me which task you want to edit.';
+        final matches =
+            await ref.read(tasksProvider.notifier).searchTasks(searchQ);
+        if (matches.length != 1) {
+          return matches.isEmpty
+              ? 'I could not find a task named "$searchQ".'
+              : 'More than one task matches "$searchQ". Please specify its exact name.';
         }
+        final existing = matches.single;
+        await ref.read(tasksProvider.notifier).addOrUpdateTask(
+              taskId: existing.id,
+              title: newTitle.isNotEmpty ? newTitle : existing.title,
+              description: newDesc.isNotEmpty ? newDesc : existing.description,
+            );
+        return 'Updated task "${newTitle.isNotEmpty ? newTitle : existing.title}".';
       } else if (action == 'add_expense') {
         final title = sanitize(data['title']);
-        final amt = double.tryParse(data['amount'].toString()) ?? 0.0;
-        if (title.isNotEmpty && amt > 0) {
-          final cat = sanitize(data['category']);
-          final date =
-              DateTime.tryParse(data['date'].toString()) ?? DateTime.now();
-          await ref.read(moneyProvider.notifier).addExpense(
-                title: title,
-                amount: amt,
-                category: cat.isEmpty ? 'General' : cat,
-                date: date,
-              );
+        final amt = double.tryParse(data['amount']?.toString() ?? '');
+        if (title.isEmpty || amt == null || amt <= 0) {
+          return 'Tell me the expense name and a positive amount.';
         }
+        final cat = sanitize(data['category']);
+        final date =
+            DateTime.tryParse(data['date']?.toString() ?? '') ?? DateTime.now();
+        await ref.read(moneyProvider.notifier).addExpense(
+              title: title,
+              amount: amt,
+              category: cat.isEmpty ? 'General' : cat,
+              date: date,
+            );
+        return 'Added expense "$title".';
       }
       return null;
     } catch (e) {
@@ -647,7 +663,8 @@ Sanitize all inputs: NEVER include executable code or script tags.
   int _selectedIndex = 0;
   List<Map<String, String>> _filteredActions = [];
   final FocusNode _msgFocusNode = FocusNode();
-  final FocusNode _keyboardFocusNode = FocusNode();
+  final FocusNode _keyboardFocusNode =
+      FocusNode(skipTraversal: true, canRequestFocus: false);
 
   @override
   void dispose() {
@@ -692,12 +709,14 @@ Sanitize all inputs: NEVER include executable code or script tags.
   ];
 
   void _onTextChanged(String text) {
-    if (text.startsWith('/') && !text.trim().contains(' ')) {
+    final trimmed = text.trim();
+    final slashPrefix = text.startsWith('/') && !trimmed.contains(' ');
+
+    if (slashPrefix) {
       final firstWord = text.split(' ').first.toLowerCase();
       final matches = capabilityRegistry
           .where((action) => action['command']!.startsWith(firstWord))
           .toList();
-
       final listToDisplay = matches.isNotEmpty ? matches : capabilityRegistry;
 
       setState(() {
@@ -706,17 +725,16 @@ Sanitize all inputs: NEVER include executable code or script tags.
         _selectedIndex = 0;
       });
     } else if (_showSlashOverlay) {
-      setState(() => _showSlashOverlay = false);
-    }
-
-    if (_showSlashOverlay) {
-      _keepMessageInputFocused();
+      setState(() {
+        _showSlashOverlay = false;
+        _filteredActions = const [];
+      });
     }
   }
 
   void _keepMessageInputFocused() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_msgFocusNode.hasFocus) {
+      if (mounted) {
         _msgFocusNode.requestFocus();
       }
     });
@@ -729,6 +747,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
         TextSelection.fromPosition(TextPosition(offset: _msgCtrl.text.length));
     setState(() {
       _showSlashOverlay = false;
+      _filteredActions = const [];
     });
     _keepMessageInputFocused();
   }
@@ -930,41 +949,43 @@ Sanitize all inputs: NEVER include executable code or script tags.
               ),
             ),
           if (_showSlashOverlay)
-            Container(
-              constraints: const BoxConstraints(maxHeight: 200),
-              margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHigh,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(16)),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 8)
-                ],
-              ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _filteredActions.length,
-                itemBuilder: (context, i) {
-                  final action = _filteredActions[i];
-                  final isSelected = i == _selectedIndex;
-                  return Material(
-                    color: Colors.transparent,
-                    child: ListTile(
-                      dense: true,
-                      selected: isSelected,
-                      selectedTileColor:
-                          colorScheme.primaryContainer.withValues(alpha: 0.3),
-                      title: Text('${action['command']} - ${action['desc']}',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: isSelected
-                                  ? colorScheme.primary
-                                  : colorScheme.onSurface)),
-                      onTap: () => _selectSlashCommand(action),
-                    ),
-                  );
-                },
+            TextFieldTapRegion(
+              child: Container(
+                constraints: const BoxConstraints(maxHeight: 200),
+                margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHigh,
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black26, blurRadius: 8)
+                  ],
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _filteredActions.length,
+                  itemBuilder: (context, i) {
+                    final action = _filteredActions[i];
+                    final isSelected = i == _selectedIndex;
+                    return Material(
+                      color: Colors.transparent,
+                      child: ListTile(
+                        dense: true,
+                        selected: isSelected,
+                        selectedTileColor:
+                            colorScheme.primaryContainer.withValues(alpha: 0.3),
+                        title: Text('${action['command']} - ${action['desc']}',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: isSelected
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurface)),
+                        onTap: () => _selectSlashCommand(action),
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           Container(
@@ -1017,9 +1038,12 @@ Sanitize all inputs: NEVER include executable code or script tags.
                     ),
                   ),
                 ),
-                IconButton.filled(
-                  onPressed: _sendMessage,
-                  icon: const Icon(Icons.send_rounded),
+                TextFieldTapRegion(
+                  child: IconButton.filled(
+                    tooltip: 'Send message',
+                    onPressed: _sendMessage,
+                    icon: const Icon(Icons.send_rounded),
+                  ),
                 ),
               ],
             ),

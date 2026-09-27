@@ -1,14 +1,11 @@
 import 'dart:io' show Platform;
-import 'package:local_auth/local_auth.dart';
-import 'package:local_auth/error_codes.dart' as auth_error;
+
 import 'package:flutter/services.dart';
+import 'package:local_auth/error_codes.dart' as auth_error;
+import 'package:local_auth/local_auth.dart';
 
 import '../../../../core/logging/app_logger.dart';
 
-/// Wraps [LocalAuthentication] with a clean API for biometric login.
-///
-/// Call [isBiometricAvailable] first to check hardware + enrolled biometrics.
-/// Then call [authenticate] — returns true on success, false on cancel/failure.
 class BiometricService {
   BiometricService() : _auth = LocalAuthentication();
 
@@ -16,53 +13,57 @@ class BiometricService {
 
   static const _tag = 'BiometricService';
 
-  /// Returns true if the device supports biometrics AND has enrolled credentials.
   Future<bool> isBiometricAvailable() async {
-    if (Platform.isLinux) {
-      return true;
-    }
+    if (Platform.isLinux) return false;
     try {
-      final canCheck = await _auth.canCheckBiometrics;
-      final isSupported = await _auth.isDeviceSupported();
-      if (!canCheck && !isSupported) return false;
-
-      final biometrics = await _auth.getAvailableBiometrics();
-      return biometrics.isNotEmpty || canCheck || isSupported;
+      return (await _auth.getAvailableBiometrics()).isNotEmpty;
     } catch (e) {
       AppLogger.w('Biometric availability check failed: $e', tag: _tag);
       return false;
     }
   }
 
-  /// Prompts the user for biometric authentication.
-  ///
-  /// Returns true on successful authentication.
-  /// Returns false if cancelled, not available, or an error occurs.
-  Future<bool> authenticate() async {
+  Future<bool> authenticate({
+    String localizedReason = 'Authenticate to access PocketDesk',
+  }) async {
     if (Platform.isLinux) {
-      return true;
+      throw const BiometricAuthenticationException(
+        'Biometric authentication is not supported on Linux.',
+      );
     }
     try {
       return await _auth.authenticate(
-        localizedReason: 'Authenticate to access PocketDesk',
+        localizedReason: localizedReason,
         options: const AuthenticationOptions(
-          biometricOnly: false, // also allows device PIN as fallback
-          stickyAuth: true,     // keep dialog alive if user backgrounds app
+          biometricOnly: false,
+          stickyAuth: true,
         ),
       );
     } on PlatformException catch (e) {
-      if (e.code == auth_error.notAvailable ||
-          e.code == auth_error.notEnrolled ||
-          e.code == auth_error.passcodeNotSet) {
-        AppLogger.w('Biometric not configured: ${e.code}', tag: _tag);
-      } else if (e.code != auth_error.lockedOut &&
-                 e.code != auth_error.permanentlyLockedOut) {
-        AppLogger.e('Biometric auth error: ${e.code}', tag: _tag, error: e);
-      }
-      return false;
-    } catch (e) {
-      AppLogger.e('Unexpected biometric error', tag: _tag, error: e);
-      return false;
+      final message = switch (e.code) {
+        auth_error.notAvailable =>
+          'Biometric authentication is not available on this device.',
+        auth_error.notEnrolled =>
+          'Set up a fingerprint or face unlock in Android Settings first.',
+        auth_error.passcodeNotSet =>
+          'Set a screen lock on this device before using biometrics.',
+        auth_error.lockedOut =>
+          'Biometrics are temporarily locked. Unlock your device and try again.',
+        auth_error.permanentlyLockedOut =>
+          'Biometrics are locked. Unlock your device with its screen lock and try again.',
+        _ => e.message ?? 'Biometric authentication could not be completed.',
+      };
+      AppLogger.e('Biometric auth error: ${e.code}', tag: _tag, error: e);
+      throw BiometricAuthenticationException(message);
     }
   }
+}
+
+class BiometricAuthenticationException implements Exception {
+  const BiometricAuthenticationException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }

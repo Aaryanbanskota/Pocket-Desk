@@ -544,7 +544,7 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                     const Text('Question 1', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
-                      value: selectedQ1,
+                      initialValue: selectedQ1,
                       isExpanded: true,
                       decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
                       items: presetQuestions1
@@ -572,7 +572,7 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                     const Text('Question 2', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
-                      value: selectedQ2,
+                      initialValue: selectedQ2,
                       isExpanded: true,
                       decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
                       items: presetQuestions2

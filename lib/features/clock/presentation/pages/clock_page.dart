@@ -215,7 +215,7 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: selectedDays,
+                initialValue: selectedDays,
                 decoration: const InputDecoration(labelText: 'Repeat'),
                 items: const [
                   DropdownMenuItem(value: 'Once', child: Text('Once')),

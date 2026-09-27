@@ -191,7 +191,7 @@ class NotePreviewDialog extends ConsumerWidget {
                           spacing: 6,
                           children: note.tags.map((String t) => Chip(
                             label: Text('#$t', style: TextStyle(fontSize: 11, color: cs.primary, fontWeight: FontWeight.bold)),
-                            backgroundColor: cs.primaryContainer.withOpacity(0.4),
+                            backgroundColor: cs.primaryContainer.withValues(alpha: 0.4),
                             side: BorderSide.none,
                             padding: EdgeInsets.zero,
                           )).toList(),

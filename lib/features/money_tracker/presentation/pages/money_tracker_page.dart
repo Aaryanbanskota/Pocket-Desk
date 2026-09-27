@@ -131,7 +131,7 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
               ),
               const SizedBox(height: AppSpacing.md),
               DropdownButtonFormField<String>(
-                value: _categories.contains(_selectedCategory) ? _selectedCategory : _categories.first,
+                initialValue: _categories.contains(_selectedCategory) ? _selectedCategory : _categories.first,
                 decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
                 items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                 onChanged: (val) {
@@ -233,7 +233,7 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                 color: cs.surfaceContainerLow,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24),
-                  side: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
+                  side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(20),
@@ -346,11 +346,11 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                     return Card(
                       elevation: 0,
                       margin: const EdgeInsets.only(bottom: 8),
-                      color: cs.surfaceContainerHighest.withOpacity(0.3),
+                      color: cs.surfaceContainerHighest.withValues(alpha: 0.3),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: cs.primary.withOpacity(0.1),
+                          backgroundColor: cs.primary.withValues(alpha: 0.1),
                           child: Icon(Icons.account_balance_wallet_outlined, color: cs.primary),
                         ),
                         title: Text(exp.title, style: const TextStyle(fontWeight: FontWeight.bold)),

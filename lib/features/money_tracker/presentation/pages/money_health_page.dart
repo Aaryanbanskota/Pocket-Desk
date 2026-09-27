@@ -156,7 +156,7 @@ class _MoneyHealthPageState extends ConsumerState<MoneyHealthPage> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: (moneyState.spendingScore >= 70 ? Colors.green : Colors.orange).withOpacity(0.15),
+                                color: (moneyState.spendingScore >= 70 ? Colors.green : Colors.orange).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -232,9 +232,9 @@ class _MoneyHealthPageState extends ConsumerState<MoneyHealthPage> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: cs.surfaceContainerHighest.withOpacity(0.5),
+                          color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: cs.primary.withOpacity(0.3)),
+                          border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
                         ),
                         child: Text(
                           _aiAnalysis!,

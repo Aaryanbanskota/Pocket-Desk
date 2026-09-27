@@ -144,11 +144,11 @@ class _AISettingsWidgetState extends ConsumerState<AISettingsWidget> {
             // ─── Master Enable Switch Card ─────────────────────────────────────
             Card(
               elevation: 0,
-              color: settings.isEnabled ? cs.primaryContainer.withOpacity(0.3) : cs.surfaceContainerLow,
+              color: settings.isEnabled ? cs.primaryContainer.withValues(alpha: 0.3) : cs.surfaceContainerLow,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
                 side: BorderSide(
-                  color: settings.isEnabled ? cs.primary : cs.outlineVariant.withOpacity(0.5),
+                  color: settings.isEnabled ? cs.primary : cs.outlineVariant.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),
@@ -179,9 +179,9 @@ class _AISettingsWidgetState extends ConsumerState<AISettingsWidget> {
                 padding: const EdgeInsets.all(14),
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.12),
+                  color: Colors.orange.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.orange.withOpacity(0.8)),
+                  border: Border.all(color: Colors.orange.withValues(alpha: 0.8)),
                 ),
                 child: const Row(
                   children: [
@@ -211,7 +211,7 @@ class _AISettingsWidgetState extends ConsumerState<AISettingsWidget> {
               color: cs.surfaceContainerLow,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: cs.outlineVariant.withOpacity(0.4)),
+                side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -310,7 +310,7 @@ class _AISettingsWidgetState extends ConsumerState<AISettingsWidget> {
 
                     // Model Selection Dropdown (with isExpanded and TextOverflow.ellipsis)
                     DropdownButtonFormField<String>(
-                      value: _models.contains(_selectedModel) ? _selectedModel : _models.first,
+                      initialValue: _models.contains(_selectedModel) ? _selectedModel : _models.first,
                       isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Model Selection',
@@ -368,8 +368,8 @@ class _AISettingsWidgetState extends ConsumerState<AISettingsWidget> {
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
                               color: _testSuccess == true
-                                  ? Colors.green.withOpacity(0.12)
-                                  : cs.errorContainer.withOpacity(0.3),
+                                  ? Colors.green.withValues(alpha: 0.12)
+                                  : cs.errorContainer.withValues(alpha: 0.3),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -404,7 +404,7 @@ class _AISettingsWidgetState extends ConsumerState<AISettingsWidget> {
               color: cs.surfaceContainerLow,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: cs.outlineVariant.withOpacity(0.4)),
+                side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
               ),
               child: Column(
                 children: [
@@ -467,7 +467,7 @@ class _AISettingsWidgetState extends ConsumerState<AISettingsWidget> {
               color: cs.surfaceContainerLow,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: cs.outlineVariant.withOpacity(0.4)),
+                side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
               ),
               child: Column(
                 children: [

@@ -89,10 +89,11 @@ class _LoginPageState extends ConsumerState<LoginPage>
     setState(() => _submitting = false);
 
     final authState = ref.read(authNotifierProvider).valueOrNull;
-    if (authState is AuthError) {
+    if (authState is AuthAuthenticated) {
+      context.go(AppRoutes.dashboard);
+    } else if (authState is AuthError) {
       _showError(authState.failure.message);
     }
-    // If authenticated, router redirect handles navigation automatically.
   }
 
   Future<void> _biometricLogin() async {
@@ -160,9 +161,9 @@ class _LoginPageState extends ConsumerState<LoginPage>
                       padding: const EdgeInsets.all(10),
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
+                        color: Colors.red.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.withOpacity(0.5)),
+                        border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
                       ),
                       child: Text(
                         dialogError!,

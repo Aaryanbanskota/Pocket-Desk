@@ -303,7 +303,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: cs.surfaceContainerLow,
-                border: Border(bottom: BorderSide(color: cs.outlineVariant.withOpacity(0.4))),
+                border: Border(bottom: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4))),
               ),
               child: ListView(
                 scrollDirection: Axis.horizontal,
@@ -381,7 +381,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                     decoration: InputDecoration(
                       hintText: 'Note Title',
                       hintStyle: tt.headlineSmall?.copyWith(
-                        color: cs.onSurfaceVariant.withOpacity(0.4),
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.4),
                         fontWeight: FontWeight.bold,
                       ),
                       border: InputBorder.none,
@@ -399,7 +399,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                           style: tt.bodySmall?.copyWith(color: cs.primary, fontWeight: FontWeight.bold),
                           decoration: InputDecoration(
                             hintText: 'Folder (e.g. Work, Ideas)',
-                            hintStyle: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant.withOpacity(0.5)),
+                            hintStyle: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
                             border: InputBorder.none,
                             isDense: true,
                           ),
@@ -519,7 +519,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
                       style: tt.bodyMedium?.copyWith(height: 1.5),
                       decoration: InputDecoration(
                         hintText: 'Start writing your note…\n\nSupports Markdown formatting:\n• # Heading\n• **Bold**, *Italic*, ~~Strikethrough~~\n• - Bullet list\n• ```code block```',
-                        hintStyle: TextStyle(color: cs.onSurfaceVariant.withOpacity(0.4)),
+                        hintStyle: TextStyle(color: cs.onSurfaceVariant.withValues(alpha: 0.4)),
                         border: InputBorder.none,
                       ),
                     ),

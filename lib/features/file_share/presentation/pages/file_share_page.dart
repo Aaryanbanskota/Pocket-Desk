@@ -228,7 +228,7 @@ class _FileSharePageState extends ConsumerState<FileSharePage> {
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: cs.primary.withOpacity(0.2)),
+                border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
               ),
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -356,14 +356,14 @@ class _FileSharePageState extends ConsumerState<FileSharePage> {
                 height: 140,
                 decoration: BoxDecoration(
                   color: cs.surfaceContainerLow,
-                  border: Border.all(color: cs.outlineVariant.withOpacity(0.5)),
+                  border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.drive_folder_upload_rounded, size: 40, color: cs.onSurfaceVariant.withOpacity(0.5)),
+                      Icon(Icons.drive_folder_upload_rounded, size: 40, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
                       const SizedBox(height: 8),
                       Text(
                         'No files added yet. Tap "Add Files" above.',
@@ -384,7 +384,7 @@ class _FileSharePageState extends ConsumerState<FileSharePage> {
                   return Card(
                     elevation: 0,
                     margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                    color: cs.surfaceContainerHighest.withOpacity(0.4),
+                    color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     child: ListTile(
                       leading: CircleAvatar(

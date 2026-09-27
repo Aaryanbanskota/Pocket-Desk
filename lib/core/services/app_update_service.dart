@@ -232,7 +232,7 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: cs.surfaceContainerHighest.withOpacity(0.4),
+                color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(

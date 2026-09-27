@@ -160,7 +160,7 @@ class _SetupOnboardingPageState extends State<SetupOnboardingPage> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: cs.primaryContainer.withOpacity(0.4),
+                            color: cs.primaryContainer.withValues(alpha: 0.4),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(step.icon, size: 54, color: cs.primary),

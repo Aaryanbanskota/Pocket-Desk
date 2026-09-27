@@ -402,7 +402,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
           Text('Question 1', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: AppSpacing.xs),
           DropdownButtonFormField<String>(
-            value: _selectedQ1,
+            initialValue: _selectedQ1,
             isExpanded: true,
             decoration: const InputDecoration(
               isDense: true,
@@ -444,7 +444,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
           Text('Question 2', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: AppSpacing.xs),
           DropdownButtonFormField<String>(
-            value: _selectedQ2,
+            initialValue: _selectedQ2,
             isExpanded: true,
             decoration: const InputDecoration(
               isDense: true,

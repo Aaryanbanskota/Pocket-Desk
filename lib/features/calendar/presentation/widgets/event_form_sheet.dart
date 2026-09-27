@@ -223,7 +223,7 @@ class _EventFormSheetState extends ConsumerState<EventFormSheet> {
                         Switch(
                           value: _isAllDay,
                           onChanged: (v) => setState(() => _isAllDay = v),
-                          activeColor: selectedColor,
+                          activeThumbColor: selectedColor,
                         ),
                       ],
                     ),
@@ -298,7 +298,7 @@ class _EventFormSheetState extends ConsumerState<EventFormSheet> {
                   const SizedBox(height: AppSpacing.sm),
                   _FormRow(
                     child: DropdownButtonFormField<RecurrenceType>(
-                      value: _recurrenceType,
+                      initialValue: _recurrenceType,
                       decoration: const InputDecoration(
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.zero,
@@ -661,7 +661,7 @@ class _ColorPicker extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: options.map((opt) {
-        final hex = '0x${opt.color.value.toRadixString(16).toUpperCase().padLeft(8, '0')}';
+        final hex = '0x${opt.color.toARGB32().toRadixString(16).toUpperCase().padLeft(8, '0')}';
         final isSelected = selectedHex == hex;
         return GestureDetector(
           onTap: () => onSelect(hex),

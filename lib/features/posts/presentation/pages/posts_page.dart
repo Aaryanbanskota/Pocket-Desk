@@ -230,7 +230,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.dynamic_feed_rounded, size: 64, color: cs.onSurfaceVariant.withOpacity(0.5)),
+                  Icon(Icons.dynamic_feed_rounded, size: 64, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
                   const SizedBox(height: 16),
                   Text('Your personal feed is empty.', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 8),
@@ -258,7 +258,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                   side: BorderSide(
-                    color: post.isPinned ? cs.primary : cs.outlineVariant.withOpacity(0.4),
+                    color: post.isPinned ? cs.primary : cs.outlineVariant.withValues(alpha: 0.4),
                     width: post.isPinned ? 2 : 1,
                   ),
                 ),
@@ -356,7 +356,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                         Container(
                                           padding: const EdgeInsets.all(8),
                                           decoration: BoxDecoration(
-                                            color: Colors.black.withOpacity(0.5),
+                                            color: Colors.black.withValues(alpha: 0.5),
                                             shape: BoxShape.circle,
                                           ),
                                           child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 32),
@@ -377,7 +377,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                           children: post.tags.map((t) => Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: cs.primary.withOpacity(0.1),
+                                  color: cs.primary.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text('#$t', style: TextStyle(fontSize: 11, color: cs.primary, fontWeight: FontWeight.bold)),
@@ -422,7 +422,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: cs.surfaceContainerHighest.withOpacity(0.4),
+                            color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(

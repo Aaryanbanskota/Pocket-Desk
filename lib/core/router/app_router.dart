@@ -160,24 +160,25 @@ GoRouter appRouter(Ref ref) {
       final authState = authAsync.valueOrNull;
       final isNewRegistration = authState is AuthAuthenticated && authState.isNewRegistration;
 
-      // Splash is only shown while auth is loading — redirect once resolved.
+      final onAuthPage = location == AppRoutes.login || location == AppRoutes.register;
+
+      // 1. Unauthenticated users must be on login or register
+      if (!isAuthenticated) {
+        if (onAuthPage) return null;
+        return AppRoutes.login;
+      }
+
+      // 2. Authenticated users on splash screen
       if (location == AppRoutes.splash) {
-        if (!isAuthenticated) return AppRoutes.login;
         return isNewRegistration ? AppRoutes.setupOnboarding : AppRoutes.dashboard;
       }
 
-      final onAuthPage =
-          location == AppRoutes.login || location == AppRoutes.register;
-      final onSetupPage = location == AppRoutes.setupOnboarding;
-
-      if (!isAuthenticated && !onAuthPage && !onSetupPage) return AppRoutes.login;
-      
-      // When user logs in or registers:
-      if (isAuthenticated && onAuthPage) {
+      // 3. Authenticated users submitting login or register forms
+      if (onAuthPage) {
         return isNewRegistration ? AppRoutes.setupOnboarding : AppRoutes.dashboard;
       }
 
-      if (isAuthenticated && onSetupPage) return null; // Keep on setup flow
+      // 4. Authenticated users already on setup page or inner dashboard pages
       return null;
     },
   );

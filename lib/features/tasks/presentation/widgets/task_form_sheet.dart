@@ -249,7 +249,7 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 20,
                 spreadRadius: 2,
               ),
@@ -264,7 +264,7 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: cs.onSurfaceVariant.withOpacity(0.4),
+                    color: cs.onSurfaceVariant.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -353,7 +353,7 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
           return ChoiceChip(
             label: Text(_priorityLabel(p)),
             selected: selected,
-            selectedColor: _priorityColor(p).withOpacity(0.2),
+            selectedColor: _priorityColor(p).withValues(alpha: 0.2),
             side: BorderSide(
               color: selected ? _priorityColor(p) : cs.outline,
             ),
@@ -426,7 +426,7 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
       if (_isRecurring) ...[
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _recurrenceRule,
+          initialValue: _recurrenceRule,
           decoration: const InputDecoration(labelText: 'Repeat'),
           items: _recurrenceOptions
               .map((r) => DropdownMenuItem(value: r, child: Text(r)))

@@ -26,8 +26,8 @@ class AppHamburgerDrawer extends ConsumerWidget {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(20, 16, 16, 20),
               decoration: BoxDecoration(
-                color: cs.primaryContainer.withOpacity(0.3),
-                border: Border(bottom: BorderSide(color: cs.outlineVariant.withOpacity(0.4))),
+                color: cs.primaryContainer.withValues(alpha: 0.3),
+                border: Border(bottom: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4))),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,7 +184,7 @@ class AppHamburgerDrawer extends ConsumerWidget {
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: cs.error,
-                    side: BorderSide(color: cs.error.withOpacity(0.5)),
+                    side: BorderSide(color: cs.error.withValues(alpha: 0.5)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   onPressed: () async {

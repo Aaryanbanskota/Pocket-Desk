@@ -122,6 +122,53 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
     if (mounted) Navigator.of(context).pop();
   }
 
+  bool get _isDirty {
+    if (widget.task == null) {
+      return _titleCtrl.text.isNotEmpty ||
+          _descCtrl.text.isNotEmpty ||
+          _listCtrl.text.isNotEmpty ||
+          _folderCtrl.text.isNotEmpty ||
+          _categoryCtrl.text.isNotEmpty ||
+          _subtasks.isNotEmpty ||
+          _dueDate != null;
+    }
+    final t = widget.task!;
+    return _titleCtrl.text != t.title ||
+        _descCtrl.text != (t.description ?? '') ||
+        _listCtrl.text != (t.listName ?? '') ||
+        _folderCtrl.text != (t.folderName ?? '') ||
+        _categoryCtrl.text != (t.category ?? '') ||
+        _priority != t.priority ||
+        _dueDate != t.dueDate ||
+        _isRecurring != t.isRecurring ||
+        _subtasks.length != t.subtaskTitles.length;
+  }
+
+  Future<bool> _confirmLeave() async {
+    if (!_isDirty) return true;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Discard changes?'),
+        content: const Text('You have unsaved changes. Are you sure you want to leave?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep Editing'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Discard'),
+          ),
+        ],
+      ),
+    );
+    return confirm ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -131,69 +178,20 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
     // On desktop we render directly as a Column inside the Dialog.
     // On mobile we use a DraggableScrollableSheet.
     if (isDesktop) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Row(
-              children: [
-                Text(
-                  widget.task == null ? 'New Task' : 'Edit Task',
-                  style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: _submit,
-                  child: const Text('Save'),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                children: _buildFormFields(cs, tt),
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (ctx, scrollCtrl) => Container(
-        decoration: BoxDecoration(
-          color: cs.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+      return PopScope(
+        canPop: !_isDirty,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          final shouldPop = await _confirmLeave();
+          if (shouldPop && context.mounted) {
+            Navigator.of(context).pop();
+          }
+        },
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: cs.onSurfaceVariant.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
                 children: [
                   Text(
@@ -201,6 +199,15 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                     style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () async {
+                      if (await _confirmLeave() && context.mounted) {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 8),
                   FilledButton(
                     onPressed: _submit,
                     child: const Text('Save'),
@@ -213,18 +220,98 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
               child: Form(
                 key: _formKey,
                 child: ListView(
-                  controller: scrollCtrl,
-                  padding: EdgeInsets.fromLTRB(
-                    20,
-                    16,
-                    20,
-                    MediaQuery.of(context).viewInsets.bottom + 24,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                   children: _buildFormFields(cs, tt),
                 ),
               ),
             ),
           ],
+        ),
+      );
+    }
+
+    return PopScope(
+      canPop: !_isDirty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _confirmLeave();
+        if (shouldPop && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (ctx, scrollCtrl) => Container(
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 20,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: cs.onSurfaceVariant.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Row(
+                  children: [
+                    Text(
+                      widget.task == null ? 'New Task' : 'Edit Task',
+                      style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () async {
+                        if (await _confirmLeave() && context.mounted) {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 4),
+                    FilledButton(
+                      onPressed: _submit,
+                      child: const Text('Save'),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    controller: scrollCtrl,
+                    padding: EdgeInsets.fromLTRB(
+                      20,
+                      16,
+                      20,
+                      MediaQuery.of(context).viewInsets.bottom + 24,
+                    ),
+                    children: _buildFormFields(cs, tt),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -384,11 +471,14 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
       if (widget.task != null) ...[
         FilledButton.tonal(
           onPressed: () async {
+            final title = widget.task!.title;
+            final messenger = ScaffoldMessenger.of(context);
+            final navigator = Navigator.of(context);
             await ref.read(tasksProvider.notifier).deleteTask(widget.task!.id);
             if (context.mounted) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Deleted "${widget.task!.title}"')),
+              navigator.pop();
+              messenger.showSnackBar(
+                SnackBar(content: Text('Deleted "$title"')),
               );
             }
           },

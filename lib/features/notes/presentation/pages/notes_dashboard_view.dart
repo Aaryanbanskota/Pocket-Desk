@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pocketdesk/features/dashboard/presentation/widgets/app_hamburger_drawer.dart';
 import '../../data/models/note_model.dart';
 import '../providers/notes_notifier.dart';
 import 'note_editor_page.dart';
@@ -40,6 +41,7 @@ class _NotesDashboardViewState extends ConsumerState<NotesDashboardView> {
     final notesAsync = ref.watch(notesProvider);
 
     return Scaffold(
+      drawer: const AppHamburgerDrawer(),
       backgroundColor: cs.surface,
       appBar: AppBar(
         backgroundColor: cs.surface,
@@ -119,23 +121,76 @@ class _NotesGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Pinned first
-    final sorted = [...notes]..sort((a, b) {
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        return b.updatedAt.compareTo(a.updatedAt);
-      });
+    final pinned = notes.where((n) => n.isPinned).toList()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    final others = notes.where((n) => !n.isPinned).toList()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
-    return GridView.builder(
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+
+    return ListView(
       padding: const EdgeInsets.all(12),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 220,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 0.8,
-      ),
-      itemCount: sorted.length,
-      itemBuilder: (_, i) => _NoteCard(note: sorted[i], onTap: onTap),
+      children: [
+        if (pinned.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Row(
+              children: [
+                Icon(Icons.push_pin_outlined, size: 16, color: cs.primary),
+                const SizedBox(width: 6),
+                Text(
+                  'PINNED (${pinned.length})',
+                  style: tt.labelMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: cs.primary,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 220,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.8,
+            ),
+            itemCount: pinned.length,
+            itemBuilder: (_, i) => _NoteCard(note: pinned[i], onTap: onTap),
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (others.isNotEmpty) ...[
+          if (pinned.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 8),
+              child: Text(
+                'OTHERS (${others.length})',
+                style: tt.labelMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: cs.onSurfaceVariant,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 220,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.8,
+            ),
+            itemCount: others.length,
+            itemBuilder: (_, i) => _NoteCard(note: others[i], onTap: onTap),
+          ),
+        ],
+      ],
     );
   }
 }

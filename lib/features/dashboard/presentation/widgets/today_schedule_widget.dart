@@ -7,6 +7,7 @@ import '../../../../core/utils/date_time_utils.dart';
 import '../../../calendar/data/models/recurrence_engine.dart';
 import '../../../calendar/presentation/providers/calendar_events_notifier.dart';
 import '../../../calendar/presentation/widgets/event_form_sheet.dart';
+import '../../../calendar/presentation/widgets/event_preview_dialog.dart';
 
 class TodayScheduleWidget extends ConsumerWidget {
   const TodayScheduleWidget({super.key});
@@ -116,24 +117,7 @@ class TodayScheduleWidget extends ConsumerWidget {
                         : '${DateTimeUtils.toTime12(ev.startTime)} - ${DateTimeUtils.toTime12(ev.endTime)}';
 
                     return InkWell(
-                      onTap: () {
-                        showModalBottomSheet<void>(
-                          context: context,
-                          isScrollControlled: true,
-                          useSafeArea: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) => DraggableScrollableSheet(
-                            expand: false,
-                            initialChildSize: 0.85,
-                            minChildSize: 0.5,
-                            maxChildSize: 0.95,
-                            builder: (_, scrollController) => EventFormSheet(
-                              initialDate: ev.startTime,
-                              editingEvent: ev,
-                            ),
-                          ),
-                        );
-                      },
+                      onTap: () => EventPreviewDialog.show(context, ev),
                       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                       child: Container(
                         decoration: BoxDecoration(
@@ -169,7 +153,7 @@ class TodayScheduleWidget extends ConsumerWidget {
                               ),
                             ),
                             if (ev.category != null && ev.category!.isNotEmpty) ...[
-                              const SizedBox(width: AppSpacing.md),
+                              const SizedBox(width: AppSpacing.sm),
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: AppSpacing.sm,
@@ -188,6 +172,59 @@ class TodayScheduleWidget extends ConsumerWidget {
                                 ),
                               ),
                             ],
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 18),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                              tooltip: 'Edit Event',
+                              onPressed: () {
+                                showModalBottomSheet<void>(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  useSafeArea: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (_) => DraggableScrollableSheet(
+                                    expand: false,
+                                    initialChildSize: 0.85,
+                                    minChildSize: 0.5,
+                                    maxChildSize: 0.95,
+                                    builder: (_, scrollController) => EventFormSheet(
+                                      initialDate: ev.startTime,
+                                      editingEvent: ev,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete_outline, size: 18, color: colorScheme.error),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                              tooltip: 'Delete Event',
+                              onPressed: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Delete Event?'),
+                                    content: Text('Are you sure you want to delete "${ev.title}"?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      FilledButton(
+                                        onPressed: () => Navigator.pop(ctx, true),
+                                        style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
+                                        child: const Text('Delete'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  await ref.read(calendarEventsProvider.notifier).deleteEvent(ev.id);
+                                }
+                              },
+                            ),
                           ],
                         ),
                       ),

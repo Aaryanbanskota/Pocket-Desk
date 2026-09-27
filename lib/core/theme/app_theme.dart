@@ -109,7 +109,7 @@ abstract final class AppTheme {
       ),
 
       // ─── Card ──────────────────────────────────────────────────────────────
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: isLight ? AppColors.cardLight : AppColors.cardDark,
         elevation: AppElevation.sm,
         shape: RoundedRectangleBorder(
@@ -120,7 +120,7 @@ abstract final class AppTheme {
           vertical: AppSpacing.xs,
         ),
       ),
-      
+
       // ─── Elevated Button ───────────────────────────────────────────────────
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -230,7 +230,7 @@ abstract final class AppTheme {
       ),
 
       // ─── Dialog ───────────────────────────────────────────────────────────
-      dialogTheme: DialogThemeData(
+      dialogTheme: DialogTheme(
         backgroundColor: isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
         elevation: AppElevation.dialog,
         shape: RoundedRectangleBorder(

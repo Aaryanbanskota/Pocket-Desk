@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pocketdesk/features/auth/presentation/providers/auth_notifier.dart';
 import '../../data/models/note_model.dart';
 import '../providers/notes_notifier.dart';
+import '../../../settings/presentation/providers/ai_settings_notifier.dart';
 
 /// Full-screen note editor (create & edit).
 class NoteEditorPage extends ConsumerStatefulWidget {
@@ -26,6 +28,64 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
   List<String> _checkItems = [];
   List<bool> _checkDone = [];
   bool _dirty = false;
+  bool _aiFormatting = false;
+
+  Future<void> _runAIAssistant() async {
+    final text = _contentCtrl.text.trim();
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please write some content first for AI to format/summarize')),
+      );
+      return;
+    }
+
+    final auth = ref.read(authNotifierProvider).valueOrNull;
+    final userId = auth is AuthAuthenticated ? auth.user.id : 0;
+    final aiSettings = await ref.read(aiSettingsRepositoryProvider.future).then((r) => r.getOrCreateSettings(userId));
+
+    if (!mounted) return;
+
+    if (!aiSettings.isEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pocketdesk AI is turned OFF in Settings → AI.')),
+      );
+      return;
+    }
+    if (aiSettings.apiKey.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('API key missing! Add your OpenRouter key in Settings → AI.')),
+      );
+      return;
+    }
+    if (!aiSettings.allowNotesAccess || !aiSettings.noteAssistanceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('AI Note Assistance is disabled in Settings → AI permissions.')),
+      );
+      return;
+    }
+
+    setState(() => _aiFormatting = true);
+    final prompt = 'Format and improve the following note content in clean Markdown syntax:\n\n$text';
+    const systemPrompt = 'You are Pocketdesk AI assisting with note formatting and structure. Return only the clean formatted markdown content without commentary.';
+
+    final res = await ref.read(aiSettingsProvider.notifier).generateCompletion(
+      prompt: prompt,
+      systemPrompt: systemPrompt,
+    );
+
+    setState(() => _aiFormatting = false);
+    if (res != null && res.isNotEmpty) {
+      setState(() {
+        _contentCtrl.text = res;
+        _dirty = true;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('AI formatted your note content!')),
+        );
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -96,40 +156,89 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
     });
   }
 
+  Future<bool> _confirmLeave() async {
+    if (!_dirty) return true;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Discard changes?'),
+        content: const Text('You have unsaved changes in your note. Are you sure you want to leave?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep Editing'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Discard'),
+          ),
+        ],
+      ),
+    );
+    return confirm ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    return Scaffold(
-      backgroundColor: cs.surface,
-      appBar: AppBar(
+    return PopScope(
+      canPop: !_dirty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _confirmLeave();
+        if (shouldPop && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
         backgroundColor: cs.surface,
-        elevation: 0,
-        title: Text(
-          widget.note == null ? 'New Note' : 'Edit Note',
-          style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        appBar: AppBar(
+          backgroundColor: cs.surface,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () async {
+              if (await _confirmLeave() && context.mounted) {
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+          title: Text(
+            widget.note == null ? 'New Note' : 'Edit Note',
+            style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          actions: [
+            IconButton(
+              icon: _aiFormatting
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.auto_awesome_rounded),
+              onPressed: _aiFormatting ? null : _runAIAssistant,
+              tooltip: 'AI Format Assistant',
+            ),
+            IconButton(
+              icon: Icon(_isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                  color: _isPinned ? cs.primary : null),
+              onPressed: () => setState(() { _isPinned = !_isPinned; _dirty = true; }),
+              tooltip: 'Pin',
+            ),
+            IconButton(
+              icon: Icon(_isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
+                  color: _isFavorite ? Colors.amber : null),
+              onPressed: () => setState(() { _isFavorite = !_isFavorite; _dirty = true; }),
+              tooltip: 'Favorite',
+            ),
+            FilledButton(
+              onPressed: _save,
+              child: const Text('Save'),
+            ),
+            const SizedBox(width: 8),
+          ],
         ),
-        actions: [
-          IconButton(
-            icon: Icon(_isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                color: _isPinned ? cs.primary : null),
-            onPressed: () => setState(() { _isPinned = !_isPinned; _dirty = true; }),
-            tooltip: 'Pin',
-          ),
-          IconButton(
-            icon: Icon(_isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
-                color: _isFavorite ? Colors.amber : null),
-            onPressed: () => setState(() { _isFavorite = !_isFavorite; _dirty = true; }),
-            tooltip: 'Favorite',
-          ),
-          FilledButton(
-            onPressed: _dirty ? _save : null,
-            child: const Text('Save'),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
         children: [
@@ -273,6 +382,7 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

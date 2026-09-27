@@ -248,6 +248,16 @@ class AuthRepository {
     }
   }
 
+  Future<bool> verifyUserPassword(int userId, String password) async {
+    try {
+      final user = await _isar.userModels.get(userId);
+      if (user == null) return false;
+      return PasswordHasher.verify(password, user.passwordHash, user.passwordSalt);
+    } catch (e) {
+      return false;
+    }
+  }
+
   // --------------------------------------------------------------------------
   // Helpers
   // --------------------------------------------------------------------------

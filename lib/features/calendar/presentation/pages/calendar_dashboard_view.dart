@@ -7,12 +7,14 @@ import '../../data/models/calendar_event_model.dart';
 import '../../data/models/recurrence_engine.dart';
 import '../providers/calendar_events_notifier.dart';
 import '../widgets/event_form_sheet.dart';
+import '../widgets/event_preview_dialog.dart';
 import '../widgets/agenda_view_widget.dart';
 import '../widgets/day_view_widget.dart';
 import '../widgets/month_view_widget.dart';
 import '../widgets/week_view_widget.dart';
 import '../widgets/year_view_widget.dart';
 import 'calendar_search_page.dart';
+import '../../../dashboard/presentation/widgets/app_hamburger_drawer.dart';
 
 enum CalendarViewType { day, week, month, year, agenda }
 
@@ -33,6 +35,7 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
     final eventsAsync = ref.watch(calendarEventsProvider);
 
     return Scaffold(
+      drawer: const AppHamburgerDrawer(),
       appBar: AppBar(
         title: const Text('Calendar'),
         actions: [
@@ -147,13 +150,13 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
                     return DayViewWidget(
                       focusedDay: _focusedDay,
                       events: expandedEvents,
-                      onEventTap: (ev) => _showAddEventDialog(context, editingEvent: ev),
+                      onEventTap: (ev) => EventPreviewDialog.show(context, ev),
                     );
                   case CalendarViewType.week:
                     return WeekViewWidget(
                       focusedDay: _focusedDay,
                       events: expandedEvents,
-                      onEventTap: (ev) => _showAddEventDialog(context, editingEvent: ev),
+                      onEventTap: (ev) => EventPreviewDialog.show(context, ev),
                     );
                   case CalendarViewType.month:
                     return MonthViewWidget(
@@ -162,7 +165,7 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
                       onDayTap: (date) => setState(() {
                         _focusedDay = date;
                       }),
-                      onEventTap: (ev) => _showAddEventDialog(context, editingEvent: ev),
+                      onEventTap: (ev) => EventPreviewDialog.show(context, ev),
                     );
                   case CalendarViewType.year:
                     return YearViewWidget(
@@ -175,7 +178,7 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
                   case CalendarViewType.agenda:
                     return AgendaViewWidget(
                       events: expandedEvents,
-                      onEventTap: (ev) => _showAddEventDialog(context, editingEvent: ev),
+                      onEventTap: (ev) => EventPreviewDialog.show(context, ev),
                     );
                 }
               },

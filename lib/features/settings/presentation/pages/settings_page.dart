@@ -5,6 +5,7 @@ import '../widgets/device_settings_widget.dart';
 import '../widgets/privacy_settings_widget.dart';
 import '../widgets/appearance_settings_widget.dart';
 import '../widgets/security_settings_widget.dart';
+import '../widgets/ai_settings_widget.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -20,7 +21,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -53,6 +54,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
           indicatorWeight: 3,
           tabs: const [
             Tab(
+              icon: Icon(Icons.smart_toy_rounded),
+              text: 'AI',
+            ),
+            Tab(
               icon: Icon(Icons.qr_code_2_rounded),
               text: 'Share',
             ),
@@ -78,6 +83,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
       body: TabBarView(
         controller: _tabController,
         children: const [
+          AISettingsWidget(),
           QrDataShareWidget(),
           DeviceSettingsWidget(),
           AppearanceSettingsWidget(),

@@ -320,7 +320,7 @@
       <div class="ai-banner-header">
         <span>✨</span> AI Summary
       </div>
-      <p>PocketDesk v1.1.0+2 builds successfully on <strong>Linux (Ubuntu x64)</strong> using Flutter 3.44.8 and Dart 3.12.2. All Material 3 theme types (<code>CardThemeData</code>, <code>DialogThemeData</code>) and font dependencies (<code>google_fonts ^6.3.2</code>) are resolved and validated.</p>
+      <p>PocketDesk v1.2.0 features universal multi-screen AI integration (Isar direct query), Argon2id password protection for saved API keys, complete Money Health wallet tracker with AI Spending Score (0–100), offline Personal Social Feed, Task & Event preview modals, and complete Note formatting/checklist suite pinned to Flutter 3.24.0 SDK via FVM.</p>
     </div>
 
     <!-- Filters -->
@@ -334,31 +334,34 @@
     <!-- Logs Accordion -->
     <div class="log-list">
 
-      <!-- Log Item 1 -->
-      <div class="log-item open" data-category="build">
+      <!-- Log Item 0: v1.2.0 -->
+      <div class="log-item open" data-category="feature">
         <div class="log-header" onclick="toggleLog(this)">
           <div class="log-title-area">
-            <span class="badge badge-build">Build Fix</span>
-            <span class="log-title">Linux Desktop Build Compatibility (Flutter 3.44+)</span>
+            <span class="badge badge-feature">Major Release</span>
+            <span class="log-title">v1.2.0 — Universal AI Companion, Money Health & Security Lock</span>
           </div>
           <div class="log-meta">
-            <span>v1.1.0+2</span>
+            <span>v1.2.0</span>
             <span class="chevron">▼</span>
           </div>
         </div>
         <div class="log-body">
-          <p><strong>Summary:</strong> Fixed Flutter Linux debug build failures caused by SDK material theme class mismatches and Dart constant evaluation bugs in older font packages.</p>
+          <p><strong>Summary:</strong> Integrated direct database Isar querying for reliable AI execution across all pages, added Argon2id password locking for API keys, Money Health dashboard, task/event previews, and rich note checklist ecosystem.</p>
           
-          <h4>Key Technical Changes:</h4>
+          <h4>Key Features & Fixes:</h4>
           <ul>
-            <li>Updated <code>app_theme.dart</code> to use <code>CardThemeData</code> and <code>DialogThemeData</code> for compatibility with Flutter 3.44+.</li>
-            <li>Upgraded <code>google_fonts</code> dependency to <code>^6.3.2</code> in <code>pubspec.yaml</code> to fix Dart 3.12 <code>FontWeight</code> constant evaluation error.</li>
-            <li>Executed full <code>flutter clean</code>, dependency refresh, and verified <code>flutter build linux --debug</code> compilation.</li>
+            <li><strong>AI Database Persistence:</strong> Direct Isar DB lookup (`AISettingsRepository`) eliminates transient provider initialization errors permanently across Money Health, Note Editor, Chat Buddy ("yo {username}"), and Feed.</li>
+            <li><strong>Security API Key Lock:</strong> Password verification dialog (`AuthNotifier.verifyPassword`) prevents unauthorized access or modification to saved OpenRouter API keys.</li>
+            <li><strong>Money Health & Wallet:</strong> Initial wallet balance setup, automatic calculation upon adding/editing expenses, category breakdowns, and AI Spending Score (0–100).</li>
+            <li><strong>Task & Event Previews:</strong> Tapping tasks or calendar events displays detailed preview sheets with quick edit and delete icons.</li>
+            <li><strong>Note Checklist & Editor:</strong> Added auto-save, archive, trash/restore, duplicate notes, rich markdown formatting, and media attachments.</li>
+            <li><strong>FVM SDK Pinning:</strong> Pinned Flutter SDK version to 3.24.0 for build reproducibility.</li>
           </ul>
 
           <div class="code-block">
-flutter clean && flutter pub get && flutter build linux --debug
-# Output: ✓ Built build/linux/x64/debug/bundle/pocketdesk
+fvm flutter analyze --no-pub
+# Output: No issues found! (0 analyzer errors)
           </div>
         </div>
       </div>

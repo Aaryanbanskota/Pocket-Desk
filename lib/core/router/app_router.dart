@@ -157,17 +157,27 @@ GoRouter appRouter(Ref ref) {
       if (isLoading) return AppRoutes.splash;
 
       final location = state.matchedLocation;
+      final authState = authAsync.valueOrNull;
+      final isNewRegistration = authState is AuthAuthenticated && authState.isNewRegistration;
 
       // Splash is only shown while auth is loading — redirect once resolved.
       if (location == AppRoutes.splash) {
-        return isAuthenticated ? AppRoutes.dashboard : AppRoutes.login;
+        if (!isAuthenticated) return AppRoutes.login;
+        return isNewRegistration ? AppRoutes.setupOnboarding : AppRoutes.dashboard;
       }
 
       final onAuthPage =
           location == AppRoutes.login || location == AppRoutes.register;
+      final onSetupPage = location == AppRoutes.setupOnboarding;
 
-      if (!isAuthenticated && !onAuthPage) return AppRoutes.login;
-      if (isAuthenticated && onAuthPage) return AppRoutes.dashboard;
+      if (!isAuthenticated && !onAuthPage && !onSetupPage) return AppRoutes.login;
+      
+      // When user logs in or registers:
+      if (isAuthenticated && onAuthPage) {
+        return isNewRegistration ? AppRoutes.setupOnboarding : AppRoutes.dashboard;
+      }
+
+      if (isAuthenticated && onSetupPage) return null; // Keep on setup flow
       return null;
     },
   );

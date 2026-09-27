@@ -42,8 +42,9 @@ final class AuthUnauthenticated extends AuthState {
 
 /// User is authenticated.
 final class AuthAuthenticated extends AuthState {
-  const AuthAuthenticated(this.user);
+  const AuthAuthenticated(this.user, {this.isNewRegistration = false});
   final UserModel user;
+  final bool isNewRegistration;
 }
 
 /// An auth operation failed.
@@ -112,7 +113,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       if (result.error != null) {
         state = AsyncValue.data(AuthError(result.error!));
       } else {
-        state = AsyncValue.data(AuthAuthenticated(result.user));
+        state = AsyncValue.data(AuthAuthenticated(result.user, isNewRegistration: true));
       }
     } catch (e, st) {
       state = AsyncValue.data(

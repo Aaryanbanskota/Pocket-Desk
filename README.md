@@ -49,35 +49,33 @@ It combines a full-featured **Calendar**, **Task Manager**, **Notes** app, and *
 
 ---
 
-## ⚡ Recent Updates & Fixes (v1.2.0)
+## ⚡ Recent Updates & Fixes (v1.2.0 Final Release)
 
-- 🔐 **Security Questions & Forgot Password Reset**:
-  - Registration flow now prompts users to set custom security questions and answers.
-  - Forgot Password flow allows offline account recovery by verifying security answers locally with Argon2id hashing.
-- 🗑️ **2-Step Complete Delete Account & Data Purge**:
-  - Complete account deletion workflow with 2-step verification ("Are you sure?" -> Type "DELETE").
-  - Fully wipes all Isar database tables, secure storage keys, user preferences, and app state so the user starts 100% fresh.
-- 🔄 **Self-Hosted In-App Update System**:
-  - Offline-first background update checks against raw `update.json` hosted on GitHub.
-  - Automatic download progress modal and seamless launch of Android's native package installer (`FileProvider` / `REQUEST_INSTALL_PACKAGES`).
-  - Preserves user data and silently degrades when offline or without internet access.
-- 🤖 **Universal AI Integration & Security**:
-  - Direct Isar database querying (`AISettingsRepository`) powering AI across all screens (Money Health, Note Formatting, Chat Buddy, Personal Social Feed).
-  - **Argon2id Password Lock** in Settings to protect saved AI API keys; authenticates user before viewing, editing, or deleting keys.
-- 📁 **Enhanced File Sharing & Local Web Server**:
-  - Redesigned File Share page with local network web server support.
-  - Generates network link and PIN code so external devices without the app installed can download shared files directly over Wi-Fi.
-- 💬 **AI Companion & Offline Social Feed**:
-  - Offline/P2P chat falls back to PocketDesk AI ("yo {username}") when no peer is connected.
-  - Personal social feed supporting image/video post attachments, post liking, and automatic AI interactions.
-- 📝 **Rich Note Ecosystem & Preview Navigation**:
-  - Note preview modal on tap, with explicit edit and delete actions.
-  - Functional auto-save on edit, checklists, audio/drawings/attachments, archive, duplicate, and tag organization.
-- 🔐 **Privacy Settings & Security**:
-  - Integrated password change feature in Privacy Settings with Argon2id hash verification.
-- 🎯 **Navigation & UX Improvements**:
-  - Uncramped, clean hamburger menu drawer across all dashboard views.
-  - Pinned Flutter `3.24.0` via FVM for consistent builds.
+- ⏰ **Clock & Timers Hub**:
+  - Full working Alarm system with custom labels, repeat schedules, enable/disable switches, and local push notifications.
+  - Interactive minute/second countdown timer with quick duration chips (1m, 5m, 10m, 15m), custom duration picker dialog, and alarm notification triggers upon completion.
+  - High-precision Stopwatch for productivity tracking.
+- 🚀 **Post-Registration Setup Onboarding**:
+  - Interactive onboarding flow launching automatically upon new user registration.
+  - Walkthrough of all major app features (Clock, Money Tracker, P2P File Share, AI Companion).
+  - Step-by-step OpenRouter API key guide (`https://openrouter.ai/` → Get API → Create Key → Save in Settings → AI).
+  - Convenient **Skip Setup** button to navigate straight to the dashboard anytime.
+- 🎨 **AI Cardano Radial Dots Emblem & Companion Chat**:
+  - Custom radial dot matrix emblem rendered with Flutter `CustomPainter`.
+  - Smooth pulse & rotation animations when Pocketdesk AI is processing or typing.
+  - System prompt enhanced with full app knowledge so users can ask AI for help using features or finding settings 24/7.
+- 📊 **Stylized AI Money Health Report**:
+  - Monthly breakdown card showing spent vs. remaining starting balance.
+  - Spending Score (out of 100), color-coded status badge, personalized spending advice quotes, category percentage progress bars, and next-month savings targets.
+- 📅 **Responsive Calendar Layout**:
+  - Horizontal scrolling view segment bar preventing label truncation across screen sizes.
+- 🔐 **Security Questions & Password Recovery**:
+  - 2-step registration with 2 security recovery questions (preset & custom options).
+  - Password recovery verification using Argon2id hashing.
+- 🗑️ **2-Step Delete Account**:
+  - Complete account deletion with double confirmation ("DELETE").
+- 🔄 **In-App Updater & P2P File Transfer**:
+  - Self-hosted raw GitHub update checks and local network P2P web server file sharing.
 
 ---
 

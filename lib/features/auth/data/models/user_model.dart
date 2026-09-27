@@ -44,4 +44,13 @@ class UserModel {
 
   /// Unique device identifier for this installation.
   late String deviceId;
+
+  /// Security question for password recovery.
+  String? securityQuestion;
+
+  /// Argon2id hash of the security answer (lowercased & trimmed).
+  String? securityAnswerHash;
+
+  /// Salt used for security answer hash.
+  String? securityAnswerSalt;
 }

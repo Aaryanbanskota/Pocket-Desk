@@ -1,0 +1,6 @@
+{
+  "version": "1.2.0",
+  "url": "https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/main/all-apk/app-release.apk",
+  "required": false,
+  "releaseNotes": "- Added Universal AI Multi-Page Integration (Direct Isar lookup)\n- Added Argon2id Password Security Lock for saved API Keys\n- Added Money Health & Wallet Balance with AI Spending Score\n- Added Task & Event Preview modals\n- Added Rich Note Formatting & Checklist Toolbar"
+}

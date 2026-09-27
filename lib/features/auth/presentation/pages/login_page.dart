@@ -127,6 +127,209 @@ class _LoginPageState extends ConsumerState<LoginPage>
     );
   }
 
+  void _showForgotPasswordDialog(BuildContext context) {
+    final resetUserCtrl = TextEditingController(text: _userCtrl.text.trim());
+    final answerCtrl = TextEditingController();
+    final newPassCtrl = TextEditingController();
+    final confirmPassCtrl = TextEditingController();
+
+    String? foundQuestion;
+    bool checkingUser = false;
+    bool resetting = false;
+    String? dialogError;
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.lock_reset_rounded, color: AppColors.primary),
+                SizedBox(width: 8),
+                Text('Reset Password'),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (dialogError != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.withOpacity(0.5)),
+                      ),
+                      child: Text(
+                        dialogError!,
+                        style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                  if (foundQuestion == null) ...[
+                    const Text('Enter your username to look up your security question:'),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: resetUserCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Username',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person_outline_rounded),
+                      ),
+                    ),
+                  ] else ...[
+                    Text('User: ${resetUserCtrl.text.trim()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Security Question:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 4),
+                          Text(foundQuestion!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: answerCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Your Answer',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.verified_user_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: newPassCtrl,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'New Password',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.lock_outline_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: confirmPassCtrl,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Confirm New Password',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.lock_outline_rounded),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              if (foundQuestion == null)
+                FilledButton(
+                  onPressed: checkingUser
+                      ? null
+                      : () async {
+                          final user = resetUserCtrl.text.trim();
+                          if (user.isEmpty) {
+                            setDialogState(() => dialogError = 'Please enter username');
+                            return;
+                          }
+                          setDialogState(() {
+                            checkingUser = true;
+                            dialogError = null;
+                          });
+                          final q = await ref.read(authNotifierProvider.notifier).getSecurityQuestion(user);
+                          setDialogState(() {
+                            checkingUser = false;
+                            if (q == null || q.isEmpty) {
+                              dialogError = 'No security question found for user "$user".';
+                            } else {
+                              foundQuestion = q;
+                            }
+                          });
+                        },
+                  child: checkingUser
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Next'),
+                )
+              else
+                FilledButton(
+                  onPressed: resetting
+                      ? null
+                      : () async {
+                          final ans = answerCtrl.text.trim();
+                          final newP = newPassCtrl.text;
+                          final confP = confirmPassCtrl.text;
+                          if (ans.isEmpty) {
+                            setDialogState(() => dialogError = 'Security answer is required.');
+                            return;
+                          }
+                          if (newP.length < 6) {
+                            setDialogState(() => dialogError = 'Password must be at least 6 characters.');
+                            return;
+                          }
+                          if (newP != confP) {
+                            setDialogState(() => dialogError = 'Passwords do not match.');
+                            return;
+                          }
+
+                          setDialogState(() {
+                            resetting = true;
+                            dialogError = null;
+                          });
+
+                          final err = await ref.read(authNotifierProvider.notifier).resetPasswordWithSecurityAnswer(
+                                username: resetUserCtrl.text.trim(),
+                                securityAnswer: ans,
+                                newPassword: newP,
+                              );
+
+                          if (ctx.mounted) {
+                            if (err != null) {
+                              setDialogState(() {
+                                resetting = false;
+                                dialogError = err.message;
+                              });
+                            } else {
+                              Navigator.pop(ctx);
+                              if (context.mounted) {
+                                setState(() {
+                                  _userCtrl.text = resetUserCtrl.text.trim();
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Password reset successfully! Please sign in with your new password.'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        },
+                  child: resetting
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Reset Password'),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -288,7 +491,14 @@ class _LoginPageState extends ConsumerState<LoginPage>
               textInputAction: TextInputAction.done,
               onFieldSubmitted: (_) => _submit(),
             ),
-            const SizedBox(height: AppSpacing.xl),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => _showForgotPasswordDialog(context),
+                child: const Text('Forgot Password?'),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
             _SubmitButton(
               submitting: _submitting,
               label: 'Sign In',

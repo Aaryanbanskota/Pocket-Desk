@@ -91,6 +91,7 @@ class NotesNotifier extends AutoDisposeAsyncNotifier<NotesState> {
     bool hasChecklist = false,
     List<String> checklistItems = const [],
     List<bool> checklistDone = const [],
+    List<String> imagePaths = const [],
     int? noteId,
   }) async {
     final auth = ref.read(authNotifierProvider).valueOrNull;
@@ -109,7 +110,8 @@ class NotesNotifier extends AutoDisposeAsyncNotifier<NotesState> {
       ..checklistItems = checklistItems
       ..checklistDone = checklistDone.isEmpty && checklistItems.isNotEmpty
           ? List.filled(checklistItems.length, false)
-          : List.from(checklistDone);
+          : List.from(checklistDone)
+      ..imagePaths = imagePaths;
 
     if (noteId != null) note.id = noteId;
 

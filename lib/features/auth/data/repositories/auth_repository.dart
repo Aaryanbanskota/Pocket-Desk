@@ -27,13 +27,13 @@ class AuthRepository {
   // Registration
   // --------------------------------------------------------------------------
 
-  /// Creates a new local user account.
-  ///
-  /// Returns [AuthFailure] if the username is already taken.
+  /// Creates a new local user account with optional security question.
   Future<({UserModel user, AppFailure? error})> register({
     required String username,
     required String password,
     String? displayName,
+    String? securityQuestion,
+    String? securityAnswer,
   }) async {
     try {
       // Check uniqueness
@@ -63,6 +63,14 @@ class AuthRepository {
         ..lastLoginAt = now
         ..deviceId = _generateDeviceId();
 
+      if (securityQuestion != null && securityAnswer != null && securityAnswer.trim().isNotEmpty) {
+        final answerHashResult = await PasswordHasher.hash(securityAnswer.toLowerCase().trim());
+        user
+          ..securityQuestion = securityQuestion
+          ..securityAnswerHash = answerHashResult.hash
+          ..securityAnswerSalt = answerHashResult.salt;
+      }
+
       await _isar.writeTxn(() async {
         await _isar.userModels.put(user);
       });
@@ -76,6 +84,72 @@ class AuthRepository {
         user: UserModel(),
         error: UnexpectedFailure('Registration failed', error: e, stackTrace: st),
       );
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Password Recovery via Security Question
+  // --------------------------------------------------------------------------
+
+  Future<String?> getSecurityQuestion(String username) async {
+    try {
+      final user = await _isar.userModels.where().usernameEqualTo(username.trim()).findFirst();
+      return user?.securityQuestion;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<AppFailure?> resetPasswordWithSecurityAnswer({
+    required String username,
+    required String securityAnswer,
+    required String newPassword,
+  }) async {
+    try {
+      final user = await _isar.userModels.where().usernameEqualTo(username.trim()).findFirst();
+      if (user == null) return const AuthFailure('User not found');
+      if (user.securityAnswerHash == null || user.securityAnswerSalt == null) {
+        return const AuthFailure('No security question was set for this account');
+      }
+
+      final valid = await PasswordHasher.verify(
+        securityAnswer.toLowerCase().trim(),
+        user.securityAnswerHash!,
+        user.securityAnswerSalt!,
+      );
+
+      if (!valid) return const AuthFailure('Incorrect security answer');
+
+      final hashResult = await PasswordHasher.hash(newPassword);
+      await _isar.writeTxn(() async {
+        user
+          ..passwordHash = hashResult.hash
+          ..passwordSalt = hashResult.salt;
+        await _isar.userModels.put(user);
+      });
+
+      AppLogger.i('Password reset via security question for ${user.username}', tag: 'AuthRepository');
+      return null;
+    } catch (e, st) {
+      return UnexpectedFailure('Password reset failed', error: e, stackTrace: st);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Full Account Deletion (Wipe All Data)
+  // --------------------------------------------------------------------------
+
+  Future<AppFailure?> deleteAccount(int userId) async {
+    try {
+      await _isar.writeTxn(() async {
+        await _isar.clear();
+      });
+      await _secureStorage.clearAll();
+      AppLogger.i('Account and all database records wiped completely', tag: 'AuthRepository');
+      return null;
+    } catch (e, st) {
+      AppLogger.e('Failed to delete account', tag: 'AuthRepository', error: e, st: st);
+      return UnexpectedFailure('Account deletion failed', error: e, stackTrace: st);
     }
   }
 

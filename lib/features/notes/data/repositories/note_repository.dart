@@ -48,9 +48,22 @@ class NoteRepository {
     try {
       final now = DateTime.now();
       note.updatedAt = now;
-      if (note.id == Isar.autoIncrement) note.createdAt = now;
-      await _isar.writeTxn(() => _isar.noteModels.put(note));
-      AppLogger.i('Saved note: ${note.title}', tag: 'NoteRepo');
+
+      if (note.id != Isar.autoIncrement && note.id > 0) {
+        final existing = await _isar.noteModels.get(note.id);
+        if (existing != null) {
+          note.createdAt = existing.createdAt;
+        } else {
+          note.createdAt = now;
+        }
+      } else {
+        note.createdAt = now;
+      }
+
+      await _isar.writeTxn(() async {
+        await _isar.noteModels.put(note);
+      });
+      AppLogger.i('Saved note: ${note.title} (ID: ${note.id})', tag: 'NoteRepo');
       return (note: note, error: null);
     } catch (e, st) {
       AppLogger.e('Failed to save note', tag: 'NoteRepo', error: e, st: st);

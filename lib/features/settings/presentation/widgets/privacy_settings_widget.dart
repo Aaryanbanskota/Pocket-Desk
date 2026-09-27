@@ -474,61 +474,74 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
+            titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+            actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             title: Row(
               children: [
-                const Icon(Icons.delete_forever_rounded, color: Colors.red, size: 28),
+                const Icon(Icons.delete_forever_rounded, color: Colors.red, size: 26),
                 const SizedBox(width: 8),
-                Text(isStepTwo ? 'Confirm Account Deletion' : 'Delete Account?'),
+                Expanded(
+                  child: Text(
+                    isStepTwo ? 'Confirm Account Deletion' : 'Delete Account?',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (errorMsg != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.withOpacity(0.5)),
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (errorMsg != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withAlpha(25),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.withAlpha(128)),
+                        ),
+                        child: Text(
+                          errorMsg!,
+                          style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
                       ),
-                      child: Text(
-                        errorMsg!,
-                        style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.bold),
+                    ],
+                    if (!isStepTwo) ...[
+                      const Text(
+                        'Are you sure you want to delete your account?',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'This will permanently delete all your data, including notes, tasks, calendar events, expenses, settings, and API keys. This action CANNOT be undone.',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                    ] else ...[
+                      const Text(
+                        'To confirm permanent deletion of ALL app data, type DELETE in the box below:',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: confirmCtrl,
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Type DELETE',
+                          isDense: true,
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
+                        ),
+                        onChanged: (_) => setDialogState(() {}),
+                      ),
+                    ],
                   ],
-                  if (!isStepTwo) ...[
-                    const Text(
-                      'Are you sure you want to delete your account?',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'This will permanently delete all your data, including notes, tasks, calendar events, expenses, settings, and API keys. This action CANNOT be undone.',
-                      style: TextStyle(fontSize: 13),
-                    ),
-                  ] else ...[
-                    const Text(
-                      'To confirm permanent deletion of ALL app data, type DELETE in the box below:',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: confirmCtrl,
-                      autofocus: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Type DELETE',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.warning_amber_rounded, color: Colors.red),
-                      ),
-                      onChanged: (_) => setDialogState(() {}),
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
             actions: [

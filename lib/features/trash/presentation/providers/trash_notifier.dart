@@ -3,6 +3,10 @@ import '../../../../core/database/isar_provider.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../data/models/trash_item_model.dart';
 import '../../data/repositories/trash_repository.dart';
+import '../../../calendar/presentation/providers/calendar_events_notifier.dart';
+import '../../../notes/presentation/providers/notes_notifier.dart';
+import '../../../posts/presentation/providers/posts_notifier.dart';
+import '../../../tasks/presentation/providers/tasks_notifier.dart';
 
 final trashRepositoryProvider = FutureProvider<TrashRepository>((ref) async {
   final isar = await ref.watch(isarProvider.future);
@@ -49,6 +53,13 @@ class TrashNotifier extends AutoDisposeAsyncNotifier<List<TrashItemModel>> {
   Future<void> restoreItem(TrashItemModel item) async {
     final repo = await ref.read(trashRepositoryProvider.future);
     await repo.restoreItem(item);
+    
+    // Invalidate main feature providers so restored item appears immediately without app restart
+    ref.invalidate(notesProvider);
+    ref.invalidate(tasksProvider);
+    ref.invalidate(calendarEventsProvider);
+    ref.invalidate(postsNotifierProvider);
+    
     ref.invalidateSelf();
   }
 

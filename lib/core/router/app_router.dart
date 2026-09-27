@@ -165,9 +165,10 @@ GoRouter appRouter(Ref ref) {
 
       final onAuthPage =
           location == AppRoutes.login || location == AppRoutes.register;
+      final onSetupPage = location == AppRoutes.setupOnboarding;
 
-      if (!isAuthenticated && !onAuthPage) return AppRoutes.login;
-      if (isAuthenticated && onAuthPage) return AppRoutes.dashboard;
+      if (!isAuthenticated && !onAuthPage && !onSetupPage) return AppRoutes.login;
+      if (isAuthenticated && onAuthPage) return AppRoutes.setupOnboarding;
       return null;
     },
   );

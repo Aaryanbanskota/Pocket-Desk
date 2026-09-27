@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/auth/presentation/pages/setup_onboarding_page.dart';
 import '../../features/auth/presentation/pages/profile_page.dart';
 import '../../features/auth/presentation/providers/auth_notifier.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
@@ -94,6 +95,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.register,
         builder: (context, state) => const RegisterPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.setupOnboarding,
+        builder: (context, state) => const SetupOnboardingPage(),
       ),
       GoRoute(
         path: AppRoutes.dashboard,

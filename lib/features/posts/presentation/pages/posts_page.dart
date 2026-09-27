@@ -196,7 +196,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     final imagePath = result.files.single.path!;
 
     final textCtrl = TextEditingController();
-    Offset textOffset = const Offset(100, 200);
+    Offset textOffset = const Offset(80, 250);
 
     if (!mounted) return;
     showModalBottomSheet<void>(
@@ -205,69 +205,157 @@ class _PostsPageState extends ConsumerState<PostsPage> {
       backgroundColor: Colors.black,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setCameraState) => Container(
-          height: MediaQuery.of(context).size.height * 0.95,
+          height: MediaQuery.of(context).size.height * 0.96,
           color: Colors.black,
-          child: Stack(
-            fit: StackFit.expand,
+          child: Column(
             children: [
-              Image.file(File(imagePath), fit: BoxFit.cover),
-              Positioned(
-                left: textOffset.dx,
-                top: textOffset.dy,
-                child: GestureDetector(
-                  onPanUpdate: (details) {
-                    setCameraState(() {
-                      textOffset += details.delta;
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(12)),
-                    child: Text(
-                      textCtrl.text.isEmpty ? 'Tap to type overlay text' : textCtrl.text,
-                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 20,
-                left: 16,
-                right: 16,
+              // Top Header Bar matching screenshot
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(ctx)),
-                    Expanded(
-                      child: TextField(
-                        controller: textCtrl,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: const InputDecoration(hintText: 'Type overlay text…', hintStyle: TextStyle(color: Colors.white70), border: InputBorder.none),
-                        onChanged: (_) => setCameraState(() {}),
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Colors.white, size: 26),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                    const Text(
+                      'New Instant',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.grid_view_rounded, color: Colors.white, size: 22),
+                          onPressed: () {},
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.photo_library_rounded, color: Colors.white, size: 22),
+                          onPressed: () async {
+                            final pickerResult = await FilePicker.platform.pickFiles(type: FileType.image);
+                            if (pickerResult != null && pickerResult.files.single.path != null) {
+                              setCameraState(() {
+                                textOffset = const Offset(80, 250);
+                              });
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              Positioned(
-                bottom: 30,
-                left: 20,
-                right: 20,
-                child: FilledButton.icon(
-                  onPressed: () async {
-                    final normX = (textOffset.dx / MediaQuery.of(context).size.width).clamp(0.0, 1.0);
-                    final normY = (textOffset.dy / MediaQuery.of(context).size.height).clamp(0.0, 1.0);
 
-                    await ref.read(instantsProvider.notifier).createInstant(
-                      imagePath: imagePath,
-                      textOverlay: textCtrl.text.trim().isEmpty ? null : textCtrl.text.trim(),
-                      textX: normX,
-                      textY: normY,
-                    );
+              // Squircle Camera Viewport matching uploaded image
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(44),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.file(File(imagePath), fit: BoxFit.cover),
+                        Positioned(
+                          left: textOffset.dx,
+                          top: textOffset.dy,
+                          child: GestureDetector(
+                            onPanUpdate: (details) {
+                              setCameraState(() {
+                                textOffset += details.delta;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.4),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                textCtrl.text.isEmpty ? 'Tap top bar to type text' : textCtrl.text,
+                                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 16,
+                          left: 16,
+                          right: 16,
+                          child: TextField(
+                            controller: textCtrl,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            decoration: InputDecoration(
+                              hintText: 'Type overlay text…',
+                              hintStyle: const TextStyle(color: Colors.white70),
+                              filled: true,
+                              fillColor: Colors.black45,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            ),
+                            onChanged: (_) => setCameraState(() {}),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
 
-                    if (context.mounted) Navigator.pop(ctx);
-                  },
-                  icon: const Icon(Icons.send_rounded),
-                  label: const Text('Post Instant'),
+              // Bottom Camera Capture Shutter Controls matching uploaded screenshot
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // Flash / Off toggle
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: const BoxDecoration(color: Color(0xFF1E293B), shape: BoxShape.circle),
+                      child: const Icon(Icons.flash_off_rounded, color: Colors.white, size: 22),
+                    ),
+
+                    // Big White Camera Shutter Button (Submits / Captures Instant)
+                    GestureDetector(
+                      onTap: () async {
+                        final normX = (textOffset.dx / MediaQuery.of(context).size.width).clamp(0.0, 1.0);
+                        final normY = (textOffset.dy / MediaQuery.of(context).size.height).clamp(0.0, 1.0);
+
+                        await ref.read(instantsProvider.notifier).createInstant(
+                          imagePath: imagePath,
+                          textOverlay: textCtrl.text.trim().isEmpty ? null : textCtrl.text.trim(),
+                          textX: normX,
+                          textY: normY,
+                        );
+
+                        if (context.mounted) Navigator.pop(ctx);
+                      },
+                      child: Container(
+                        width: 76,
+                        height: 76,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 5),
+                        ),
+                        child: Center(
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Camera Flip icon
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: const BoxDecoration(color: Color(0xFF1E293B), shape: BoxShape.circle),
+                      child: const Icon(Icons.flip_camera_ios_rounded, color: Colors.white, size: 22),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -443,6 +531,23 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                       Text(author, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isAI ? cs.primary : cs.onSurface)),
                                       const SizedBox(height: 2),
                                       Text(comment, style: TextStyle(fontSize: 14, color: cs.onSurface)),
+                                      const SizedBox(height: 4),
+                                      GestureDetector(
+                                        onTap: () {
+                                          _commentCtrl.text = '@$author ';
+                                          _commentCtrl.selection = TextSelection.fromPosition(
+                                            TextPosition(offset: _commentCtrl.text.length),
+                                          );
+                                        },
+                                        child: Text(
+                                          'Reply',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: cs.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),

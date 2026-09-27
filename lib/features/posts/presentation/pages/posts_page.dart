@@ -190,10 +190,14 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     );
   }
 
-  void _openCreateInstantCamera() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.image);
-    if (result == null || result.files.single.path == null) return;
-    final imagePath = result.files.single.path!;
+  void _openCreateInstantCamera({String? initialPath}) async {
+    String imagePath = initialPath ?? '';
+    if (imagePath.isEmpty) {
+      final result = await FilePicker.platform.pickFiles(type: FileType.image);
+      if (result != null && result.files.single.path != null) {
+        imagePath = result.files.single.path!;
+      }
+    }
 
     final textCtrl = TextEditingController();
     Offset textOffset = const Offset(80, 250);
@@ -563,7 +567,20 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                   Expanded(
                     child: TextField(
                       controller: _commentCtrl,
-                      decoration: const InputDecoration(hintText: 'Add a comment…', border: InputBorder.none),
+                      decoration: const InputDecoration(
+                        hintText: 'Add a comment…',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (val) async {
+                        final text = val.trim();
+                        if (text.isNotEmpty) {
+                          await ref.read(postsNotifierProvider.notifier).addComment(post, text);
+                          _commentCtrl.clear();
+                          if (ctx.mounted) Navigator.pop(ctx);
+                        }
+                      },
                     ),
                   ),
                   TextButton(
@@ -575,7 +592,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                         if (ctx.mounted) Navigator.pop(ctx);
                       }
                     },
-                    child: const Text('Post', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text('Post', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
                 ],
               ),

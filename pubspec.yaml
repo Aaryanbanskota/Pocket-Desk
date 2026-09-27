@@ -33,8 +33,7 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.6
 
-  # Typography
-  google_fonts: ^6.2.1
+
 
   # Navigation & Routing
   go_router: ^14.2.0
@@ -69,7 +68,7 @@ dependencies:
   geolocator: ^13.0.2
   file_picker: ^8.0.0
   package_info_plus: ^8.0.0
-  open_file_plus: ^3.4.1
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

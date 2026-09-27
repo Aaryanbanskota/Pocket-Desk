@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:open_file_plus/open_file_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -55,10 +55,11 @@ class _AboutAppPageState extends State<AboutAppPage> {
 
   Future<void> _openWebUrl(String url) async {
     try {
-      if (Platform.isLinux) {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else if (Platform.isLinux) {
         await Process.run('xdg-open', [url]);
-      } else {
-        await OpenFile.open(url);
       }
     } catch (e) {
       if (mounted) {

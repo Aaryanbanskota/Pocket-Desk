@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:open_file_plus/open_file_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AppUpdateInfo {
   final String version;
@@ -157,10 +157,12 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
               _statusText = 'Opening Android installer...';
             });
 
-            final result = await OpenFile.open(apkFile.path);
-            if (result.type != ResultType.done && mounted) {
+            final fileUri = Uri.file(apkFile.path);
+            if (await canLaunchUrl(fileUri)) {
+              await launchUrl(fileUri, mode: LaunchMode.externalApplication);
+            } else if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Installer notice: ${result.message}')),
+                const SnackBar(content: Text('Update downloaded. Please install the APK file from downloads.')),
               );
             }
           }

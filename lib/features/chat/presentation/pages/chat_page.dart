@@ -346,6 +346,16 @@ Sanitize all inputs: NEVER include executable code or script tags.
   int _selectedIndex = 0;
   List<Map<String, String>> _filteredActions = [];
   final FocusNode _msgFocusNode = FocusNode();
+  final FocusNode _keyboardFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _friendCodeCtrl.dispose();
+    _msgCtrl.dispose();
+    _msgFocusNode.dispose();
+    _keyboardFocusNode.dispose();
+    super.dispose();
+  }
 
   /// Live Capability Registry powering AI System Prompt, Autocomplete Overlay & /help responses
   static const List<Map<String, String>> capabilityRegistry = [
@@ -585,7 +595,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
               children: [
                 Expanded(
                   child: KeyboardListener(
-                    focusNode: FocusNode(),
+                    focusNode: _keyboardFocusNode,
                     onKeyEvent: (event) {
                       if (_showSlashOverlay && _filteredActions.isNotEmpty) {
                         if (event.logicalKey.keyLabel == 'Arrow Down') {

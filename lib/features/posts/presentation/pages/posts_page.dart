@@ -190,19 +190,11 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     );
   }
 
-  void _openCreateInstantCamera({String? initialPath}) async {
-    String imagePath = initialPath ?? '';
-    if (imagePath.isEmpty) {
-      final result = await FilePicker.platform.pickFiles(type: FileType.image);
-      if (result != null && result.files.single.path != null) {
-        imagePath = result.files.single.path!;
-      }
-    }
-
+  void _openCreateInstantCamera({String? initialPath}) {
     final textCtrl = TextEditingController();
     Offset textOffset = const Offset(80, 250);
+    String imagePath = initialPath ?? '';
 
-    if (!mounted) return;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -227,24 +219,17 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                       'New Instant',
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.grid_view_rounded, color: Colors.white, size: 22),
-                          onPressed: () {},
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.photo_library_rounded, color: Colors.white, size: 22),
-                          onPressed: () async {
-                            final pickerResult = await FilePicker.platform.pickFiles(type: FileType.image);
-                            if (pickerResult != null && pickerResult.files.single.path != null) {
-                              setCameraState(() {
-                                textOffset = const Offset(80, 250);
-                              });
-                            }
-                          },
-                        ),
-                      ],
+                    IconButton(
+                      icon: const Icon(Icons.photo_library_rounded, color: Colors.white, size: 24),
+                      tooltip: 'Choose from gallery',
+                      onPressed: () async {
+                        final pickerResult = await FilePicker.platform.pickFiles(type: FileType.image);
+                        if (pickerResult != null && pickerResult.files.single.path != null) {
+                          setCameraState(() {
+                            imagePath = pickerResult.files.single.path!;
+                          });
+                        }
+                      },
                     ),
                   ],
                 ),
@@ -259,7 +244,26 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        Image.file(File(imagePath), fit: BoxFit.cover),
+                        if (imagePath.isNotEmpty && File(imagePath).existsSync())
+                          Image.file(File(imagePath), fit: BoxFit.cover)
+                        else
+                          Container(
+                            color: const Color(0xFF1E293B),
+                            child: const Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.camera_alt_rounded, color: Colors.white70, size: 54),
+                                  SizedBox(height: 12),
+                                  Text(
+                                    'Camera Viewport\nTap shutter below or icon above for gallery',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: Colors.white60, fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         Positioned(
                           left: textOffset.dx,
                           top: textOffset.dy,
@@ -272,11 +276,11 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                               decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.4),
+                                color: Colors.black.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Text(
-                                textCtrl.text.isEmpty ? 'Tap top bar to type text' : textCtrl.text,
+                                textCtrl.text.isEmpty ? 'Tap top bar to type overlay text' : textCtrl.text,
                                 style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
                               ),
                             ),
@@ -293,7 +297,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                               hintText: 'Type overlay text…',
                               hintStyle: const TextStyle(color: Colors.white70),
                               filled: true,
-                              fillColor: Colors.black45,
+                              fillColor: Colors.black54,
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             ),
@@ -320,7 +324,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                       child: const Icon(Icons.flash_off_rounded, color: Colors.white, size: 22),
                     ),
 
-                    // Big White Camera Shutter Button (Submits / Captures Instant)
+                    // Big White Camera Shutter Button (Captures / Posts Instant)
                     GestureDetector(
                       onTap: () async {
                         final normX = (textOffset.dx / MediaQuery.of(context).size.width).clamp(0.0, 1.0);
@@ -503,10 +507,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Center(
-                    child: Container(width: 36, height: 4, decoration: BoxDecoration(color: cs.onSurfaceVariant.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(2))),
-                  ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Text('Comments', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const Divider(height: 24),
                   Expanded(

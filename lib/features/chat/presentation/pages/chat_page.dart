@@ -133,8 +133,19 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     final prompt = 'Chat history:\n$historyContext\n$username: ${userMsg.text}';
     final nowStr = DateTime.now().toString();
     final systemPrompt = '''
-You are Pocketdesk AI, the official built-in action agent for Pocketdesk. Always address the user warmly (e.g. "yo <username>"). Be casual, helpful, clear, and friendly!
+You are Pocketdesk AI, the official built-in universal action agent for Pocketdesk. Always address the user warmly (e.g. "yo <username>"). Be casual, helpful, clear, and friendly!
 Current timestamp: $nowStr
+
+SLASH ACTION SYSTEM:
+The user input may start with a slash command defining the intended action type:
+- /create: User wants to CREATE a record (Note, Task, Event, Expense).
+- /edit: User wants to EDIT an existing record.
+- /delete: User wants to DELETE a record (Check permissions & request confirmation).
+- /view: User wants to VIEW or summarize records.
+- /search: User wants to SEARCH across Pocketdesk data.
+- /help: User wants to see available slash actions.
+
+The natural text following the slash action describes WHAT the user wants to do. You MUST parse natural language, typos, spelling mistakes, and casual phrasing (e.g. "creat a note name Test 101 and put article inside" -> Action: CREATE, Target: Note, Title: Test 101, Content: article).
 
 CAPABILITY & PERMISSION MATRIX:
 1. Calendar & Events: Support reading, creating, and editing events. Ask for missing details if underspecified.
@@ -143,20 +154,20 @@ CAPABILITY & PERMISSION MATRIX:
 4. Money Tracker: Support reading, creating, and logging expenses.
 5. Personal Feed: STRICTLY READ-ONLY. NEVER attempt to post, edit, or delete personal feed items.
 6. Trash: READ-ONLY. AI cannot restore or permanently purge trash items.
-7. Deletion Rule: DELETION IS STRICTLY FORBIDDEN BY DEFAULT across all modules. If the user asks to delete an item, check if Master AI permission is enabled and ask for explicit user confirmation before taking any action.
+7. Deletion Rule: DELETION IS STRICTLY FORBIDDEN BY DEFAULT across all modules. If the user uses /delete or requests deletion, verify authorization and ask for explicit user confirmation.
 
-IF THE USER ASKS YOU TO CREATE OR EDIT AN ITEM:
-You MUST output a JSON action block at the END of your message:
+IF EXECUTING A CREATE OR EDIT ACTION:
+You MUST output a JSON action block at the END of your response:
 ```json
 {
-  "action": "create_task" | "create_note" | "create_event" | "add_expense" | "ask_confirmation",
+  "action": "create_task" | "create_note" | "create_event" | "add_expense" | "edit_note" | "edit_task" | "ask_confirmation",
   "data": { ... }
 }
 ```
 
 Field specifications:
-- create_task: {"title": "...", "description": "...", "dueDate": "YYYY-MM-DD HH:mm"}
-- create_note: {"title": "...", "content": "...", "folder": "..."}
+- create_task / edit_task: {"title": "...", "description": "...", "dueDate": "YYYY-MM-DD HH:mm", "targetTitle": "..."}
+- create_note / edit_note: {"title": "...", "content": "...", "folder": "...", "targetTitle": "..."}
 - create_event: {"title": "...", "startTime": "YYYY-MM-DD HH:mm", "endTime": "YYYY-MM-DD HH:mm", "location": "..."}
 - add_expense: {"title": "...", "amount": 100.0, "category": "...", "date": "YYYY-MM-DD"}
 - ask_confirmation: {"type": "delete" | "edit", "details": "..."}
@@ -279,6 +290,39 @@ Sanitize all inputs: NEVER include executable code or script tags.
             }
           }
         }
+      } else if (action == 'edit_note') {
+        final targetTitle = sanitize(data['targetTitle']);
+        final newTitle = sanitize(data['title']);
+        final newContent = sanitize(data['content']);
+        final searchQ = targetTitle.isNotEmpty ? targetTitle : newTitle;
+        if (searchQ.isNotEmpty) {
+          final matches = await ref.read(notesProvider.notifier).searchNotes(searchQ);
+          if (matches.isNotEmpty) {
+            final existing = matches.first;
+            await ref.read(notesProvider.notifier).saveNote(
+              noteId: existing.id,
+              title: newTitle.isNotEmpty ? newTitle : existing.title,
+              content: newContent.isNotEmpty ? newContent : existing.content,
+              folderName: existing.folderName,
+            );
+          }
+        }
+      } else if (action == 'edit_task') {
+        final targetTitle = sanitize(data['targetTitle']);
+        final newTitle = sanitize(data['title']);
+        final newDesc = sanitize(data['description']);
+        final searchQ = targetTitle.isNotEmpty ? targetTitle : newTitle;
+        if (searchQ.isNotEmpty) {
+          final matches = await ref.read(tasksProvider.notifier).searchTasks(searchQ);
+          if (matches.isNotEmpty) {
+            final existing = matches.first;
+            await ref.read(tasksProvider.notifier).addOrUpdateTask(
+              taskId: existing.id,
+              title: newTitle.isNotEmpty ? newTitle : existing.title,
+              description: newDesc.isNotEmpty ? newDesc : existing.description,
+            );
+          }
+        }
       } else if (action == 'add_expense') {
         final title = sanitize(data['title']);
         final amt = double.tryParse(data['amount'].toString()) ?? 0.0;
@@ -296,6 +340,46 @@ Sanitize all inputs: NEVER include executable code or script tags.
     } catch (e) {
       // Safe fallback preventing app crash on malformed AI parameters
     }
+  }
+
+  bool _showSlashOverlay = false;
+  List<String> _filteredSlashCommands = [];
+
+  static const List<Map<String, String>> _slashActions = [
+    {'command': '/create', 'desc': 'CREATE something (note, task, event, expense)'},
+    {'command': '/edit', 'desc': 'EDIT an existing record (note, task, event, expense)'},
+    {'command': '/delete', 'desc': 'DELETE a record (requires authorization & confirmation)'},
+    {'command': '/view', 'desc': 'VIEW records or summaries'},
+    {'command': '/search', 'desc': 'SEARCH across all Pocketdesk data'},
+    {'command': '/help', 'desc': 'Show available AI slash commands'},
+    {'command': '/summarize', 'desc': 'SUMMARIZE notes or data'},
+  ];
+
+  void _onTextChanged(String text) {
+    if (text.startsWith('/')) {
+      final query = text.toLowerCase();
+      final matches = _slashActions
+          .where((action) => action['command']!.startsWith(query))
+          .map((action) => '${action['command']} - ${action['desc']}')
+          .toList();
+      setState(() {
+        _showSlashOverlay = matches.isNotEmpty;
+        _filteredSlashCommands = matches;
+      });
+    } else if (_showSlashOverlay) {
+      setState(() {
+        _showSlashOverlay = false;
+      });
+    }
+  }
+
+  void _selectSlashCommand(String fullCmd) {
+    final cmdName = fullCmd.split(' ').first;
+    _msgCtrl.text = '$cmdName ';
+    _msgCtrl.selection = TextSelection.fromPosition(TextPosition(offset: _msgCtrl.text.length));
+    setState(() {
+      _showSlashOverlay = false;
+    });
   }
 
   @override
@@ -326,7 +410,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    _activePeerName != null ? 'P2P Connected • Code: $_myFriendCode' : 'AI Matrix Companion Mode (yo $username)',
+                    _activePeerName != null ? 'P2P Connected • Code: $_myFriendCode' : 'AI Universal Action Agent (yo $username)',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 11),
@@ -377,7 +461,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'No peer connected right now. Say hi to Pocketdesk AI — your 24/7 buddy!',
+                            'Universal AI Agent ready! Type / to open slash actions (/create, /edit, /delete, /view, /search).',
                             textAlign: TextAlign.center,
                             style: TextStyle(color: colorScheme.onSurfaceVariant),
                           ),
@@ -459,6 +543,29 @@ Sanitize all inputs: NEVER include executable code or script tags.
               ),
             ),
 
+          if (_showSlashOverlay)
+            Container(
+              constraints: const BoxConstraints(maxHeight: 180),
+              margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHigh,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _filteredSlashCommands.length,
+                itemBuilder: (context, i) {
+                  final item = _filteredSlashCommands[i];
+                  return ListTile(
+                    dense: true,
+                    title: Text(item, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    onTap: () => _selectSlashCommand(item),
+                  );
+                },
+              ),
+            ),
+
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             color: colorScheme.surfaceContainerLow,
@@ -467,8 +574,9 @@ Sanitize all inputs: NEVER include executable code or script tags.
                 Expanded(
                   child: TextField(
                     controller: _msgCtrl,
-                    decoration: InputDecoration(
-                      hintText: 'Type a message to $username\'s AI buddy…',
+                    onChanged: _onTextChanged,
+                    decoration: const InputDecoration(
+                      hintText: 'Type / for slash actions (e.g. /create, /edit, /search)…',
                       border: InputBorder.none,
                     ),
                     onSubmitted: (_) => _sendMessage(),

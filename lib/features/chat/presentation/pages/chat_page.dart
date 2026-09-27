@@ -1,9 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketdesk/core/services/p2p_sync_service.dart';
 import 'package:pocketdesk/core/theme/app_spacing.dart';
 import 'package:pocketdesk/features/auth/presentation/providers/auth_notifier.dart';
+import 'package:pocketdesk/features/calendar/presentation/providers/calendar_events_notifier.dart';
+import 'package:pocketdesk/features/money_tracker/presentation/providers/money_notifier.dart';
+import 'package:pocketdesk/features/notes/presentation/providers/notes_notifier.dart';
 import 'package:pocketdesk/features/settings/presentation/providers/ai_settings_notifier.dart';
+import 'package:pocketdesk/features/tasks/presentation/providers/tasks_notifier.dart';
 import 'package:pocketdesk/features/dashboard/presentation/widgets/app_hamburger_drawer.dart';
 import 'package:pocketdesk/features/chat/presentation/widgets/ai_cardano_dots_widget.dart';
 
@@ -170,9 +175,9 @@ Always include a friendly confirmation sentence before the JSON block explaining
         if (jsonMatch != null) {
           final jsonStr = jsonMatch.group(1);
           if (jsonStr != null) {
-            final Map<String, dynamic> actionMap = jsonDecode(jsonStr);
-            final String? action = actionMap['action'];
-            final Map<String, dynamic>? data = actionMap['data'];
+            final Map<String, dynamic> actionMap = Map<String, dynamic>.from(jsonDecode(jsonStr) as Map);
+            final String? action = actionMap['action'] as String?;
+            final Map<String, dynamic>? data = actionMap['data'] != null ? Map<String, dynamic>.from(actionMap['data'] as Map) : null;
 
             if (action != null && data != null) {
               await _executeAIAction(action, data);
@@ -211,7 +216,7 @@ Always include a friendly confirmation sentence before the JSON block explaining
           if (data['dueDate'] != null) {
             dueDate = DateTime.tryParse(data['dueDate'].toString());
           }
-          await ref.read(tasksNotifierProvider.notifier).addOrUpdateTask(
+          await ref.read(tasksProvider.notifier).addOrUpdateTask(
             title: title,
             description: desc.isEmpty ? null : desc,
             dueDate: dueDate,
@@ -222,10 +227,10 @@ Always include a friendly confirmation sentence before the JSON block explaining
         if (title.isNotEmpty) {
           final content = sanitize(data['content']);
           final folder = sanitize(data['folder']);
-          await ref.read(notesNotifierProvider.notifier).addOrUpdateNote(
+          await ref.read(notesProvider.notifier).saveNote(
             title: title,
             content: content,
-            folder: folder.isEmpty ? null : folder,
+            folderName: folder.isEmpty ? null : folder,
           );
         }
       } else if (action == 'create_event') {
@@ -234,7 +239,7 @@ Always include a friendly confirmation sentence before the JSON block explaining
           final start = DateTime.tryParse(data['startTime'].toString()) ?? DateTime.now().add(const Duration(hours: 1));
           final end = DateTime.tryParse(data['endTime'].toString()) ?? start.add(const Duration(hours: 1));
           final loc = sanitize(data['location']);
-          await ref.read(calendarEventsNotifierProvider.notifier).addOrUpdateEvent(
+          await ref.read(calendarEventsProvider.notifier).addOrUpdateEvent(
             title: title,
             startTime: start,
             endTime: end,
@@ -247,7 +252,7 @@ Always include a friendly confirmation sentence before the JSON block explaining
         if (title.isNotEmpty && amt > 0) {
           final cat = sanitize(data['category']);
           final date = DateTime.tryParse(data['date'].toString()) ?? DateTime.now();
-          await ref.read(moneyNotifierProvider.notifier).addExpense(
+          await ref.read(moneyProvider.notifier).addExpense(
             title: title,
             amount: amt,
             category: cat.isEmpty ? 'General' : cat,

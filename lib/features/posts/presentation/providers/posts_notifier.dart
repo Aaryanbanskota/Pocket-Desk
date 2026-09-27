@@ -53,6 +53,19 @@ class InstantsNotifier extends AutoDisposeAsyncNotifier<List<InstantModel>> {
 
   Future<void> deleteInstant(int id) async {
     final repo = await ref.read(postsRepositoryProvider.future);
+    final auth = ref.read(authNotifierProvider).valueOrNull;
+    if (auth is AuthAuthenticated) {
+      final instants = await repo.getInstantsForUser(auth.user.id);
+      final match = instants.where((i) => i.id == id).firstOrNull;
+      if (match != null) {
+        await ref.read(trashNotifierProvider.notifier).moveToTrash(
+              itemType: TrashItemType.instant,
+              originalId: match.id,
+              title: match.textOverlay ?? 'Instant Story',
+              snippet: match.imagePath,
+            );
+      }
+    }
     await repo.deleteInstant(id);
     ref.invalidateSelf();
   }

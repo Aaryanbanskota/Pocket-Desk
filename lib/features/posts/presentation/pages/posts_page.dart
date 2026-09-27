@@ -715,7 +715,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                               Text('${post.likesCount}', style: const TextStyle(fontWeight: FontWeight.bold)),
                               const SizedBox(width: 16),
                               IconButton(
-                                icon: const Icon(Icons.chat_bubble_outline_rounded),
+                                icon: const Icon(Icons.mode_comment_outlined),
                                 onPressed: () => _showInstagramCommentsSheet(post),
                               ),
                               Text('${post.comments.length}', style: const TextStyle(fontWeight: FontWeight.bold)),

@@ -59,6 +59,7 @@ class TrashNotifier extends AutoDisposeAsyncNotifier<List<TrashItemModel>> {
     ref.invalidate(tasksProvider);
     ref.invalidate(calendarEventsProvider);
     ref.invalidate(postsNotifierProvider);
+    ref.invalidate(instantsProvider);
     
     ref.invalidateSelf();
   }

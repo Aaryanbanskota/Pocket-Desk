@@ -25,7 +25,10 @@ class _NotesDashboardViewState extends ConsumerState<NotesDashboardView> {
   }
 
   Future<void> _doSearch(String q) async {
-    if (q.trim().isEmpty) { setState(() => _searchResults = null); return; }
+    if (q.trim().isEmpty) {
+      setState(() => _searchResults = null);
+      return;
+    }
     final results = await ref.read(notesProvider.notifier).searchNotes(q);
     setState(() => _searchResults = results);
   }
@@ -62,13 +65,17 @@ class _NotesDashboardViewState extends ConsumerState<NotesDashboardView> {
                 ),
                 onChanged: _doSearch,
               )
-            : Text('Notes', style: tt.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+            : Text('Notes',
+                style: tt.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(_searching ? Icons.close : Icons.search_outlined),
             onPressed: () => setState(() {
               _searching = !_searching;
-              if (!_searching) { _searchCtrl.clear(); _searchResults = null; }
+              if (!_searching) {
+                _searchCtrl.clear();
+                _searchResults = null;
+              }
             }),
           ),
         ],
@@ -86,7 +93,8 @@ class _NotesDashboardViewState extends ConsumerState<NotesDashboardView> {
                 _FolderSidebar(
                   folders: state.folders,
                   selected: state.selectedFolder,
-                  onSelect: (f) => ref.read(notesProvider.notifier).setFolder(f),
+                  onSelect: (f) =>
+                      ref.read(notesProvider.notifier).setFolder(f),
                 ),
               Expanded(
                 child: displayNotes.isEmpty
@@ -208,8 +216,12 @@ class _NoteCard extends ConsumerWidget {
   final void Function(NoteModel) onTap;
 
   static const _cardColors = [
-    Color(0xFFFFF9C4), Color(0xFFE8F5E9), Color(0xFFE3F2FD),
-    Color(0xFFF3E5F5), Color(0xFFFCE4EC), Color(0xFFE0F7FA),
+    Color(0xFFFFF9C4),
+    Color(0xFFE8F5E9),
+    Color(0xFFE3F2FD),
+    Color(0xFFF3E5F5),
+    Color(0xFFFCE4EC),
+    Color(0xFFE0F7FA),
   ];
 
   Color _cardColor(BuildContext context) {
@@ -279,14 +291,20 @@ class _NoteCard extends ConsumerWidget {
                   Expanded(
                     child: Wrap(
                       spacing: 4,
-                      children: note.tags.take(2).map((t) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: cs.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(t, style: TextStyle(fontSize: 10, color: cs.primary)),
-                          )).toList(),
+                      children: note.tags
+                          .take(2)
+                          .map((t) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: cs.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(t,
+                                    style: TextStyle(
+                                        fontSize: 10, color: cs.primary)),
+                              ))
+                          .toList(),
                     ),
                   )
                 else
@@ -301,7 +319,8 @@ class _NoteCard extends ConsumerWidget {
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(4),
-                    child: Icon(Icons.edit_outlined, size: 16, color: cs.onSurfaceVariant),
+                    child: Icon(Icons.edit_outlined,
+                        size: 16, color: cs.onSurfaceVariant),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -316,7 +335,8 @@ class _NoteCard extends ConsumerWidget {
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(4),
-                    child: Icon(Icons.delete_outline_rounded, size: 16, color: cs.error),
+                    child: Icon(Icons.delete_outline_rounded,
+                        size: 16, color: cs.error),
                   ),
                 ),
               ],
@@ -336,24 +356,41 @@ class _NoteCard extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(note.isPinned ? Icons.push_pin : Icons.push_pin_outlined),
+              leading: Icon(
+                  note.isPinned ? Icons.push_pin : Icons.push_pin_outlined),
               title: Text(note.isPinned ? 'Unpin' : 'Pin'),
-              onTap: () { notifier.togglePin(note); Navigator.pop(context); },
+              onTap: () {
+                notifier.togglePin(note);
+                Navigator.pop(context);
+              },
             ),
             ListTile(
-              leading: Icon(note.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded),
+              leading: Icon(note.isFavorite
+                  ? Icons.star_rounded
+                  : Icons.star_outline_rounded),
               title: Text(note.isFavorite ? 'Unfavorite' : 'Favorite'),
-              onTap: () { notifier.toggleFavorite(note); Navigator.pop(context); },
+              onTap: () {
+                notifier.toggleFavorite(note);
+                Navigator.pop(context);
+              },
             ),
             ListTile(
               leading: const Icon(Icons.copy_rounded),
               title: const Text('Duplicate Note'),
-              onTap: () { notifier.duplicateNote(note); Navigator.pop(context); },
+              onTap: () {
+                notifier.duplicateNote(note);
+                Navigator.pop(context);
+              },
             ),
             ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('Delete', style: TextStyle(color: Colors.red)),
-              onTap: () { notifier.deleteNote(note.id); Navigator.pop(context); },
+              leading: Icon(Icons.delete_outline,
+                  color: Theme.of(context).colorScheme.error),
+              title: Text('Delete',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              onTap: () {
+                notifier.deleteNote(note.id);
+                Navigator.pop(context);
+              },
             ),
           ],
         ),
@@ -365,7 +402,8 @@ class _NoteCard extends ConsumerWidget {
 // ─── Folder Sidebar ───────────────────────────────────────────────────────────
 
 class _FolderSidebar extends StatelessWidget {
-  const _FolderSidebar({required this.folders, this.selected, required this.onSelect});
+  const _FolderSidebar(
+      {required this.folders, this.selected, required this.onSelect});
   final List<String> folders;
   final String? selected;
   final void Function(String?) onSelect;
@@ -381,8 +419,11 @@ class _FolderSidebar extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
-          _FolderTile(label: 'All Notes', icon: Icons.notes_outlined,
-              selected: selected == null, onTap: () => onSelect(null)),
+          _FolderTile(
+              label: 'All Notes',
+              icon: Icons.notes_outlined,
+              selected: selected == null,
+              onTap: () => onSelect(null)),
           ...folders.map((f) => _FolderTile(
                 label: f,
                 icon: Icons.folder_outlined,
@@ -396,7 +437,11 @@ class _FolderSidebar extends StatelessWidget {
 }
 
 class _FolderTile extends StatelessWidget {
-  const _FolderTile({required this.label, required this.icon, required this.selected, required this.onTap});
+  const _FolderTile(
+      {required this.label,
+      required this.icon,
+      required this.selected,
+      required this.onTap});
   final String label;
   final IconData icon;
   final bool selected;
@@ -407,12 +452,14 @@ class _FolderTile extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return ListTile(
       dense: true,
-      leading: Icon(icon, size: 18, color: selected ? cs.primary : cs.onSurfaceVariant),
-      title: Text(label, style: TextStyle(
-        color: selected ? cs.primary : cs.onSurface,
-        fontWeight: selected ? FontWeight.w600 : null,
-        fontSize: 13,
-      )),
+      leading: Icon(icon,
+          size: 18, color: selected ? cs.primary : cs.onSurfaceVariant),
+      title: Text(label,
+          style: TextStyle(
+            color: selected ? cs.primary : cs.onSurface,
+            fontWeight: selected ? FontWeight.w600 : null,
+            fontSize: 13,
+          )),
       tileColor: selected ? cs.primary.withValues(alpha: 0.1) : null,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       onTap: onTap,
@@ -423,7 +470,8 @@ class _FolderTile extends StatelessWidget {
 // ─── Folder chip bar (narrow) ─────────────────────────────────────────────────
 
 class _FolderChipBar extends StatelessWidget {
-  const _FolderChipBar({required this.folders, this.selected, required this.onSelect});
+  const _FolderChipBar(
+      {required this.folders, this.selected, required this.onSelect});
   final List<String> folders;
   final String? selected;
   final void Function(String?) onSelect;
@@ -471,12 +519,17 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.note_outlined, size: 72, color: cs.primary.withValues(alpha: 0.3)),
+          Icon(Icons.note_outlined,
+              size: 72, color: cs.primary.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
-          Text('No notes yet', style: Theme.of(context).textTheme.titleMedium
-              ?.copyWith(color: cs.onSurfaceVariant)),
+          Text('No notes yet',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(color: cs.onSurfaceVariant)),
           const SizedBox(height: 8),
-          FilledButton.tonal(onPressed: onAdd, child: const Text('Create your first note')),
+          FilledButton.tonal(
+              onPressed: onAdd, child: const Text('Create your first note')),
         ],
       ),
     );

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:pocketdesk/features/money_tracker/data/models/expense_model.dart';
 import 'package:pocketdesk/features/money_tracker/presentation/providers/money_notifier.dart';
 import 'package:pocketdesk/features/settings/presentation/providers/ai_settings_notifier.dart';
 
@@ -14,270 +16,490 @@ class _MoneyHealthPageState extends ConsumerState<MoneyHealthPage> {
   bool _analyzing = false;
   String? _aiAnalysis;
 
-  Future<void> _runAIAnalysis(MoneyState moneyState) async {
-    setState(() { _analyzing = true; _aiAnalysis = null; });
-    final aiSettings = await ref.read(aiSettingsRepositoryProvider.future).then((r) => r.getOrCreateSettings(moneyState.wallet?.userId ?? 0));
-
-    if (!aiSettings.isEnabled) {
-      setState(() {
-        _analyzing = false;
-        _aiAnalysis = 'Pocketdesk AI is currently turned OFF in Settings → AI. Turn ON "Enable Pocketdesk AI" to activate AI insights.';
-      });
-      return;
-    }
-
-    if (aiSettings.apiKey.trim().isEmpty) {
-      setState(() {
-        _analyzing = false;
-        _aiAnalysis = 'API Key is missing! Please enter and save your OpenRouter API key in Settings → AI.';
-      });
-      return;
-    }
-
-    if (!aiSettings.allowMoneyAccess || !aiSettings.moneyAnalysisEnabled) {
-      setState(() {
-        _analyzing = false;
-        _aiAnalysis = 'AI Money Analysis permission is turned off. Check "AI Money Health Analysis" and "Money Data" in Settings → AI.';
-      });
-      return;
-    }
-
-    final catSummary = moneyState.categoryBreakdown.entries
-        .map((e) => '${e.key}: ${moneyState.currency} ${e.value.toStringAsFixed(0)}')
-        .join(', ');
-
-    final prompt = 'User spent ${moneyState.currency} ${moneyState.thisMonthSpent.toStringAsFixed(0)} this month across categories: $catSummary. Current balance is ${moneyState.currency} ${moneyState.currentBalance.toStringAsFixed(0)}. Spending Score is ${moneyState.spendingScore}/100.';
-    const systemPrompt = 'You are Pocketdesk AI analyzing financial spending data. Provide 2 concise bullet point suggestions on how to optimize monthly spending.';
-
-    final res = await ref.read(aiSettingsProvider.notifier).generateCompletion(
-      prompt: prompt,
-      systemPrompt: systemPrompt,
-    );
-
+  Future<void> _runAIAnalysis(
+    MoneyState state,
+    List<ExpenseModel> monthExpenses,
+    Map<String, double> categories,
+    double totalSpent,
+  ) async {
     setState(() {
-      _analyzing = false;
-      _aiAnalysis = res ?? 'Unable to connect to OpenRouter. Please verify your API key in Settings → AI.';
+      _analyzing = true;
+      _aiAnalysis = null;
     });
-  }
+    try {
+      final settings = await ref
+          .read(aiSettingsRepositoryProvider.future)
+          .then((repo) => repo.getOrCreateSettings(state.wallet?.userId ?? 0));
 
-  String _getMonthName(int month) {
-    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    return months[(month - 1) % 12];
+      String? error;
+      if (!settings.isEnabled) {
+        error =
+            'Enable Pocketdesk AI in Settings → AI to generate this report.';
+      } else if (settings.apiKey.trim().isEmpty) {
+        error = 'Add your OpenRouter API key in Settings → AI to continue.';
+      } else if (!settings.allowMoneyAccess || !settings.moneyAnalysisEnabled) {
+        error =
+            'Enable AI Money Health Analysis and Money Data access in Settings → AI.';
+      }
+      if (error != null) {
+        if (mounted) setState(() => _aiAnalysis = error);
+        return;
+      }
+
+      final now = DateTime.now();
+      final largest = monthExpenses.isEmpty
+          ? null
+          : monthExpenses.reduce(
+              (a, b) => a.amount >= b.amount ? a : b,
+            );
+      final categoriesText = categories.entries
+          .map((entry) =>
+              '${entry.key}: ${state.currency} ${entry.value.toStringAsFixed(2)}')
+          .join('\n');
+      final transactionsText = monthExpenses
+          .take(20)
+          .map((expense) =>
+              '${DateFormat('yyyy-MM-dd').format(expense.date)} | ${expense.category} | ${expense.title} | ${state.currency} ${expense.amount.toStringAsFixed(2)}')
+          .join('\n');
+      final prompt = '''
+Prepare a professional monthly account activity report using only these recorded expense transactions.
+Reporting period: ${DateFormat('MMMM yyyy').format(now)}
+Current wallet balance: ${state.currency} ${state.currentBalance.toStringAsFixed(2)}
+Recorded expenses this month: ${state.currency} ${totalSpent.toStringAsFixed(2)}
+Transaction count: ${monthExpenses.length}
+Average recorded spend per elapsed calendar day: ${state.currency} ${(totalSpent / now.day).toStringAsFixed(2)}
+Largest transaction: ${largest == null ? 'None' : '${largest.title} (${largest.category}), ${state.currency} ${largest.amount.toStringAsFixed(2)}'}
+Expense totals by category:
+${categoriesText.isEmpty ? 'None' : categoriesText}
+
+Recent transactions (up to 20):
+${transactionsText.isEmpty ? 'None' : transactionsText}
+''';
+      const systemPrompt = '''
+You are a careful personal-finance report writer, not a bank and not a financial adviser.
+Write a concise, professional statement-style report with headings: Monthly overview, Spending mix, Notable activity, and Practical observations.
+Use only the supplied expense records and balance. Do not invent income, budgets, prior-period comparisons, account details, causes, or forecasts. State when there is not enough data to draw a conclusion. Do not repeat raw transaction data unnecessarily. Clearly call these local wallet records, not bank-verified transactions.
+''';
+
+      final report =
+          await ref.read(aiSettingsProvider.notifier).generateCompletion(
+                prompt: prompt,
+                systemPrompt: systemPrompt,
+                maxTokens: 450,
+              );
+      if (mounted) {
+        setState(() {
+          _aiAnalysis = report ??
+              'Could not generate the report. Check your connection and AI settings, then try again.';
+        });
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() => _aiAnalysis = 'Report generation failed: $error');
+      }
+    } finally {
+      if (mounted) setState(() => _analyzing = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final moneyAsync = ref.watch(moneyProvider);
+    final colors = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Money Health'),
-      ),
-      body: moneyAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (moneyState) {
-          final breakdown = moneyState.categoryBreakdown;
-          final totalSpent = moneyState.thisMonthSpent;
-          final now = DateTime.now();
-          final currentMonthStr = _getMonthName(now.month);
-          final startingBalance = moneyState.currentBalance + totalSpent;
+      appBar: AppBar(title: const Text('Money Report')),
+      body: ref.watch(moneyProvider).when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) =>
+                Center(child: Text('Could not load report: $error')),
+            data: (state) {
+              final now = DateTime.now();
+              final monthExpenses = state.expenses
+                  .where((expense) =>
+                      expense.date.year == now.year &&
+                      expense.date.month == now.month)
+                  .toList()
+                ..sort((a, b) => b.date.compareTo(a.date));
+              final totalSpent = monthExpenses.fold(
+                  0.0, (sum, expense) => sum + expense.amount);
+              final categories = <String, double>{};
+              for (final expense in monthExpenses) {
+                categories.update(
+                  expense.category,
+                  (amount) => amount + expense.amount,
+                  ifAbsent: () => expense.amount,
+                );
+              }
+              final orderedCategories = categories.entries.toList()
+                ..sort((a, b) => b.value.compareTo(a.value));
+              final averagePerDay = totalSpent / now.day;
+              final largestCategory =
+                  orderedCategories.isEmpty ? null : orderedCategories.first;
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Main AI Money Report Card (Matching user ASCII mockup)
-              Container(
-                decoration: BoxDecoration(
-                  color: cs.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: cs.outlineVariant),
-                ),
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Top header: ✨ AI Money Report + Month
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Text('✨ ', style: TextStyle(fontSize: 18)),
-                            Text('AI Money Report', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        Text(currentMonthStr, style: theme.textTheme.titleSmall?.copyWith(color: cs.onSurfaceVariant, fontWeight: FontWeight.w600)),
-                      ],
+              return ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Card(
+                    margin: EdgeInsets.zero,
+                    color: colors.surface,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(color: colors.outlineVariant),
                     ),
-                    const SizedBox(height: 16),
-                    Text('Your spending this month', style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
-                    const SizedBox(height: 8),
-
-                    // Amount breakdown line: Rs. X spent | Rs. Y remaining
-                    Row(
-                      children: [
-                        Text(
-                          '${moneyState.currency} ${totalSpent.toStringAsFixed(0)} spent',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: cs.error, fontSize: 15),
-                        ),
-                        const SizedBox(width: 16),
-                        Text(
-                          '${moneyState.currency} ${moneyState.currentBalance.toStringAsFixed(0)} remaining',
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 15),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'From your ${moneyState.currency} ${startingBalance.toStringAsFixed(0)} starting balance',
-                      style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                    ),
-                    const SizedBox(height: 16),
-                    const Divider(height: 1),
-                    const SizedBox(height: 16),
-
-                    // Spending Score & Status badge
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              '${moneyState.spendingScore}/100',
-                              style: theme.textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: moneyState.spendingScore >= 70 ? Colors.green : Colors.orange,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: colors.primaryContainer,
+                                foregroundColor: colors.onPrimaryContainer,
+                                child: const Icon(Icons.receipt_long_rounded),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: (moneyState.spendingScore >= 70 ? Colors.green : Colors.orange).withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                moneyState.spendingStatus,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: moneyState.spendingScore >= 70 ? Colors.green : Colors.orange,
-                                  fontSize: 12,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('ACCOUNT ACTIVITY',
+                                        style: theme.textTheme.labelSmall
+                                            ?.copyWith(
+                                          color: colors.onSurfaceVariant,
+                                          letterSpacing: 1.1,
+                                          fontWeight: FontWeight.w700,
+                                        )),
+                                    Text(
+                                      DateFormat('MMMM yyyy').format(now),
+                                      style:
+                                          theme.textTheme.titleLarge?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
+                              Icon(Icons.info_outline_rounded,
+                                  color: colors.onSurfaceVariant),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          Text('CURRENT WALLET BALANCE',
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: colors.onSurfaceVariant,
+                                letterSpacing: 0.8,
+                              )),
+                          const SizedBox(height: 4),
+                          Text(
+                            _money(state.currency, state.currentBalance),
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: colors.onSurface,
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '"${moneyState.spendingScore >= 80 ? 'Healthy control over monthly expenses!' : moneyState.spendingScore >= 60 ? 'Spending is steady, but watch non-essential expenses.' : 'High spending detected. Focus on reducing variable costs.'}"',
-                      style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic, color: cs.onSurfaceVariant),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Top Categories Breakdown (%)
-                    Text('Top Categories', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 10),
-                    if (breakdown.isEmpty)
-                      Text('No category expenses recorded.', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13))
-                    else
-                      ...breakdown.entries.map((e) {
-                        final percentage = totalSpent > 0 ? (e.value / totalSpent * 100).toStringAsFixed(1) : '0';
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Pocketdesk local wallet • Not a bank statement',
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: colors.onSurfaceVariant),
+                          ),
+                          const SizedBox(height: 20),
+                          Divider(color: colors.outlineVariant),
+                          const SizedBox(height: 16),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final width = (constraints.maxWidth - 16) / 2;
+                              return Wrap(
+                                spacing: 16,
+                                runSpacing: 16,
                                 children: [
-                                  Text(e.key, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                                  Text('${moneyState.currency} ${e.value.toStringAsFixed(0)} ($percentage%)', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                                  SizedBox(
+                                    width: width,
+                                    child: _ReportMetric(
+                                      label: 'Spent this month',
+                                      value: _money(state.currency, totalSpent),
+                                      icon: Icons.south_west_rounded,
+                                      color: colors.error,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: width,
+                                    child: _ReportMetric(
+                                      label: 'Daily average',
+                                      value:
+                                          _money(state.currency, averagePerDay),
+                                      icon: Icons.calendar_today_rounded,
+                                      color: colors.primary,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: width,
+                                    child: _ReportMetric(
+                                      label: 'Transactions',
+                                      value: '${monthExpenses.length}',
+                                      icon: Icons.swap_horiz_rounded,
+                                      color: colors.secondary,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: width,
+                                    child: _ReportMetric(
+                                      label: 'Top category',
+                                      value: largestCategory?.key ?? '—',
+                                      icon: Icons.pie_chart_outline_rounded,
+                                      color: colors.tertiary,
+                                    ),
+                                  ),
                                 ],
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Card(
+                    margin: EdgeInsets.zero,
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Spending by category',
+                              style: theme.textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 16),
+                          if (orderedCategories.isEmpty)
+                            Text('No expenses recorded this month.',
+                                style: theme.textTheme.bodyMedium
+                                    ?.copyWith(color: colors.onSurfaceVariant))
+                          else
+                            ...orderedCategories.map((entry) {
+                              final share = totalSpent == 0
+                                  ? 0.0
+                                  : entry.value / totalSpent;
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                            child: Text(entry.key,
+                                                style: theme
+                                                    .textTheme.bodyMedium
+                                                    ?.copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                ))),
+                                        Text(
+                                          '${_money(state.currency, entry.value)}  ·  ${(share * 100).toStringAsFixed(1)}%',
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: colors.onSurfaceVariant,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    LinearProgressIndicator(
+                                      value: share,
+                                      minHeight: 7,
+                                      borderRadius: BorderRadius.circular(8),
+                                      backgroundColor:
+                                          colors.surfaceContainerHighest,
+                                      color: colors.primary,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Card(
+                    margin: EdgeInsets.zero,
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Recent activity',
+                              style: theme.textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 8),
+                          if (monthExpenses.isEmpty)
+                            Text(
+                                'Transactions from this month will appear here.',
+                                style: theme.textTheme.bodyMedium
+                                    ?.copyWith(color: colors.onSurfaceVariant))
+                          else
+                            ...monthExpenses
+                                .take(8)
+                                .map((expense) => _ActivityRow(
+                                      expense: expense,
+                                      currency: state.currency,
+                                    )),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Card(
+                    margin: EdgeInsets.zero,
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.auto_awesome_rounded,
+                                  color: colors.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text('AI analyst report',
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    )),
                               ),
-                              const SizedBox(height: 4),
-                              LinearProgressIndicator(
-                                value: totalSpent > 0 ? (e.value / totalSpent) : 0,
-                                backgroundColor: cs.surfaceContainerHighest,
-                                color: cs.primary,
-                                minHeight: 6,
-                                borderRadius: BorderRadius.circular(4),
+                              TextButton.icon(
+                                onPressed: _analyzing
+                                    ? null
+                                    : () => _runAIAnalysis(
+                                          state,
+                                          monthExpenses,
+                                          categories,
+                                          totalSpent,
+                                        ),
+                                icon: _analyzing
+                                    ? const SizedBox.square(
+                                        dimension: 16,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.refresh_rounded),
+                                label:
+                                    Text(_analyzing ? 'Preparing' : 'Generate'),
                               ),
                             ],
                           ),
-                        );
-                      }),
-                    const SizedBox(height: 20),
-
-                    // AI Insights & Suggestions
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('AI Suggestions', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-                        TextButton.icon(
-                          onPressed: _analyzing ? null : () => _runAIAnalysis(moneyState),
-                          icon: _analyzing
-                              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                              : const Icon(Icons.refresh, size: 16),
-                          label: Text(_analyzing ? 'Analyzing...' : 'Generate AI Advice'),
-                        ),
-                      ],
-                    ),
-                    if (_aiAnalysis != null) ...[
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
-                        ),
-                        child: Text(
-                          _aiAnalysis!,
-                          style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
-                        ),
+                          const SizedBox(height: 8),
+                          if (_aiAnalysis == null && !_analyzing)
+                            Text(
+                              'Generate a transaction-based summary. The report uses your local expense records and does not assume income or a budget.',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                          if (_aiAnalysis != null)
+                            SelectableText(
+                              _aiAnalysis!,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                height: 1.55,
+                                color: colors.onSurface,
+                              ),
+                            ),
+                        ],
                       ),
-                    ] else ...[
-                      const SizedBox(height: 4),
-                      const Text('• Track daily small purchases to increase remaining balance.', style: TextStyle(fontSize: 13)),
-                      const SizedBox(height: 4),
-                      const Text('• Aim to keep dining & entertainment under 30% of total budget.', style: TextStyle(fontSize: 13)),
-                    ],
-
-                    const SizedBox(height: 20),
-                    const Divider(height: 1),
-                    const SizedBox(height: 16),
-
-                    // Next Month Targets
-                    Text('Next Month Target', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Suggested Spending Cap:', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
-                        Text('${moneyState.currency} ${(startingBalance * 0.7).toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Target Savings:', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
-                        Text('${moneyState.currency} ${(startingBalance * 0.3).toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 13)),
-                      ],
-                    ),
-                  ],
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              );
+            },
+          ),
+    );
+  }
+
+  String _money(String currency, double amount) =>
+      '$currency ${NumberFormat('#,##0.00').format(amount)}';
+}
+
+class _ReportMetric extends StatelessWidget {
+  const _ReportMetric({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: colors.onSurfaceVariant)),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.onSurface,
                 ),
               ),
             ],
-          );
-        },
-      ),
+          ),
+        ),
+      ],
     );
   }
 }
 
+class _ActivityRow extends StatelessWidget {
+  const _ActivityRow({required this.expense, required this.currency});
+
+  final ExpenseModel expense;
+  final String currency;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(
+        backgroundColor: colors.surfaceContainerHighest,
+        foregroundColor: colors.onSurfaceVariant,
+        child: const Icon(Icons.payments_outlined),
+      ),
+      title: Text(expense.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(
+        '${expense.category}  ·  ${DateFormat('MMM d').format(expense.date)}',
+        style:
+            theme.textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+      ),
+      trailing: Text(
+        '$currency ${NumberFormat('#,##0.00').format(expense.amount)}',
+        style: theme.textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: colors.onSurface,
+        ),
+      ),
+    );
+  }
+}

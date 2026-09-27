@@ -44,6 +44,21 @@ class WeatherWidget extends ConsumerWidget {
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    if (weather.accuracyMeters != null &&
+                        weather.accuracyMeters! > 0)
+                      Text(
+                        'GPS accuracy ±${weather.accuracyMeters!.round()} m',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    if (weather.observedAt != null)
+                      Text(
+                        'Updated ${TimeOfDay.fromDateTime(weather.observedAt!.toLocal()).format(context)}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -63,6 +78,20 @@ class WeatherWidget extends ConsumerWidget {
                       color: colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  if (weather.apparentTemperature != null)
+                    Text(
+                      'Feels ${weather.apparentTemperature!.toStringAsFixed(0)}°',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  if (weather.humidity != null)
+                    Text(
+                      'Humidity ${weather.humidity}%',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                 ],
               ),
             ],
@@ -76,17 +105,19 @@ class WeatherWidget extends ConsumerWidget {
         ),
         error: (err, _) => Row(
           children: [
-            const Icon(Icons.error_outline_rounded, color: Colors.red),
+            Icon(Icons.error_outline_rounded, color: colorScheme.error),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
-                'Weather: $err',
-                style: theme.textTheme.bodyMedium?.copyWith(color: Colors.red),
+                err.toString().replaceFirst('Exception: ', ''),
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: colorScheme.onSurface),
               ),
             ),
             IconButton(
               icon: const Icon(Icons.refresh_rounded),
-              onPressed: () => ref.read(weatherProvider.notifier).fetchWeather(),
+              onPressed: () =>
+                  ref.read(weatherProvider.notifier).fetchWeather(),
             ),
           ],
         ),

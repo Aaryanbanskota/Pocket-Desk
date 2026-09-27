@@ -4,6 +4,10 @@ class WeatherInfo {
   final int weatherCode;
   final String description;
   final String cityName;
+  final double? apparentTemperature;
+  final int? humidity;
+  final DateTime? observedAt;
+  final double? accuracyMeters;
 
   WeatherInfo({
     required this.temperature,
@@ -11,20 +15,40 @@ class WeatherInfo {
     required this.weatherCode,
     required this.description,
     required this.cityName,
+    this.apparentTemperature,
+    this.humidity,
+    this.observedAt,
+    this.accuracyMeters,
   });
 
-  factory WeatherInfo.fromJson(Map<String, dynamic> json, String cityName) {
-    final current = (json['current_weather'] ?? json['current']) as Map<String, dynamic>;
-    final temp = ((current['temperature'] ?? current['temperature_2m'] ?? 0.0) as num).toDouble();
-    final wind = ((current['windspeed'] ?? current['wind_speed_10m'] ?? 0.0) as num).toDouble();
-    final code = ((current['weathercode'] ?? current['weather_code'] ?? 0) as num).toInt();
+  factory WeatherInfo.fromJson(
+    Map<String, dynamic> json,
+    String cityName, {
+    double? accuracyMeters,
+  }) {
+    final current = Map<String, dynamic>.from(
+      (json['current'] ?? json['current_weather']) as Map,
+    );
+    final temperature = current['temperature_2m'] ?? current['temperature'];
+    final wind = current['wind_speed_10m'] ?? current['windspeed'];
+    final code = current['weather_code'] ?? current['weathercode'];
+    if (temperature is! num || wind is! num || code is! num) {
+      throw const FormatException('Weather response is missing current data.');
+    }
+    final apparent = current['apparent_temperature'] as num?;
+    final humidity = current['relative_humidity_2m'] as num?;
+    final observedAt = DateTime.tryParse(current['time']?.toString() ?? '');
 
     return WeatherInfo(
-      temperature: temp,
-      windSpeed: wind,
-      weatherCode: code,
-      description: _getWeatherDescription(code),
+      temperature: temperature.toDouble(),
+      windSpeed: wind.toDouble(),
+      weatherCode: code.toInt(),
+      description: _getWeatherDescription(code.toInt()),
       cityName: cityName,
+      apparentTemperature: apparent?.toDouble(),
+      humidity: humidity?.toInt(),
+      observedAt: observedAt,
+      accuracyMeters: accuracyMeters,
     );
   }
 

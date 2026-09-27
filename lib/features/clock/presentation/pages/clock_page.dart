@@ -1,8 +1,12 @@
 import 'dart:async';
-import 'dart:io' show Platform;
+import 'dart:convert';
+import 'dart:io' show File, Platform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 
+import '../../../../core/logging/app_logger.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/theme/app_spacing.dart';
 
@@ -20,6 +24,24 @@ class AlarmItem {
   String label;
   String days;
   bool isEnabled;
+
+  factory AlarmItem.fromJson(Map<dynamic, dynamic> json) => AlarmItem(
+        id: json['id'] as int,
+        time:
+            TimeOfDay(hour: json['hour'] as int, minute: json['minute'] as int),
+        label: json['label'] as String,
+        days: json['days'] as String,
+        isEnabled: json['isEnabled'] as bool,
+      );
+
+  Map<String, Object> toJson() => {
+        'id': id,
+        'hour': time.hour,
+        'minute': time.minute,
+        'label': label,
+        'days': days,
+        'isEnabled': isEnabled,
+      };
 }
 
 class ClockPage extends ConsumerStatefulWidget {
@@ -45,22 +67,12 @@ class _ClockPageState extends ConsumerState<ClockPage>
   int _timerInitialSeconds = 60;
   int _timerSeconds = 60;
   bool _isTimerRunning = false;
+  DateTime? _timerDeadline;
 
   // Alarm list state
-  final List<AlarmItem> _alarms = [
-    AlarmItem(
-        id: 1,
-        time: const TimeOfDay(hour: 7, minute: 0),
-        label: 'Morning Wake Up',
-        days: 'Weekdays',
-        isEnabled: false),
-    AlarmItem(
-        id: 2,
-        time: const TimeOfDay(hour: 8, minute: 30),
-        label: 'Work Start',
-        days: 'Daily',
-        isEnabled: false),
-  ];
+  final List<AlarmItem> _alarms = [];
+  bool _alarmsLoading = true;
+  String? _alarmStorageError;
 
   @override
   void initState() {
@@ -69,6 +81,7 @@ class _ClockPageState extends ConsumerState<ClockPage>
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _now = DateTime.now());
     });
+    unawaited(_loadAlarms());
   }
 
   @override
@@ -103,8 +116,17 @@ class _ClockPageState extends ConsumerState<ClockPage>
   Future<void> _toggleTimer() async {
     if (_isTimerRunning) {
       _countDownTimer?.cancel();
-      await NotificationService.instance.cancelTimer(999001);
-      setState(() => _isTimerRunning = false);
+      final remaining = _remainingTimerSeconds();
+      if (remaining > 0) {
+        await NotificationService.instance.cancelTimer(999001);
+      }
+      if (!mounted) return;
+      setState(() {
+        _timerSeconds = remaining;
+        _timerDeadline = null;
+        _isTimerRunning = false;
+      });
+      if (remaining == 0) _finishTimer();
     } else {
       if (_timerSeconds <= 0) return;
       late final bool scheduled;
@@ -126,40 +148,59 @@ class _ClockPageState extends ConsumerState<ClockPage>
         );
         return;
       }
+      _timerDeadline = DateTime.now().add(Duration(seconds: _timerSeconds));
       setState(() => _isTimerRunning = true);
-      _countDownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _countDownTimer = Timer.periodic(const Duration(milliseconds: 250), (_) {
         if (!mounted) return;
-        if (_timerSeconds > 1) {
-          setState(() => _timerSeconds--);
+        final remaining = _remainingTimerSeconds();
+        if (remaining > 0) {
+          if (remaining != _timerSeconds) {
+            setState(() => _timerSeconds = remaining);
+          }
         } else {
-          _countDownTimer?.cancel();
-          setState(() {
-            _timerSeconds = 0;
-            _isTimerRunning = false;
-          });
-          if (!Platform.isAndroid) {
-            unawaited(
-              NotificationService.instance.showNotification(
-                id: 999001,
-                title: 'Timer Finished',
-                body: 'Your countdown timer has ended.',
-              ),
-            );
-          }
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                  content: Text('Timer Finished! ⏰'),
-                  backgroundColor: Colors.green),
-            );
-          }
+          _finishTimer();
         }
       });
     }
   }
 
+  int _remainingTimerSeconds() {
+    final milliseconds =
+        _timerDeadline?.difference(DateTime.now()).inMilliseconds ??
+            _timerSeconds * 1000;
+    return ((milliseconds + 999) ~/ 1000).clamp(0, _timerInitialSeconds);
+  }
+
+  void _finishTimer() {
+    _countDownTimer?.cancel();
+    _timerDeadline = null;
+    if (mounted) {
+      setState(() {
+        _timerSeconds = 0;
+        _isTimerRunning = false;
+      });
+      final colors = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Timer finished'),
+          backgroundColor: colors.tertiary,
+        ),
+      );
+    }
+    if (!Platform.isAndroid) {
+      unawaited(
+        NotificationService.instance.showNotification(
+          id: 999001,
+          title: 'Timer Finished',
+          body: 'Your countdown timer has ended.',
+        ),
+      );
+    }
+  }
+
   void _resetTimer() {
     _countDownTimer?.cancel();
+    _timerDeadline = null;
     unawaited(NotificationService.instance.cancelTimer(999001));
     setState(() {
       _isTimerRunning = false;
@@ -169,6 +210,7 @@ class _ClockPageState extends ConsumerState<ClockPage>
 
   void _setTimerDuration(int seconds) {
     _countDownTimer?.cancel();
+    _timerDeadline = null;
     unawaited(NotificationService.instance.cancelTimer(999001));
     setState(() {
       _isTimerRunning = false;
@@ -193,6 +235,7 @@ class _ClockPageState extends ConsumerState<ClockPage>
               child: TextField(
                 controller: minutesController,
                 keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: const InputDecoration(labelText: 'Minutes'),
               ),
             ),
@@ -201,6 +244,7 @@ class _ClockPageState extends ConsumerState<ClockPage>
               child: TextField(
                 controller: secondsController,
                 keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: const InputDecoration(labelText: 'Seconds'),
               ),
             ),
@@ -213,9 +257,16 @@ class _ClockPageState extends ConsumerState<ClockPage>
             onPressed: () {
               final m = int.tryParse(minutesController.text.trim()) ?? 0;
               final s = int.tryParse(secondsController.text.trim()) ?? 0;
+              if (m < 0 || s < 0 || s > 59) {
+                _showClockMessage('Enter minutes and 0–59 seconds.');
+                return;
+              }
               final total = (m * 60) + s;
               if (total > 0) {
                 _setTimerDuration(total);
+              } else {
+                _showClockMessage('Set a timer longer than zero.');
+                return;
               }
               Navigator.pop(ctx);
             },
@@ -279,13 +330,15 @@ class _ClockPageState extends ConsumerState<ClockPage>
           actions: [
             if (existingAlarm != null)
               IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () {
-                  unawaited(
-                    NotificationService.instance.cancelAlarm(existingAlarm.id),
-                  );
+                icon: Icon(Icons.delete,
+                    color: Theme.of(context).colorScheme.error),
+                onPressed: () async {
+                  await NotificationService.instance
+                      .cancelAlarm(existingAlarm.id);
+                  if (!mounted) return;
                   setState(() => _alarms.remove(existingAlarm));
-                  Navigator.pop(ctx);
+                  await _saveAlarms();
+                  if (ctx.mounted) Navigator.pop(ctx);
                 },
               ),
             TextButton(
@@ -328,6 +381,8 @@ class _ClockPageState extends ConsumerState<ClockPage>
     final alarm = alarmToSchedule;
     if (alarm != null && (existingAlarm == null || alarm.isEnabled)) {
       await _scheduleAlarm(alarm);
+    } else if (alarm != null) {
+      await _saveAlarms();
     }
   }
 
@@ -342,14 +397,22 @@ class _ClockPageState extends ConsumerState<ClockPage>
         minute: alarm.time.minute,
       );
     } catch (e) {
-      if (mounted) _showClockMessage('Could not schedule alarm: $e');
+      if (mounted) {
+        setState(() => alarm.isEnabled = false);
+        await _saveAlarms();
+        _showClockMessage('Could not schedule alarm: $e');
+      }
       return;
     }
     if (!mounted) return;
     if (scheduled) {
       setState(() => alarm.isEnabled = true);
+      await _saveAlarms();
+      if (!mounted) return;
       _showClockMessage('Alarm set for ${alarm.time.format(context)}');
     } else {
+      setState(() => alarm.isEnabled = false);
+      await _saveAlarms();
       _showClockMessage(
         'Allow notifications in Android Settings to use alarms.',
       );
@@ -362,6 +425,60 @@ class _ClockPageState extends ConsumerState<ClockPage>
     } else {
       await NotificationService.instance.cancelAlarm(alarm.id);
       if (mounted) setState(() => alarm.isEnabled = false);
+      await _saveAlarms();
+    }
+  }
+
+  Future<File> _alarmFile() async {
+    final directory = await getApplicationDocumentsDirectory();
+    return File('${directory.path}/alarms.json');
+  }
+
+  Future<void> _loadAlarms() async {
+    try {
+      final file = await _alarmFile();
+      if (await file.exists()) {
+        final decoded = jsonDecode(await file.readAsString()) as List<dynamic>;
+        final saved =
+            decoded.map((value) => AlarmItem.fromJson(value as Map)).toList();
+        if (mounted) {
+          setState(() {
+            _alarms
+              ..clear()
+              ..addAll(saved);
+          });
+        }
+      }
+    } catch (error, stackTrace) {
+      AppLogger.e('Failed to load saved alarms',
+          tag: 'ClockPage', error: error, st: stackTrace);
+      if (mounted) {
+        setState(() => _alarmStorageError = 'Could not load saved alarms.');
+      }
+    } finally {
+      if (mounted) setState(() => _alarmsLoading = false);
+    }
+  }
+
+  Future<void> _saveAlarms() async {
+    try {
+      final file = await _alarmFile();
+      final temporary = File('${file.path}.tmp');
+      await temporary.writeAsString(
+        jsonEncode(_alarms.map((alarm) => alarm.toJson()).toList()),
+        flush: true,
+      );
+      await temporary.rename(file.path);
+      if (_alarmStorageError != null && mounted) {
+        setState(() => _alarmStorageError = null);
+      }
+    } catch (error, stackTrace) {
+      AppLogger.e('Failed to save alarms',
+          tag: 'ClockPage', error: error, st: stackTrace);
+      if (mounted) {
+        setState(() => _alarmStorageError = 'Could not save alarms.');
+        _showClockMessage('Could not save alarm settings.');
+      }
     }
   }
 
@@ -418,28 +535,101 @@ class _ClockPageState extends ConsumerState<ClockPage>
               onPressed: () => _addOrEditAlarm(),
               child: const Icon(Icons.add),
             ),
-            body: ListView.separated(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              itemCount: _alarms.length,
-              separatorBuilder: (_, __) => const Divider(),
-              itemBuilder: (context, index) {
-                final alarm = _alarms[index];
-                return SwitchListTile(
-                  title: Text(
-                    alarm.time.format(context),
-                    style: const TextStyle(
-                        fontSize: 26, fontWeight: FontWeight.bold),
+            body: _alarmsLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    children: [
+                      if (_alarmStorageError != null)
+                        Padding(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          child: Text(
+                            _alarmStorageError!,
+                            style: theme.textTheme.bodyMedium
+                                ?.copyWith(color: colorScheme.error),
+                          ),
+                        ),
+                      Expanded(
+                        child: _alarms.isEmpty
+                            ? Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(AppSpacing.xl),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.alarm_add_rounded,
+                                          size: 56,
+                                          color: colorScheme.onSurfaceVariant),
+                                      const SizedBox(height: AppSpacing.md),
+                                      Text('No alarms yet',
+                                          style: theme.textTheme.titleLarge),
+                                      const SizedBox(height: AppSpacing.xs),
+                                      Text(
+                                        'Add an alarm to schedule a local notification.',
+                                        textAlign: TextAlign.center,
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                                color: colorScheme
+                                                    .onSurfaceVariant),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : ListView.separated(
+                                padding: const EdgeInsets.all(AppSpacing.lg),
+                                itemCount: _alarms.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 8),
+                                itemBuilder: (context, index) {
+                                  final alarm = _alarms[index];
+                                  return Card(
+                                    margin: EdgeInsets.zero,
+                                    child: ListTile(
+                                      leading: CircleAvatar(
+                                        backgroundColor: alarm.isEnabled
+                                            ? colorScheme.primaryContainer
+                                            : colorScheme
+                                                .surfaceContainerHighest,
+                                        foregroundColor: alarm.isEnabled
+                                            ? colorScheme.onPrimaryContainer
+                                            : colorScheme.onSurfaceVariant,
+                                        child: const Icon(Icons.alarm_rounded),
+                                      ),
+                                      title: Text(
+                                        alarm.time.format(context),
+                                        style: theme.textTheme.headlineSmall
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                          '${alarm.label}  ·  ${alarm.days}'),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            tooltip: 'Edit alarm',
+                                            icon:
+                                                const Icon(Icons.edit_outlined),
+                                            onPressed: () => _addOrEditAlarm(
+                                                existingAlarm: alarm),
+                                          ),
+                                          Switch(
+                                            value: alarm.isEnabled,
+                                            onChanged: (val) =>
+                                                _toggleAlarmState(alarm, val),
+                                            activeThumbColor:
+                                                colorScheme.primary,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
                   ),
-                  subtitle: Text('${alarm.days} • ${alarm.label}'),
-                  value: alarm.isEnabled,
-                  onChanged: (val) => _toggleAlarmState(alarm, val),
-                  secondary: IconButton(
-                    icon: const Icon(Icons.edit_outlined),
-                    onPressed: () => _addOrEditAlarm(existingAlarm: alarm),
-                  ),
-                );
-              },
-            ),
           ),
 
           // 3. Timer Tab
@@ -450,9 +640,64 @@ class _ClockPageState extends ConsumerState<ClockPage>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '${(_timerSeconds ~/ 60).toString().padLeft(2, '0')}:${(_timerSeconds % 60).toString().padLeft(2, '0')}',
-                    style: theme.textTheme.displayLarge
-                        ?.copyWith(fontWeight: FontWeight.bold, fontSize: 64),
+                    'COUNTDOWN TIMER',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      letterSpacing: 1.4,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(
+                    width: 252,
+                    height: 252,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox.expand(
+                          child: CircularProgressIndicator(
+                            value: _timerInitialSeconds == 0
+                                ? 0
+                                : (_timerSeconds / _timerInitialSeconds)
+                                    .clamp(0.0, 1.0),
+                            strokeWidth: 10,
+                            strokeCap: StrokeCap.round,
+                            backgroundColor:
+                                colorScheme.surfaceContainerHighest,
+                          ),
+                        ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _isTimerRunning
+                                  ? Icons.hourglass_top_rounded
+                                  : Icons.hourglass_empty_rounded,
+                              color: colorScheme.primary,
+                              size: 28,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${(_timerSeconds ~/ 60).toString().padLeft(2, '0')}:${(_timerSeconds % 60).toString().padLeft(2, '0')}',
+                              style: theme.textTheme.displayMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _isTimerRunning ? 'RUNNING' : 'READY',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                letterSpacing: 1.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Wrap(

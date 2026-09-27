@@ -19,29 +19,52 @@ class RegisterPage extends ConsumerStatefulWidget {
 
 class _RegisterPageState extends ConsumerState<RegisterPage>
     with SingleTickerProviderStateMixin {
-  final _formKey = GlobalKey<FormState>();
+  final _step1FormKey = GlobalKey<FormState>();
+  final _step2FormKey = GlobalKey<FormState>();
+  
   final _nameCtrl = TextEditingController();
   final _userCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
+  
+  final _customQ1Ctrl = TextEditingController();
+  final _ans1Ctrl = TextEditingController();
+  final _customQ2Ctrl = TextEditingController();
+  final _ans2Ctrl = TextEditingController();
+
+  int _currentStep = 1; // 1: Account Info, 2: Security Recovery Questions
   bool _obscurePass = true;
   bool _obscureConfirm = true;
   bool _submitting = false;
-  final _securityAnswerCtrl = TextEditingController();
-  String _selectedQuestion = 'What was the name of your first pet?';
-  final List<String> _securityQuestions = [
+
+  final List<String> _presetQuestions1 = [
     'What was the name of your first pet?',
     'What city were you born in?',
-    'What is your favorite book or movie?',
     'What is your mother\'s maiden name?',
     'What was the model of your first car?',
+    'Write my own custom question...',
   ];
+
+  final List<String> _presetQuestions2 = [
+    'What is your favorite book or movie?',
+    'What was the name of your primary school?',
+    'What is your favorite food?',
+    'What was your childhood nickname?',
+    'Write my own custom question...',
+  ];
+
+  late String _selectedQ1;
+  late String _selectedQ2;
+
   late AnimationController _fadeCtrl;
   late Animation<double> _fadeAnim;
 
   @override
   void initState() {
     super.initState();
+    _selectedQ1 = _presetQuestions1.first;
+    _selectedQ2 = _presetQuestions2.first;
+
     _fadeCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -57,12 +80,39 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
     _userCtrl.dispose();
     _passCtrl.dispose();
     _confirmCtrl.dispose();
-    _securityAnswerCtrl.dispose();
+    _customQ1Ctrl.dispose();
+    _ans1Ctrl.dispose();
+    _customQ2Ctrl.dispose();
+    _ans2Ctrl.dispose();
     super.dispose();
   }
 
+  void _goToStep2() {
+    if (!(_step1FormKey.currentState?.validate() ?? false)) return;
+    setState(() {
+      _currentStep = 2;
+    });
+  }
+
+  void _backToStep1() {
+    setState(() {
+      _currentStep = 1;
+    });
+  }
+
   Future<void> _submit() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!(_step2FormKey.currentState?.validate() ?? false)) return;
+
+    final finalQ1 = _selectedQ1 == 'Write my own custom question...'
+        ? _customQ1Ctrl.text.trim()
+        : _selectedQ1;
+    final finalQ2 = _selectedQ2 == 'Write my own custom question...'
+        ? _customQ2Ctrl.text.trim()
+        : _selectedQ2;
+
+    final combinedQuestion = '$finalQ1 | $finalQ2';
+    final combinedAnswer = '${_ans1Ctrl.text.trim()} | ${_ans2Ctrl.text.trim()}';
+
     setState(() => _submitting = true);
 
     await ref.read(authNotifierProvider.notifier).register(
@@ -70,8 +120,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
           password: _passCtrl.text,
           displayName:
               _nameCtrl.text.trim().isEmpty ? null : _nameCtrl.text.trim(),
-          securityQuestion: _selectedQuestion,
-          securityAnswer: _securityAnswerCtrl.text.trim(),
+          securityQuestion: combinedQuestion,
+          securityAnswer: combinedAnswer,
         );
 
     if (!mounted) return;
@@ -119,11 +169,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
               opacity: _fadeAnim,
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
-                  horizontal: isWide ? size.width * 0.3 : AppSpacing.xl,
+                  horizontal: isWide ? size.width * 0.28 : AppSpacing.xl,
                   vertical: AppSpacing.xl,
                 ),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
+                  constraints: const BoxConstraints(maxWidth: 460),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -172,121 +222,289 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
         ],
       ),
       padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Create Account',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              'Your data stays on your device — always.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            PDTextField(
-              controller: _nameCtrl,
-              label: 'Display Name (optional)',
-              prefixIcon: Icons.badge_outlined,
-              textInputAction: TextInputAction.next,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            PDTextField(
-              controller: _userCtrl,
-              label: 'Username',
-              prefixIcon: Icons.person_outline_rounded,
-              validator: Validators.username,
-              textInputAction: TextInputAction.next,
-              autocorrect: false,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            PDTextField(
-              controller: _passCtrl,
-              label: 'Password',
-              prefixIcon: Icons.lock_outline_rounded,
-              obscureText: _obscurePass,
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePass
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  color: Colors.grey,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _currentStep == 1
+            ? _buildStep1(theme, colorScheme)
+            : _buildStep2(theme, colorScheme),
+      ),
+    );
+  }
+
+  Widget _buildStep1(ThemeData theme, ColorScheme colorScheme) {
+    return Form(
+      key: _step1FormKey,
+      child: Column(
+        key: const ValueKey(1),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Create Account',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
                 ),
-                onPressed: () =>
-                    setState(() => _obscurePass = !_obscurePass),
               ),
-              validator: Validators.password,
-              textInputAction: TextInputAction.next,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            PDTextField(
-              controller: _confirmCtrl,
-              label: 'Confirm Password',
-              prefixIcon: Icons.lock_outline_rounded,
-              obscureText: _obscureConfirm,
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscureConfirm
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  color: Colors.grey,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(30),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                onPressed: () =>
-                    setState(() => _obscureConfirm = !_obscureConfirm),
+                child: Text(
+                  'Step 1 of 2',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-              validator: (v) =>
-                  Validators.confirmPassword(v, _passCtrl.text),
-              textInputAction: TextInputAction.next,
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Your data stays on your device — always.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
             ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          PDTextField(
+            controller: _nameCtrl,
+            label: 'Display Name',
+            prefixIcon: Icons.badge_outlined,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          PDTextField(
+            controller: _userCtrl,
+            label: 'Username',
+            prefixIcon: Icons.person_outline_rounded,
+            validator: Validators.username,
+            textInputAction: TextInputAction.next,
+            autocorrect: false,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          PDTextField(
+            controller: _passCtrl,
+            label: 'Password',
+            prefixIcon: Icons.lock_outline_rounded,
+            obscureText: _obscurePass,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePass
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: Colors.grey,
+              ),
+              onPressed: () =>
+                  setState(() => _obscurePass = !_obscurePass),
+            ),
+            validator: Validators.password,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          PDTextField(
+            controller: _confirmCtrl,
+            label: 'Confirm Password',
+            prefixIcon: Icons.lock_outline_rounded,
+            obscureText: _obscureConfirm,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureConfirm
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: Colors.grey,
+              ),
+              onPressed: () =>
+                  setState(() => _obscureConfirm = !_obscureConfirm),
+            ),
+            validator: (v) =>
+                Validators.confirmPassword(v, _passCtrl.text),
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _goToStep2(),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _PasswordStrengthIndicator(password: _passCtrl),
+          const SizedBox(height: AppSpacing.xl),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              backgroundColor: AppColors.primary,
+            ),
+            onPressed: _goToStep2,
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Continue', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+                SizedBox(width: 8),
+                Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStep2(ThemeData theme, ColorScheme colorScheme) {
+    final isCustom1 = _selectedQ1 == 'Write my own custom question...';
+    final isCustom2 = _selectedQ2 == 'Write my own custom question...';
+
+    return Form(
+      key: _step2FormKey,
+      child: Column(
+        key: const ValueKey(2),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  'Security Recovery Questions',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(30),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Step 2 of 2',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Set up 2 security questions to recover your password if forgotten.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          
+          // Question 1
+          Text('Question 1', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: AppSpacing.xs),
+          DropdownButtonFormField<String>(
+            value: _selectedQ1,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              isDense: true,
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.help_outline_rounded, size: 20),
+            ),
+            items: _presetQuestions1
+                .map((q) => DropdownMenuItem(
+                      value: q,
+                      child: Text(q, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14)),
+                    ))
+                .toList(),
+            onChanged: (val) {
+              if (val != null) setState(() => _selectedQ1 = val);
+            },
+          ),
+          if (isCustom1) ...[
             const SizedBox(height: AppSpacing.sm),
-            _PasswordStrengthIndicator(password: _passCtrl),
-            const SizedBox(height: AppSpacing.lg),
-            const Divider(height: 1),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Security Question for Recovery',
-              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            DropdownButtonFormField<String>(
-              value: _selectedQuestion,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Security Question',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.help_outline_rounded),
-              ),
-              items: _securityQuestions
-                  .map((q) => DropdownMenuItem(value: q, child: Text(q, overflow: TextOverflow.ellipsis)))
-                  .toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => _selectedQuestion = val);
-              },
-            ),
-            const SizedBox(height: AppSpacing.md),
             PDTextField(
-              controller: _securityAnswerCtrl,
-              label: 'Security Answer',
-              prefixIcon: Icons.verified_user_outlined,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Security answer is required for recovery' : null,
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => _submit(),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            _SubmitButton(
-              submitting: _submitting,
-              label: 'Create Account',
-              onPressed: _submit,
+              controller: _customQ1Ctrl,
+              label: 'Enter your custom Question 1',
+              prefixIcon: Icons.create_rounded,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Please write your custom question' : null,
             ),
           ],
-        ),
+          const SizedBox(height: AppSpacing.sm),
+          PDTextField(
+            controller: _ans1Ctrl,
+            label: 'Answer 1',
+            prefixIcon: Icons.verified_user_outlined,
+            validator: (v) => (v == null || v.trim().isEmpty) ? 'Answer 1 is required' : null,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          const Divider(height: 1),
+          const SizedBox(height: AppSpacing.lg),
+
+          // Question 2
+          Text('Question 2', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: AppSpacing.xs),
+          DropdownButtonFormField<String>(
+            value: _selectedQ2,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              isDense: true,
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.help_outline_rounded, size: 20),
+            ),
+            items: _presetQuestions2
+                .map((q) => DropdownMenuItem(
+                      value: q,
+                      child: Text(q, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14)),
+                    ))
+                .toList(),
+            onChanged: (val) {
+              if (val != null) setState(() => _selectedQ2 = val);
+            },
+          ),
+          if (isCustom2) ...[
+            const SizedBox(height: AppSpacing.sm),
+            PDTextField(
+              controller: _customQ2Ctrl,
+              label: 'Enter your custom Question 2',
+              prefixIcon: Icons.create_rounded,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Please write your custom question' : null,
+            ),
+          ],
+          const SizedBox(height: AppSpacing.sm),
+          PDTextField(
+            controller: _ans2Ctrl,
+            label: 'Answer 2',
+            prefixIcon: Icons.verified_user_outlined,
+            validator: (v) => (v == null || v.trim().isEmpty) ? 'Answer 2 is required' : null,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _submit(),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+
+          Row(
+            children: [
+              OutlinedButton(
+                onPressed: _submitting ? null : _backToStep1,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.arrow_back_rounded, size: 18),
+                    SizedBox(width: 4),
+                    Text('Back'),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _SubmitButton(
+                  submitting: _submitting,
+                  label: 'Create Account',
+                  onPressed: _submit,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

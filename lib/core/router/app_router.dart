@@ -19,6 +19,7 @@ import '../../features/chat/presentation/pages/chat_page.dart';
 import '../../features/money_tracker/presentation/pages/money_tracker_page.dart';
 import '../../features/clock/presentation/pages/clock_page.dart';
 import '../../features/settings/presentation/pages/about_app_page.dart';
+import '../../features/settings/presentation/pages/legal_document_page.dart';
 import '../../features/trash/presentation/pages/trash_page.dart';
 import 'app_routes.dart';
 
@@ -148,6 +149,18 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.aboutApp,
         builder: (context, state) => const AboutAppPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.termsAndConditions,
+        builder: (context, state) => const TermsAndConditionsPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.privacyPolicy,
+        builder: (context, state) => const PrivacyPolicyPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.licenses,
+        builder: (context, state) => const PocketDeskLicensesPage(),
       ),
       GoRoute(
         path: AppRoutes.trash,

@@ -12,6 +12,7 @@ class AISettingsModel {
   late int userId;
 
   bool isEnabled = true;
+  bool masterControlEnabled = false;
   String provider = 'OpenRouter';
   String apiKey = '';
   String selectedModel = 'openai/gpt-4o-mini';

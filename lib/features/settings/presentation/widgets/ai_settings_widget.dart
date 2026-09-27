@@ -174,6 +174,36 @@ class _AISettingsWidgetState extends ConsumerState<AISettingsWidget> {
             ),
             const SizedBox(height: 16),
 
+            Card(
+              elevation: 0,
+              color: settings.masterControlEnabled
+                  ? Colors.orange.withValues(alpha: 0.12)
+                  : cs.surfaceContainerLow,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: settings.masterControlEnabled
+                      ? Colors.orange
+                      : cs.outlineVariant.withValues(alpha: 0.5),
+                ),
+              ),
+              child: SwitchListTile(
+                title: const Text(
+                  'AI Master Control',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text(
+                  'Let AI open app sections and manage supported records. It asks before deleting tasks or events; Feed and Trash stay read-only.',
+                ),
+                value: settings.masterControlEnabled,
+                onChanged: (value) async {
+                  settings.masterControlEnabled = value;
+                  await ref.read(aiSettingsProvider.notifier).updateSettings(settings);
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+
             if (!settings.isEnabled)
               Container(
                 padding: const EdgeInsets.all(14),

@@ -29,6 +29,7 @@ class _DeviceSettingsWidgetState extends ConsumerState<DeviceSettingsWidget> {
     _deviceNameController.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -165,7 +166,8 @@ class _DeviceSettingsWidgetState extends ConsumerState<DeviceSettingsWidget> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: P2PSyncService().getConnectedPeers().length,
                 itemBuilder: (context, index) {
-                  final peer = P2PSyncService().getConnectedPeers()[index] as Map<String, dynamic>;
+                  final peer = P2PSyncService().getConnectedPeers()[index]
+                      as Map<String, dynamic>;
                   return ListTile(
                     leading: const Icon(Icons.laptop_rounded),
                     title: Text(peer['name'] as String? ?? 'Peer Device'),
@@ -271,7 +273,10 @@ class _DeviceSettingsWidgetState extends ConsumerState<DeviceSettingsWidget> {
                     ),
                   ),
                   OutlinedButton(
-                    onPressed: () => AppUpdateService.checkForUpdates(context),
+                    onPressed: () => AppUpdateService.checkForUpdates(
+                      context,
+                      showStatus: true,
+                    ),
                     child: const Text('Check Now'),
                   ),
                 ],

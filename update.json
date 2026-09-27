@@ -1,5 +1,6 @@
 {
   "version": "1.2.0",
+  "buildNumber": 3,
   "url": "https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/main/all-apk/app-release.apk",
   "required": false,
   "releaseNotes": "- Added Self-Hosted In-App Update System with raw GitHub release fetching & native Android installer launch\n- Added 2-Step Security Question Recovery during sign-up & Settings\n- Added 2-Step Complete Account Deletion & Isar Data Purge\n- Added Universal AI Multi-Page Integration (Money Health, Note Formatting, Feed Comments, Chat Buddy)\n- Added Argon2id Password Lock for saved OpenRouter API Keys\n- Added Mobile Biometric Authentication compatibility & Password Input length limits\n- Added Redesigned About App Page & System Logs viewer"

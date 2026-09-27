@@ -75,7 +75,8 @@ It combines a full-featured **Calendar**, **Task Manager**, **Notes** app, and *
 - 🗑️ **2-Step Delete Account**:
   - Complete account deletion with double confirmation ("DELETE").
 - 🔄 **In-App Updater & P2P File Transfer**:
-  - Self-hosted raw GitHub update checks and local network P2P web server file sharing.
+  - Checks the public GitHub update manifest and opens Android's installer for downloaded APKs.
+  - Local network P2P web server file sharing.
 
 ---
 
@@ -93,6 +94,8 @@ It combines a full-featured **Calendar**, **Task Manager**, **Notes** app, and *
 | **App Bundle (AAB)** | [📦 Download AAB](https://github.com/Aaryanbanskota/Pocket-Desk/releases/download/v1.0.0/app-release.aab) | ~36 MB |
 
 > **Tip:** Prefer the AAB for Google Play / modern installers. Use the APK for sideloading.
+
+To publish an in-app Android update, increment the app version and build number in `pubspec.yaml`, build a release APK signed with the same key as the installed app, replace `all-apk/app-release.apk`, and update `update.json` with that version, build number, download URL, and release notes. The repository must be public so installed apps can retrieve the manifest and APK.
 
 ### 🐧 Linux Desktop Downloads
 

@@ -19,7 +19,14 @@ class CalendarRepository {
     try {
       final now = DateTime.now();
       event.updatedAt = now;
-      if (event.id == Isar.autoIncrement) {
+      if (event.id != Isar.autoIncrement && event.id > 0) {
+        final existing = await _isar.calendarEventModels.get(event.id);
+        if (existing != null) {
+          event.createdAt = existing.createdAt;
+        } else {
+          event.createdAt = now;
+        }
+      } else {
         event.createdAt = now;
       }
 

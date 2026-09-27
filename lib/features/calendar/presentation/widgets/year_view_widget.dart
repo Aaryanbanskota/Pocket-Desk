@@ -8,17 +8,26 @@ class YearViewWidget extends StatelessWidget {
     super.key,
     required this.focusedDay,
     required this.onMonthDayTap,
+    this.isBsCalendar = true,
   });
 
   final DateTime focusedDay;
   final ValueChanged<DateTime> onMonthDayTap;
+  final bool isBsCalendar;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
+    final adMonthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
     final nepaliFocused = NepaliDate.fromDateTime(focusedDay);
     final int currentBsYear = nepaliFocused.year;
+    final int currentAdYear = focusedDay.year;
 
     return GridView.builder(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -30,10 +39,22 @@ class YearViewWidget extends StatelessWidget {
       ),
       itemCount: 12,
       itemBuilder: (context, monthIdx) {
-        final bsMonth = monthIdx + 1;
-        final monthFirstBs = NepaliDate(year: currentBsYear, month: bsMonth, day: 1);
-        final monthDaysCount = NepaliDate.getDaysInBsMonth(currentBsYear, bsMonth);
-        final startOffset = monthFirstBs.weekday % 7; // Sunday = 0
+        final monthNumber = monthIdx + 1;
+        late final String monthHeader;
+        late final int monthDaysCount;
+        late final int startOffset;
+
+        if (isBsCalendar) {
+          final monthFirstBs = NepaliDate(year: currentBsYear, month: monthNumber, day: 1);
+          monthDaysCount = NepaliDate.getDaysInBsMonth(currentBsYear, monthNumber);
+          startOffset = monthFirstBs.weekday % 7;
+          monthHeader = '${NepaliDate.monthNamesEn[monthIdx]} $currentBsYear';
+        } else {
+          final monthFirstAd = DateTime(currentAdYear, monthNumber, 1);
+          monthDaysCount = DateTime(currentAdYear, monthNumber + 1, 0).day;
+          startOffset = monthFirstAd.weekday % 7;
+          monthHeader = '${adMonthNames[monthIdx]} $currentAdYear';
+        }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,7 +62,7 @@ class YearViewWidget extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(left: 4, bottom: 4),
               child: Text(
-                '${NepaliDate.monthNamesEn[monthIdx]} $currentBsYear',
+                monthHeader,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.primary,
@@ -65,8 +86,9 @@ class YearViewWidget extends StatelessWidget {
 
                   if (!isValidDay) return const SizedBox.shrink();
 
-                  final bsDate = NepaliDate(year: currentBsYear, month: bsMonth, day: dayNumber);
-                  final cellDate = bsDate.toDateTime();
+                  final cellDate = isBsCalendar
+                      ? NepaliDate(year: currentBsYear, month: monthNumber, day: dayNumber).toDateTime()
+                      : DateTime(currentAdYear, monthNumber, dayNumber);
                   final isToday = DateTimeUtils.isToday(cellDate);
 
                   return GestureDetector(

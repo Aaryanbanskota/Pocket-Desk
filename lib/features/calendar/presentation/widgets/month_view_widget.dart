@@ -11,39 +11,52 @@ class MonthViewWidget extends StatelessWidget {
     required this.events,
     required this.onDayTap,
     required this.onEventTap,
+    this.isBsCalendar = true,
   });
 
   final DateTime focusedDay;
   final List<CalendarEventModel> events;
   final ValueChanged<DateTime> onDayTap;
   final ValueChanged<CalendarEventModel> onEventTap;
+  final bool isBsCalendar;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final nepaliFocused = NepaliDate.fromDateTime(focusedDay);
-    final firstDayOfBsMonth = NepaliDate(year: nepaliFocused.year, month: nepaliFocused.month, day: 1);
-    final daysInBsMonth = NepaliDate.getDaysInBsMonth(nepaliFocused.year, nepaliFocused.month);
-
-    // Calculate leading padding days (Sunday = 7 -> 0 mod 7)
-    final firstDayWeekday = firstDayOfBsMonth.weekday; // 1 = Mon, 7 = Sun
-    final int leadingEmptyDays = firstDayWeekday % 7;
     final List<DateTime> gridDays = [];
 
-    // Prior month overflow days
-    final firstDayAd = firstDayOfBsMonth.toDateTime();
-    for (int i = leadingEmptyDays; i > 0; i--) {
-      gridDays.add(firstDayAd.subtract(Duration(days: i)));
+    if (isBsCalendar) {
+      final nepaliFocused = NepaliDate.fromDateTime(focusedDay);
+      final firstDayOfBsMonth = NepaliDate(year: nepaliFocused.year, month: nepaliFocused.month, day: 1);
+      final daysInBsMonth = NepaliDate.getDaysInBsMonth(nepaliFocused.year, nepaliFocused.month);
+
+      final firstDayWeekday = firstDayOfBsMonth.weekday; // 1 = Mon, 7 = Sun
+      final int leadingEmptyDays = firstDayWeekday % 7;
+      final firstDayAd = firstDayOfBsMonth.toDateTime();
+
+      for (int i = leadingEmptyDays; i > 0; i--) {
+        gridDays.add(firstDayAd.subtract(Duration(days: i)));
+      }
+      for (int i = 0; i < daysInBsMonth; i++) {
+        gridDays.add(firstDayAd.add(Duration(days: i)));
+      }
+    } else {
+      final firstDayOfMonth = DateTime(focusedDay.year, focusedDay.month, 1);
+      final lastDayOfMonth = DateTime(focusedDay.year, focusedDay.month + 1, 0);
+
+      final int leadingEmptyDays = firstDayOfMonth.weekday % 7; // 0 = Sun
+      final prevMonthLastDay = DateTime(focusedDay.year, focusedDay.month, 0);
+
+      for (int i = leadingEmptyDays - 1; i >= 0; i--) {
+        gridDays.add(prevMonthLastDay.subtract(Duration(days: i)));
+      }
+      for (int i = 1; i <= lastDayOfMonth.day; i++) {
+        gridDays.add(DateTime(focusedDay.year, focusedDay.month, i));
+      }
     }
 
-    // Current month days
-    for (int i = 0; i < daysInBsMonth; i++) {
-      gridDays.add(firstDayAd.add(Duration(days: i)));
-    }
-
-    // Future month overflow days
     final totalGridCells = ((gridDays.length / 7).ceil()) * 7;
     final remainingCells = totalGridCells - gridDays.length;
     final lastDayAd = gridDays.last;
@@ -93,8 +106,11 @@ class MonthViewWidget extends StatelessWidget {
                 itemBuilder: (context, idx) {
                   final date = gridDays[idx];
 
-                  final nepaliDate = NepaliDate.fromDateTime(date);
-                  final isCurrentMonth = nepaliDate.month == nepaliFocused.month && nepaliDate.year == nepaliFocused.year;
+                  final isCurrentMonth = isBsCalendar
+                      ? (NepaliDate.fromDateTime(date).month == NepaliDate.fromDateTime(focusedDay).month &&
+                          NepaliDate.fromDateTime(date).year == NepaliDate.fromDateTime(focusedDay).year)
+                      : (date.month == focusedDay.month && date.year == focusedDay.year);
+                  final dayText = isBsCalendar ? NepaliDate.fromDateTime(date).day.toString() : date.day.toString();
                   final isToday = DateTimeUtils.isToday(date);
                   final isFocused = DateTimeUtils.isSameDay(date, focusedDay);
                   final dayEvents = events.where((e) => DateTimeUtils.isSameDay(e.startTime, date)).toList();
@@ -127,7 +143,7 @@ class MonthViewWidget extends StatelessWidget {
                                 shape: BoxShape.circle,
                               ),
                               child: Text(
-                                nepaliDate.day.toString(),
+                                dayText,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: isToday

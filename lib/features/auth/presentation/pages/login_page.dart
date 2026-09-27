@@ -184,50 +184,124 @@ class _LoginPageState extends ConsumerState<LoginPage>
                   ] else ...[
                     Text('User: ${resetUserCtrl.text.trim()}', style: const TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(8),
+                    if (foundQuestion!.contains(' | ')) ...[
+                      // 2 Questions
+                      Builder(builder: (context) {
+                        final qList = foundQuestion!.split(' | ');
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primaryContainer.withAlpha(100),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Question 1:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 4),
+                                  Text(qList[0], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: answerCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Answer 1',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.verified_user_outlined),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primaryContainer.withAlpha(100),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Question 2:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 4),
+                                  Text(qList[1], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: confirmPassCtrl, // reused for Answer 2 in 2-Q mode
+                              decoration: const InputDecoration(
+                                labelText: 'Answer 2',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.verified_user_outlined),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: newPassCtrl,
+                              obscureText: true,
+                              decoration: const InputDecoration(
+                                labelText: 'New Password',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.lock_outline_rounded),
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                    ] else ...[
+                      // Single Question legacy
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer.withAlpha(100),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Security Question:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Text(foundQuestion!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          ],
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Security Question:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 4),
-                          Text(foundQuestion!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                        ],
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: answerCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Your Answer',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.verified_user_outlined),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: answerCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Your Answer',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.verified_user_outlined),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: newPassCtrl,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'New Password',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.lock_outline_rounded),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: newPassCtrl,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'New Password',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.lock_outline_rounded),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: confirmPassCtrl,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Confirm New Password',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.lock_outline_rounded),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: confirmPassCtrl,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Confirm New Password',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.lock_outline_rounded),
-                      ),
-                    ),
+                    ],
                   ],
                 ],
               ),
@@ -270,21 +344,29 @@ class _LoginPageState extends ConsumerState<LoginPage>
                   onPressed: resetting
                       ? null
                       : () async {
-                          final ans = answerCtrl.text.trim();
+                          final isMulti = foundQuestion!.contains(' | ');
+                          final ans1 = answerCtrl.text.trim();
+                          final ans2 = confirmPassCtrl.text.trim();
                           final newP = newPassCtrl.text;
-                          final confP = confirmPassCtrl.text;
-                          if (ans.isEmpty) {
-                            setDialogState(() => dialogError = 'Security answer is required.');
-                            return;
+
+                          if (isMulti) {
+                            if (ans1.isEmpty || ans2.isEmpty) {
+                              setDialogState(() => dialogError = 'Both security answers are required.');
+                              return;
+                            }
+                          } else {
+                            if (ans1.isEmpty) {
+                              setDialogState(() => dialogError = 'Security answer is required.');
+                              return;
+                            }
                           }
+
                           if (newP.length < 6) {
                             setDialogState(() => dialogError = 'Password must be at least 6 characters.');
                             return;
                           }
-                          if (newP != confP) {
-                            setDialogState(() => dialogError = 'Passwords do not match.');
-                            return;
-                          }
+
+                          final combinedAns = isMulti ? '$ans1 | $ans2' : ans1;
 
                           setDialogState(() {
                             resetting = true;
@@ -293,7 +375,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
 
                           final err = await ref.read(authNotifierProvider.notifier).resetPasswordWithSecurityAnswer(
                                 username: resetUserCtrl.text.trim(),
-                                securityAnswer: ans,
+                                securityAnswer: combinedAns,
                                 newPassword: newP,
                               );
 

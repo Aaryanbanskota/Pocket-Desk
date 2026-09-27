@@ -332,6 +332,40 @@ class AuthRepository {
     }
   }
 
+  Future<AppFailure?> updateSecurityQuestions({
+    required int userId,
+    required String password,
+    required String securityQuestion,
+    required String securityAnswer,
+  }) async {
+    try {
+      final user = await _isar.userModels.get(userId);
+      if (user == null) return const AuthFailure('User not found');
+
+      final valid = await PasswordHasher.verify(
+        password,
+        user.passwordHash,
+        user.passwordSalt,
+      );
+      if (!valid) return const AuthFailure('Password is incorrect');
+
+      final answerHashResult = await PasswordHasher.hash(securityAnswer.toLowerCase().trim());
+      await _isar.writeTxn(() async {
+        user
+          ..securityQuestion = securityQuestion
+          ..securityAnswerHash = answerHashResult.hash
+          ..securityAnswerSalt = answerHashResult.salt;
+        await _isar.userModels.put(user);
+      });
+
+      AppLogger.i('Security questions updated for ${user.username}', tag: 'AuthRepository');
+      return null;
+    } catch (e, st) {
+      AppLogger.e('Failed to update security questions', tag: 'AuthRepository', error: e, st: st);
+      return UnexpectedFailure('Failed to update security questions', error: e, stackTrace: st);
+    }
+  }
+
   // --------------------------------------------------------------------------
   // Helpers
   // --------------------------------------------------------------------------

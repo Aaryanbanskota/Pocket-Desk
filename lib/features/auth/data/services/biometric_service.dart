@@ -24,10 +24,10 @@ class BiometricService {
     try {
       final canCheck = await _auth.canCheckBiometrics;
       final isSupported = await _auth.isDeviceSupported();
-      if (!canCheck || !isSupported) return false;
+      if (!canCheck && !isSupported) return false;
 
       final biometrics = await _auth.getAvailableBiometrics();
-      return biometrics.isNotEmpty;
+      return biometrics.isNotEmpty || canCheck || isSupported;
     } catch (e) {
       AppLogger.w('Biometric availability check failed: $e', tag: _tag);
       return false;

@@ -161,13 +161,7 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                   ),
                   Material(
                     child: InkWell(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Two-factor authentication'),
-                          ),
-                        );
-                      },
+                      onTap: () => _showUpdateSecurityQuestionsDialog(context),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.md,
@@ -176,13 +170,13 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                         child: Row(
                           children: [
                             Icon(
-                              Icons.verified_user_rounded,
+                              Icons.security_rounded,
                               color: colorScheme.primary,
                             ),
                             const SizedBox(width: AppSpacing.md),
                             Expanded(
                               child: Text(
-                                'Two-factor authentication',
+                                'Security Recovery Questions',
                                 style: theme.textTheme.bodyMedium,
                               ),
                             ),
@@ -458,6 +452,215 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
             child: const Text('Save Password'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showUpdateSecurityQuestionsDialog(BuildContext context) {
+    final pwdCtrl = TextEditingController();
+    final customQ1Ctrl = TextEditingController();
+    final ans1Ctrl = TextEditingController();
+    final customQ2Ctrl = TextEditingController();
+    final ans2Ctrl = TextEditingController();
+
+    final presetQuestions1 = [
+      'What was the name of your first pet?',
+      'What city were you born in?',
+      'What is your mother\'s maiden name?',
+      'What was the model of your first car?',
+      'Write my own custom question...',
+    ];
+
+    final presetQuestions2 = [
+      'What is your favorite book or movie?',
+      'What was the name of your primary school?',
+      'What is your favorite food?',
+      'What was your childhood nickname?',
+      'Write my own custom question...',
+    ];
+
+    String selectedQ1 = presetQuestions1.first;
+    String selectedQ2 = presetQuestions2.first;
+    bool isSubmitting = false;
+    String? dialogError;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final isCustom1 = selectedQ1 == 'Write my own custom question...';
+          final isCustom2 = selectedQ2 == 'Write my own custom question...';
+
+          return AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.security_rounded, color: Colors.blue, size: 24),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Update Security Questions',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (dialogError != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withAlpha(25),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.withAlpha(128)),
+                        ),
+                        child: Text(
+                          dialogError!,
+                          style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                    const Text('Confirm your password to update your security questions:', style: TextStyle(fontSize: 13)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: pwdCtrl,
+                      obscureText: true,
+                      maxLength: 64,
+                      decoration: const InputDecoration(
+                        labelText: 'Current Password',
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.lock_outline_rounded, size: 20),
+                      ),
+                    ),
+                    const Divider(height: 20),
+                    const Text('Question 1', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      value: selectedQ1,
+                      isExpanded: true,
+                      decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
+                      items: presetQuestions1
+                          .map((q) => DropdownMenuItem(value: q, child: Text(q, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => selectedQ1 = val);
+                      },
+                    ),
+                    if (isCustom1) ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: customQ1Ctrl,
+                        maxLength: 100,
+                        decoration: const InputDecoration(labelText: 'Custom Question 1', isDense: true, border: OutlineInputBorder()),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: ans1Ctrl,
+                      maxLength: 64,
+                      decoration: const InputDecoration(labelText: 'Answer 1', isDense: true, border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('Question 2', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      value: selectedQ2,
+                      isExpanded: true,
+                      decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
+                      items: presetQuestions2
+                          .map((q) => DropdownMenuItem(value: q, child: Text(q, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => selectedQ2 = val);
+                      },
+                    ),
+                    if (isCustom2) ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: customQ2Ctrl,
+                        maxLength: 100,
+                        decoration: const InputDecoration(labelText: 'Custom Question 2', isDense: true, border: OutlineInputBorder()),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: ans2Ctrl,
+                      maxLength: 64,
+                      decoration: const InputDecoration(labelText: 'Answer 2', isDense: true, border: OutlineInputBorder()),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSubmitting ? null : () => Navigator.pop(dialogCtx),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSubmitting
+                    ? null
+                    : () async {
+                        final pwd = pwdCtrl.text.trim();
+                        final q1 = isCustom1 ? customQ1Ctrl.text.trim() : selectedQ1;
+                        final a1 = ans1Ctrl.text.trim();
+                        final q2 = isCustom2 ? customQ2Ctrl.text.trim() : selectedQ2;
+                        final a2 = ans2Ctrl.text.trim();
+
+                        if (pwd.isEmpty) {
+                          setDialogState(() => dialogError = 'Password is required to confirm changes.');
+                          return;
+                        }
+                        if (q1.isEmpty || a1.isEmpty || q2.isEmpty || a2.isEmpty) {
+                          setDialogState(() => dialogError = 'Please complete both questions and answers.');
+                          return;
+                        }
+
+                        setDialogState(() {
+                          isSubmitting = true;
+                          dialogError = null;
+                        });
+
+                        final combinedQ = '$q1 | $q2';
+                        final combinedA = '$a1 | $a2';
+
+                        final err = await ref.read(authNotifierProvider.notifier).updateSecurityQuestions(
+                              password: pwd,
+                              securityQuestion: combinedQ,
+                              securityAnswer: combinedA,
+                            );
+
+                        if (dialogCtx.mounted) {
+                          if (err != null) {
+                            setDialogState(() {
+                              isSubmitting = false;
+                              dialogError = err.message;
+                            });
+                          } else {
+                            Navigator.pop(dialogCtx);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Security recovery questions updated successfully!')),
+                              );
+                            }
+                          }
+                        }
+                      },
+                child: isSubmitting
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text('Update Questions'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

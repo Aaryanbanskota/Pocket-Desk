@@ -35,6 +35,7 @@ abstract final class AppRoutes {
   static const String chat = '/chat';
   static const String moneyTracker = '/money';
   static const String clock = '/clock';
+  static const String aboutApp = '/about';
 
   // Error
   static const String notFound = '/404';

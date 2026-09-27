@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 
@@ -21,6 +22,8 @@ class PDTextField extends StatelessWidget {
     this.enabled = true,
     this.maxLines = 1,
     this.hint,
+    this.maxLength = 64,
+    this.inputFormatters,
   });
 
   final TextEditingController controller;
@@ -36,6 +39,8 @@ class PDTextField extends StatelessWidget {
   final bool enabled;
   final int maxLines;
   final String? hint;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +56,9 @@ class PDTextField extends StatelessWidget {
       onFieldSubmitted: onFieldSubmitted,
       enabled: enabled,
       maxLines: maxLines,
+      maxLength: maxLength,
+      inputFormatters: inputFormatters,
+      buildCounter: obscureText ? (context, {required currentLength, required isFocused, maxLength}) => null : null,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

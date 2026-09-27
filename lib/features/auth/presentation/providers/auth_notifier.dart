@@ -271,6 +271,23 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     final repo = await ref.read(authRepositoryProvider.future);
     return repo.getLastUsername();
   }
+
+  Future<AppFailure?> updateSecurityQuestions({
+    required String password,
+    required String securityQuestion,
+    required String securityAnswer,
+  }) async {
+    final current = state.valueOrNull;
+    if (current is! AuthAuthenticated) return const AuthFailure('Not logged in');
+
+    final repo = await ref.read(authRepositoryProvider.future);
+    return repo.updateSecurityQuestions(
+      userId: current.user.id,
+      password: password,
+      securityQuestion: securityQuestion,
+      securityAnswer: securityAnswer,
+    );
+  }
 }
 
 final authNotifierProvider =

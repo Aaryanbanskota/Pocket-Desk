@@ -163,6 +163,14 @@ class AppHamburgerDrawer extends ConsumerWidget {
                       context.push(AppRoutes.settings);
                     },
                   ),
+                  _NavItem(
+                    icon: Icons.info_outline_rounded,
+                    label: 'About App',
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push(AppRoutes.aboutApp);
+                    },
+                  ),
                 ],
               ),
             ),

@@ -128,7 +128,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
     setState(() => _submitting = false);
 
     final authState = ref.read(authNotifierProvider).valueOrNull;
-    if (authState is AuthError) {
+    if (authState is AuthAuthenticated) {
+      context.go(AppRoutes.setupOnboarding);
+    } else if (authState is AuthError) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authState.failure.message),

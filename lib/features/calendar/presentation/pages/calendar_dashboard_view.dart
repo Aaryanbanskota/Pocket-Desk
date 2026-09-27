@@ -62,34 +62,36 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
       body: Column(
         children: [
           // 1. Selector segment for Calendar Views
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
             child: SegmentedButton<CalendarViewType>(
+              showSelectedIcon: false,
               segments: const [
                 ButtonSegment(
                   value: CalendarViewType.day,
                   label: Text('Day'),
-                  icon: Icon(Icons.view_day_outlined),
+                  icon: Icon(Icons.view_day_outlined, size: 18),
                 ),
                 ButtonSegment(
                   value: CalendarViewType.week,
                   label: Text('Week'),
-                  icon: Icon(Icons.view_week_outlined),
+                  icon: Icon(Icons.view_week_outlined, size: 18),
                 ),
                 ButtonSegment(
                   value: CalendarViewType.month,
                   label: Text('Month'),
-                  icon: Icon(Icons.calendar_view_month_outlined),
+                  icon: Icon(Icons.calendar_view_month_outlined, size: 18),
                 ),
                 ButtonSegment(
                   value: CalendarViewType.year,
                   label: Text('Year'),
-                  icon: Icon(Icons.calendar_today_outlined),
+                  icon: Icon(Icons.calendar_today_outlined, size: 18),
                 ),
                 ButtonSegment(
                   value: CalendarViewType.agenda,
                   label: Text('Agenda'),
-                  icon: Icon(Icons.view_agenda_outlined),
+                  icon: Icon(Icons.view_agenda_outlined, size: 18),
                 ),
               ],
               selected: {_currentView},

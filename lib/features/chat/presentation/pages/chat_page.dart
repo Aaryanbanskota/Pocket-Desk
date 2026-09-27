@@ -357,14 +357,19 @@ Sanitize all inputs: NEVER include executable code or script tags.
 
   void _onTextChanged(String text) {
     if (text.startsWith('/')) {
-      final query = text.toLowerCase();
+      final firstWord = text.split(' ').first.toLowerCase();
       final matches = _slashActions
-          .where((action) => action['command']!.startsWith(query))
+          .where((action) => action['command']!.startsWith(firstWord))
           .map((action) => '${action['command']} - ${action['desc']}')
           .toList();
+
+      final listToDisplay = matches.isNotEmpty
+          ? matches
+          : _slashActions.map((action) => '${action['command']} - ${action['desc']}').toList();
+
       setState(() {
-        _showSlashOverlay = matches.isNotEmpty;
-        _filteredSlashCommands = matches;
+        _showSlashOverlay = true;
+        _filteredSlashCommands = listToDisplay;
       });
     } else if (_showSlashOverlay) {
       setState(() {

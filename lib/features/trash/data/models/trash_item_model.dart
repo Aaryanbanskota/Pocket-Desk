@@ -9,6 +9,7 @@ enum TrashItemType {
   task,
   event,
   expense,
+  instant,
 }
 
 /// Unified Trash collection stored in Isar.

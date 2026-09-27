@@ -5,6 +5,7 @@ import '../../data/models/trash_item_model.dart';
 import '../../../notes/data/models/note_model.dart';
 import '../../../tasks/data/models/task_model.dart';
 import '../../../calendar/data/models/calendar_event_model.dart';
+import '../../../posts/data/models/instant_model.dart';
 import '../../../posts/data/models/post_model.dart';
 
 class TrashRepository {
@@ -136,6 +137,16 @@ class TrashRepository {
               ..createdAt = item.deletedAt
               ..updatedAt = DateTime.now();
             await _isar.postModels.put(post);
+            break;
+          case TrashItemType.instant:
+            final instant = InstantModel()
+              ..id = item.originalId
+              ..userId = item.userId
+              ..imagePath = item.snippet ?? ''
+              ..textOverlay = item.title
+              ..createdAt = item.deletedAt
+              ..expiresAt = DateTime.now().add(const Duration(hours: 24));
+            await _isar.instantModels.put(instant);
             break;
           case TrashItemType.expense:
             break;

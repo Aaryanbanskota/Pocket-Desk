@@ -131,32 +131,49 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
     final historyContext = _messages.take(6).map((m) => '${m.senderName}: ${m.text}').join('\n');
     final prompt = 'Chat history:\n$historyContext\n$username: ${userMsg.text}';
-    const systemPrompt = '''
-You are Pocketdesk AI, the official built-in companion and assistant for Pocketdesk. Always address the user warmly (e.g. "yo <username>"). Be casual, helpful, clear, and friendly!
+    final nowStr = DateTime.now().toString();
+    final systemPrompt = '''
+You are Pocketdesk AI, the official built-in universal action agent for Pocketdesk. Always address the user warmly (e.g. "yo <username>"). Be casual, helpful, clear, and friendly!
+Current timestamp: $nowStr
 
-You have full authority to perform actions on behalf of the user across Pocketdesk features (EXCEPT Personal Feed):
-1. Tasks: Create or edit tasks.
-2. Notes: Create or edit notes.
-3. Calendar & Events: Create or edit calendar events.
-4. Money Tracker: Log expenses or update wallet.
+SLASH ACTION SYSTEM:
+The user input may start with a slash command defining the intended action type:
+- /create: User wants to CREATE a record (Note, Task, Event, Expense).
+- /edit: User wants to EDIT an existing record.
+- /delete: User wants to DELETE a record (Check permissions & request confirmation).
+- /view: User wants to VIEW or summarize records.
+- /search: User wants to SEARCH across Pocketdesk data.
+- /help: User wants to see available slash actions.
 
-IF THE USER ASKS YOU TO CREATE, ADD, OR LOG SOMETHING (e.g. "Add a task to buy groceries", "Remind me to call John tomorrow", "Log 50 rs expense for coffee", "Create note about project ideas"):
-You MUST return a JSON action block at the END of your response formatted exactly like this:
+The natural text following the slash action describes WHAT the user wants to do. You MUST parse natural language, typos, spelling mistakes, and casual phrasing (e.g. "creat a note name Test 101 and put article inside" -> Action: CREATE, Target: Note, Title: Test 101, Content: article).
+
+CAPABILITY & PERMISSION MATRIX:
+1. Calendar & Events: Support reading, creating, and editing events. Ask for missing details if underspecified.
+2. Tasks: Support reading, creating, and editing tasks. Understand natural date phrases like "tomorrow", "next Monday", "in 2 days".
+3. Notes: Support reading, creating, and editing notes.
+4. Money Tracker: Support reading, creating, and logging expenses.
+5. Personal Feed: STRICTLY READ-ONLY. NEVER attempt to post, edit, or delete personal feed items.
+6. Trash: READ-ONLY. AI cannot restore or permanently purge trash items.
+7. Deletion Rule: DELETION IS STRICTLY FORBIDDEN BY DEFAULT across all modules. If the user uses /delete or requests deletion, verify authorization and ask for explicit user confirmation.
+
+IF EXECUTING A CREATE OR EDIT ACTION:
+You MUST output a JSON action block at the END of your response:
 ```json
 {
-  "action": "create_task" | "create_note" | "create_event" | "add_expense",
+  "action": "create_task" | "create_note" | "create_event" | "add_expense" | "edit_note" | "edit_task" | "ask_confirmation",
   "data": { ... }
 }
 ```
 
-Field details for action data:
-- create_task: {"title": "...", "description": "...", "dueDate": "YYYY-MM-DD HH:mm"}
-- create_note: {"title": "...", "content": "...", "folder": "..."}
+Field specifications:
+- create_task / edit_task: {"title": "...", "description": "...", "dueDate": "YYYY-MM-DD HH:mm", "targetTitle": "..."}
+- create_note / edit_note: {"title": "...", "content": "...", "folder": "...", "targetTitle": "..."}
 - create_event: {"title": "...", "startTime": "YYYY-MM-DD HH:mm", "endTime": "YYYY-MM-DD HH:mm", "location": "..."}
-- add_expense: {"title": "...", "amount": 100.0, "category": "Food/Bills/etc", "date": "YYYY-MM-DD"}
+- add_expense: {"title": "...", "amount": 100.0, "category": "...", "date": "YYYY-MM-DD"}
+- ask_confirmation: {"type": "delete" | "edit", "details": "..."}
 
-DO NOT outputs malicious code or scripts in data fields. Make sure title/content are clean text.
-Always include a friendly confirmation sentence before the JSON block explaining what you did!
+If essential details are missing (e.g. event time or task title), ask a quick clarifying question instead of guessing!
+Sanitize all inputs: NEVER include executable code or script tags.
 ''';
 
     final reply = await ref.read(aiSettingsProvider.notifier).generateCompletion(
@@ -239,12 +256,72 @@ Always include a friendly confirmation sentence before the JSON block explaining
           final start = DateTime.tryParse(data['startTime'].toString()) ?? DateTime.now().add(const Duration(hours: 1));
           final end = DateTime.tryParse(data['endTime'].toString()) ?? start.add(const Duration(hours: 1));
           final loc = sanitize(data['location']);
-          await ref.read(calendarEventsProvider.notifier).addOrUpdateEvent(
-            title: title,
-            startTime: start,
-            endTime: end,
-            location: loc.isEmpty ? null : loc,
-          );
+
+          if (mounted) {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (dialogCtx) => AlertDialog(
+                title: const Text('Confirm Calendar Event'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Title: $title', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text('Start: ${start.toString().substring(0, 16)}'),
+                    Text('End: ${end.toString().substring(0, 16)}'),
+                    if (loc.isNotEmpty) Text('Location: $loc'),
+                  ],
+                ),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('Cancel')),
+                  FilledButton(onPressed: () => Navigator.pop(dialogCtx, true), child: const Text('Confirm & Save')),
+                ],
+              ),
+            );
+
+            if (confirm == true) {
+              await ref.read(calendarEventsProvider.notifier).addOrUpdateEvent(
+                title: title,
+                startTime: start,
+                endTime: end,
+                location: loc.isEmpty ? null : loc,
+              );
+            }
+          }
+        }
+      } else if (action == 'edit_note') {
+        final targetTitle = sanitize(data['targetTitle']);
+        final newTitle = sanitize(data['title']);
+        final newContent = sanitize(data['content']);
+        final searchQ = targetTitle.isNotEmpty ? targetTitle : newTitle;
+        if (searchQ.isNotEmpty) {
+          final matches = await ref.read(notesProvider.notifier).searchNotes(searchQ);
+          if (matches.isNotEmpty) {
+            final existing = matches.first;
+            await ref.read(notesProvider.notifier).saveNote(
+              noteId: existing.id,
+              title: newTitle.isNotEmpty ? newTitle : existing.title,
+              content: newContent.isNotEmpty ? newContent : existing.content,
+              folderName: existing.folderName,
+            );
+          }
+        }
+      } else if (action == 'edit_task') {
+        final targetTitle = sanitize(data['targetTitle']);
+        final newTitle = sanitize(data['title']);
+        final newDesc = sanitize(data['description']);
+        final searchQ = targetTitle.isNotEmpty ? targetTitle : newTitle;
+        if (searchQ.isNotEmpty) {
+          final matches = await ref.read(tasksProvider.notifier).searchTasks(searchQ);
+          if (matches.isNotEmpty) {
+            final existing = matches.first;
+            await ref.read(tasksProvider.notifier).addOrUpdateTask(
+              taskId: existing.id,
+              title: newTitle.isNotEmpty ? newTitle : existing.title,
+              description: newDesc.isNotEmpty ? newDesc : existing.description,
+            );
+          }
         }
       } else if (action == 'add_expense') {
         final title = sanitize(data['title']);
@@ -263,6 +340,65 @@ Always include a friendly confirmation sentence before the JSON block explaining
     } catch (e) {
       // Safe fallback preventing app crash on malformed AI parameters
     }
+  }
+
+  bool _showSlashOverlay = false;
+  int _selectedIndex = 0;
+  List<Map<String, String>> _filteredActions = [];
+  final FocusNode _msgFocusNode = FocusNode();
+  final FocusNode _keyboardFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _friendCodeCtrl.dispose();
+    _msgCtrl.dispose();
+    _msgFocusNode.dispose();
+    _keyboardFocusNode.dispose();
+    super.dispose();
+  }
+
+  /// Live Capability Registry powering AI System Prompt, Autocomplete Overlay & /help responses
+  static const List<Map<String, String>> capabilityRegistry = [
+    {'command': '/create', 'desc': 'CREATE something (note, task, event, expense)'},
+    {'command': '/edit', 'desc': 'EDIT an existing record (note, task, event, expense)'},
+    {'command': '/delete', 'desc': 'DELETE a record (requires Master AI authorization & confirmation)'},
+    {'command': '/view', 'desc': 'VIEW records or summaries'},
+    {'command': '/search', 'desc': 'SEARCH across all Pocketdesk data'},
+    {'command': '/help', 'desc': 'List all live AI slash commands & capabilities'},
+    {'command': '/summarize', 'desc': 'SUMMARIZE notes, expenses, or tasks'},
+    {'command': '/mark', 'desc': 'MARK task status (completed / pending)'},
+    {'command': '/manage', 'desc': 'MANAGE supported Instants or data settings'},
+  ];
+
+  void _onTextChanged(String text) {
+    if (text.startsWith('/')) {
+      final firstWord = text.split(' ').first.toLowerCase();
+      final matches = capabilityRegistry
+          .where((action) => action['command']!.startsWith(firstWord))
+          .toList();
+
+      final listToDisplay = matches.isNotEmpty ? matches : capabilityRegistry;
+
+      setState(() {
+        _showSlashOverlay = true;
+        _filteredActions = listToDisplay;
+        _selectedIndex = 0;
+      });
+    } else if (_showSlashOverlay) {
+      setState(() {
+        _showSlashOverlay = false;
+      });
+    }
+  }
+
+  void _selectSlashCommand(Map<String, String> action) {
+    final cmdName = action['command']!;
+    _msgCtrl.text = '$cmdName ';
+    _msgCtrl.selection = TextSelection.fromPosition(TextPosition(offset: _msgCtrl.text.length));
+    setState(() {
+      _showSlashOverlay = false;
+    });
+    _msgFocusNode.requestFocus();
   }
 
   @override
@@ -293,7 +429,7 @@ Always include a friendly confirmation sentence before the JSON block explaining
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    _activePeerName != null ? 'P2P Connected • Code: $_myFriendCode' : 'AI Matrix Companion Mode (yo $username)',
+                    _activePeerName != null ? 'P2P Connected • Code: $_myFriendCode' : 'AI Universal Action Agent (yo $username)',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 11),
@@ -344,7 +480,7 @@ Always include a friendly confirmation sentence before the JSON block explaining
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'No peer connected right now. Say hi to Pocketdesk AI — your 24/7 buddy!',
+                            'Universal AI Agent ready! Type / to open slash actions (/create, /edit, /delete, /view, /search).',
                             textAlign: TextAlign.center,
                             style: TextStyle(color: colorScheme.onSurfaceVariant),
                           ),
@@ -426,19 +562,74 @@ Always include a friendly confirmation sentence before the JSON block explaining
               ),
             ),
 
+          if (_showSlashOverlay)
+            Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHigh,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _filteredActions.length,
+                itemBuilder: (context, i) {
+                  final action = _filteredActions[i];
+                  final isSelected = i == _selectedIndex;
+                  return ListTile(
+                    dense: true,
+                    selected: isSelected,
+                    selectedTileColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                    title: Text('${action['command']} - ${action['desc']}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isSelected ? colorScheme.primary : colorScheme.onSurface)),
+                    onTap: () => _selectSlashCommand(action),
+                  );
+                },
+              ),
+            ),
+
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             color: colorScheme.surfaceContainerLow,
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _msgCtrl,
-                    decoration: InputDecoration(
-                      hintText: 'Type a message to $username\'s AI buddy…',
-                      border: InputBorder.none,
+                  child: KeyboardListener(
+                    focusNode: _keyboardFocusNode,
+                    onKeyEvent: (event) {
+                      if (_showSlashOverlay && _filteredActions.isNotEmpty) {
+                        if (event.logicalKey.keyLabel == 'Arrow Down') {
+                          setState(() {
+                            _selectedIndex = (_selectedIndex + 1) % _filteredActions.length;
+                          });
+                        } else if (event.logicalKey.keyLabel == 'Arrow Up') {
+                          setState(() {
+                            _selectedIndex = (_selectedIndex - 1 + _filteredActions.length) % _filteredActions.length;
+                          });
+                        } else if (event.logicalKey.keyLabel == 'Escape') {
+                          setState(() {
+                            _showSlashOverlay = false;
+                          });
+                        }
+                      }
+                    },
+                    child: TextField(
+                      controller: _msgCtrl,
+                      focusNode: _msgFocusNode,
+                      onChanged: _onTextChanged,
+                      decoration: const InputDecoration(
+                        hintText: 'Type / for slash actions (e.g. /create, /edit, /search)…',
+                        border: InputBorder.none,
+                      ),
+                      onSubmitted: (_) {
+                        if (_showSlashOverlay && _filteredActions.isNotEmpty) {
+                          final selected = _filteredActions[_selectedIndex.clamp(0, _filteredActions.length - 1)];
+                          _selectSlashCommand(selected);
+                        } else {
+                          _sendMessage();
+                        }
+                      },
                     ),
-                    onSubmitted: (_) => _sendMessage(),
                   ),
                 ),
                 IconButton.filled(

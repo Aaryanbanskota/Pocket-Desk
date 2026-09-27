@@ -156,16 +156,18 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
     final auth = ref.read(authNotifierProvider).valueOrNull;
     final author = auth is AuthAuthenticated ? (auth.user.displayName ?? auth.user.username) : 'You';
 
-    post.comments.add(commentText.trim());
-    post.commentAuthors.add(author);
-    post.commentDates.add(DateTime.now());
-
     final repo = await ref.read(postsRepositoryProvider.future);
-    await repo.savePost(post);
+    final freshPost = await repo.getPostById(post.id) ?? post;
+
+    freshPost.comments = List.from(freshPost.comments)..add(commentText.trim());
+    freshPost.commentAuthors = List.from(freshPost.commentAuthors)..add(author);
+    freshPost.commentDates = List.from(freshPost.commentDates)..add(DateTime.now());
+
+    await repo.savePost(freshPost);
     ref.invalidateSelf();
 
     // Trigger AI response in thread if cap of 5 AI replies hasn't been reached
-    _triggerAIThreadReply(post);
+    _triggerAIThreadReply(freshPost);
   }
 
   Future<void> _triggerAIThreadReply(PostModel post) async {
@@ -188,9 +190,11 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
     if (reply != null && reply.isNotEmpty) {
       final freshRepo = await ref.read(postsRepositoryProvider.future);
       final currentPost = await freshRepo.getPostById(post.id) ?? post;
-      currentPost.comments.add(reply);
-      currentPost.commentAuthors.add('Pocketdesk AI 🤖');
-      currentPost.commentDates.add(DateTime.now());
+
+      currentPost.comments = List.from(currentPost.comments)..add(reply);
+      currentPost.commentAuthors = List.from(currentPost.commentAuthors)..add('Pocketdesk AI 🤖');
+      currentPost.commentDates = List.from(currentPost.commentDates)..add(DateTime.now());
+
       await freshRepo.savePost(currentPost);
       ref.invalidateSelf();
     }

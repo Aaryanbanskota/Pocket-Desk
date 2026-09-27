@@ -162,12 +162,20 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                       itemCount: instants.length,
                       itemBuilder: (context, i) {
                         final inst = instants[i];
+                        final hasFile = inst.imagePath.isNotEmpty && File(inst.imagePath).existsSync();
                         return Stack(
                           fit: StackFit.expand,
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(20),
-                              child: Image.file(File(inst.imagePath), fit: BoxFit.cover),
+                              child: hasFile
+                                  ? Image.file(File(inst.imagePath), fit: BoxFit.cover)
+                                  : Container(
+                                      color: const Color(0xFF1E293B),
+                                      child: const Center(
+                                        child: Icon(Icons.broken_image_rounded, color: Colors.white54, size: 48),
+                                      ),
+                                    ),
                             ),
                             if (inst.textOverlay != null && inst.textOverlay!.isNotEmpty)
                               Positioned(
@@ -698,24 +706,32 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                     const SizedBox(width: 16),
 
                     if (instants.isNotEmpty)
-                      GestureDetector(
-                        onTap: () => _openInstantsDashboard(instants),
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.pink, width: 2.5),
-                                image: DecorationImage(image: FileImage(File(instants.first.imagePath)), fit: BoxFit.cover),
+                      Builder(builder: (context) {
+                        final firstPath = instants.first.imagePath;
+                        final hasRingFile = firstPath.isNotEmpty && File(firstPath).existsSync();
+                        return GestureDetector(
+                          onTap: () => _openInstantsDashboard(instants),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.pink, width: 2.5),
+                                  color: cs.primaryContainer,
+                                  image: hasRingFile
+                                      ? DecorationImage(image: FileImage(File(firstPath)), fit: BoxFit.cover)
+                                      : null,
+                                ),
+                                child: hasRingFile ? null : Icon(Icons.star_rounded, color: cs.primary),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text('Your Instants', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
+                              const SizedBox(height: 4),
+                              const Text('Your Instants', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        );
+                      }),
                   ],
                 ),
                 loading: () => const SizedBox(),

@@ -343,33 +343,36 @@ Sanitize all inputs: NEVER include executable code or script tags.
   }
 
   bool _showSlashOverlay = false;
-  List<String> _filteredSlashCommands = [];
+  int _selectedIndex = 0;
+  List<Map<String, String>> _filteredActions = [];
+  final FocusNode _msgFocusNode = FocusNode();
 
-  static const List<Map<String, String>> _slashActions = [
+  /// Live Capability Registry powering AI System Prompt, Autocomplete Overlay & /help responses
+  static const List<Map<String, String>> capabilityRegistry = [
     {'command': '/create', 'desc': 'CREATE something (note, task, event, expense)'},
     {'command': '/edit', 'desc': 'EDIT an existing record (note, task, event, expense)'},
-    {'command': '/delete', 'desc': 'DELETE a record (requires authorization & confirmation)'},
+    {'command': '/delete', 'desc': 'DELETE a record (requires Master AI authorization & confirmation)'},
     {'command': '/view', 'desc': 'VIEW records or summaries'},
     {'command': '/search', 'desc': 'SEARCH across all Pocketdesk data'},
-    {'command': '/help', 'desc': 'Show available AI slash commands'},
-    {'command': '/summarize', 'desc': 'SUMMARIZE notes or data'},
+    {'command': '/help', 'desc': 'List all live AI slash commands & capabilities'},
+    {'command': '/summarize', 'desc': 'SUMMARIZE notes, expenses, or tasks'},
+    {'command': '/mark', 'desc': 'MARK task status (completed / pending)'},
+    {'command': '/manage', 'desc': 'MANAGE supported Instants or data settings'},
   ];
 
   void _onTextChanged(String text) {
     if (text.startsWith('/')) {
       final firstWord = text.split(' ').first.toLowerCase();
-      final matches = _slashActions
+      final matches = capabilityRegistry
           .where((action) => action['command']!.startsWith(firstWord))
-          .map((action) => '${action['command']} - ${action['desc']}')
           .toList();
 
-      final listToDisplay = matches.isNotEmpty
-          ? matches
-          : _slashActions.map((action) => '${action['command']} - ${action['desc']}').toList();
+      final listToDisplay = matches.isNotEmpty ? matches : capabilityRegistry;
 
       setState(() {
         _showSlashOverlay = true;
-        _filteredSlashCommands = listToDisplay;
+        _filteredActions = listToDisplay;
+        _selectedIndex = 0;
       });
     } else if (_showSlashOverlay) {
       setState(() {
@@ -378,13 +381,14 @@ Sanitize all inputs: NEVER include executable code or script tags.
     }
   }
 
-  void _selectSlashCommand(String fullCmd) {
-    final cmdName = fullCmd.split(' ').first;
+  void _selectSlashCommand(Map<String, String> action) {
+    final cmdName = action['command']!;
     _msgCtrl.text = '$cmdName ';
     _msgCtrl.selection = TextSelection.fromPosition(TextPosition(offset: _msgCtrl.text.length));
     setState(() {
       _showSlashOverlay = false;
     });
+    _msgFocusNode.requestFocus();
   }
 
   @override
@@ -550,7 +554,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
 
           if (_showSlashOverlay)
             Container(
-              constraints: const BoxConstraints(maxHeight: 180),
+              constraints: const BoxConstraints(maxHeight: 200),
               margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               decoration: BoxDecoration(
                 color: colorScheme.surfaceContainerHigh,
@@ -559,13 +563,16 @@ Sanitize all inputs: NEVER include executable code or script tags.
               ),
               child: ListView.builder(
                 shrinkWrap: true,
-                itemCount: _filteredSlashCommands.length,
+                itemCount: _filteredActions.length,
                 itemBuilder: (context, i) {
-                  final item = _filteredSlashCommands[i];
+                  final action = _filteredActions[i];
+                  final isSelected = i == _selectedIndex;
                   return ListTile(
                     dense: true,
-                    title: Text(item, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    onTap: () => _selectSlashCommand(item),
+                    selected: isSelected,
+                    selectedTileColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                    title: Text('${action['command']} - ${action['desc']}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isSelected ? colorScheme.primary : colorScheme.onSurface)),
+                    onTap: () => _selectSlashCommand(action),
                   );
                 },
               ),
@@ -577,14 +584,42 @@ Sanitize all inputs: NEVER include executable code or script tags.
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _msgCtrl,
-                    onChanged: _onTextChanged,
-                    decoration: const InputDecoration(
-                      hintText: 'Type / for slash actions (e.g. /create, /edit, /search)…',
-                      border: InputBorder.none,
+                  child: KeyboardListener(
+                    focusNode: FocusNode(),
+                    onKeyEvent: (event) {
+                      if (_showSlashOverlay && _filteredActions.isNotEmpty) {
+                        if (event.logicalKey.keyLabel == 'Arrow Down') {
+                          setState(() {
+                            _selectedIndex = (_selectedIndex + 1) % _filteredActions.length;
+                          });
+                        } else if (event.logicalKey.keyLabel == 'Arrow Up') {
+                          setState(() {
+                            _selectedIndex = (_selectedIndex - 1 + _filteredActions.length) % _filteredActions.length;
+                          });
+                        } else if (event.logicalKey.keyLabel == 'Escape') {
+                          setState(() {
+                            _showSlashOverlay = false;
+                          });
+                        }
+                      }
+                    },
+                    child: TextField(
+                      controller: _msgCtrl,
+                      focusNode: _msgFocusNode,
+                      onChanged: _onTextChanged,
+                      decoration: const InputDecoration(
+                        hintText: 'Type / for slash actions (e.g. /create, /edit, /search)…',
+                        border: InputBorder.none,
+                      ),
+                      onSubmitted: (_) {
+                        if (_showSlashOverlay && _filteredActions.isNotEmpty) {
+                          final selected = _filteredActions[_selectedIndex.clamp(0, _filteredActions.length - 1)];
+                          _selectSlashCommand(selected);
+                        } else {
+                          _sendMessage();
+                        }
+                      },
                     ),
-                    onSubmitted: (_) => _sendMessage(),
                   ),
                 ),
                 IconButton.filled(

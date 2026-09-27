@@ -39,7 +39,7 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
     final saved = await repo.savePost(post);
     ref.invalidateSelf();
 
-    // Trigger AI Reaction asynchronously if enabled
+    // Trigger AI Reaction and like asynchronously if enabled
     _triggerAIReaction(saved);
   }
 
@@ -49,8 +49,18 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
       return;
     }
 
+    // AI randomly likes the post if it finds it engaging
+    final repo = await ref.read(postsRepositoryProvider.future);
+    if (!post.isLiked) {
+      post.isLiked = true;
+      post.likesCount += 1;
+      await repo.savePost(post);
+      ref.invalidateSelf();
+    }
+
+    // AI evaluates only text content (ignoring images/videos)
     final prompt = 'User posted text on their private personal feed: "${post.content}"';
-    const systemPrompt = 'You are Pocketdesk AI replying warmly to a user post in their offline personal feed. Respond naturally as a helpful friend in 1-2 friendly sentences. Do not mention that you are an AI model.';
+    const systemPrompt = 'You are Pocketdesk AI replying warmly to a user post in their offline personal feed. You evaluate only the text content provided. Respond naturally as a helpful friend in 1-2 friendly sentences. Do not mention that you are an AI model.';
 
     final reactionText = await ref.read(aiSettingsProvider.notifier).generateCompletion(
       prompt: prompt,
@@ -62,7 +72,6 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
       post.commentAuthors.add('Pocketdesk AI 🤖');
       post.commentDates.add(DateTime.now());
 
-      final repo = await ref.read(postsRepositoryProvider.future);
       await repo.savePost(post);
       ref.invalidateSelf();
     }

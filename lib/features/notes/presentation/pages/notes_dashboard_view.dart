@@ -306,6 +306,11 @@ class _NoteCard extends ConsumerWidget {
               onTap: () { notifier.toggleFavorite(note); Navigator.pop(context); },
             ),
             ListTile(
+              leading: const Icon(Icons.copy_rounded),
+              title: const Text('Duplicate Note'),
+              onTap: () { notifier.duplicateNote(note); Navigator.pop(context); },
+            ),
+            ListTile(
               leading: const Icon(Icons.delete_outline, color: Colors.red),
               title: const Text('Delete', style: TextStyle(color: Colors.red)),
               onTap: () { notifier.deleteNote(note.id); Navigator.pop(context); },

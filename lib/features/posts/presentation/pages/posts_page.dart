@@ -485,120 +485,124 @@ class _PostsPageState extends ConsumerState<PostsPage> {
 
   void _showInstagramCommentsSheet(PostModel post) {
     _commentCtrl.clear();
-    final cs = Theme.of(context).colorScheme;
 
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: cs.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: Container(
-          height: MediaQuery.of(ctx).size.height * 0.75,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Center(
-                child: Container(width: 36, height: 4, decoration: BoxDecoration(color: cs.onSurfaceVariant.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(2))),
-              ),
-              const SizedBox(height: 12),
-              Text('Comments', style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-              const Divider(height: 24),
-              Expanded(
-                child: post.comments.isEmpty
-                    ? Center(child: Text('No comments yet. Be the first to comment!', style: TextStyle(color: cs.onSurfaceVariant)))
-                    : ListView.builder(
-                        itemCount: post.comments.length,
-                        itemBuilder: (context, i) {
-                          final author = post.commentAuthors[i];
-                          final comment = post.comments[i];
-                          final isAI = author.contains('AI');
+      builder: (ctx) => Consumer(
+        builder: (context, ref, child) {
+          final cs = Theme.of(context).colorScheme;
+          final postsState = ref.watch(postsNotifierProvider).valueOrNull ?? [];
+          final currentPost = postsState.firstWhere((p) => p.id == post.id, orElse: () => post);
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: isAI ? cs.primaryContainer : cs.surfaceContainerHighest,
-                                  child: isAI
-                                      ? const Icon(Icons.smart_toy_rounded, size: 16, color: Colors.blue)
-                                      : const Icon(Icons.person_rounded, size: 16),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(author, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isAI ? cs.primary : cs.onSurface)),
-                                      const SizedBox(height: 2),
-                                      Text(comment, style: TextStyle(fontSize: 14, color: cs.onSurface)),
-                                      const SizedBox(height: 4),
-                                      GestureDetector(
-                                        onTap: () {
-                                          _commentCtrl.text = '@$author ';
-                                          _commentCtrl.selection = TextSelection.fromPosition(
-                                            TextPosition(offset: _commentCtrl.text.length),
-                                          );
-                                        },
-                                        child: Text(
-                                          'Reply',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            color: cs.onSurfaceVariant,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-              ),
-              const Divider(height: 1),
-              Row(
+          return Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              padding: const EdgeInsets.all(16),
+              child: Column(
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _commentCtrl,
-                      decoration: const InputDecoration(
-                        hintText: 'Add a comment…',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12),
-                      ),
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (val) async {
-                        final text = val.trim();
-                        if (text.isNotEmpty) {
-                          await ref.read(postsNotifierProvider.notifier).addComment(post, text);
-                          _commentCtrl.clear();
-                          if (ctx.mounted) Navigator.pop(ctx);
-                        }
-                      },
-                    ),
+                  Center(
+                    child: Container(width: 36, height: 4, decoration: BoxDecoration(color: cs.onSurfaceVariant.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(2))),
                   ),
-                  TextButton(
-                    onPressed: () async {
-                      final text = _commentCtrl.text.trim();
-                      if (text.isNotEmpty) {
-                        await ref.read(postsNotifierProvider.notifier).addComment(post, text);
-                        _commentCtrl.clear();
-                        if (ctx.mounted) Navigator.pop(ctx);
-                      }
-                    },
-                    child: const Text('Post', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 12),
+                  Text('Comments', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  const Divider(height: 24),
+                  Expanded(
+                    child: currentPost.comments.isEmpty
+                        ? Center(child: Text('No comments yet. Be the first to comment!', style: TextStyle(color: cs.onSurfaceVariant)))
+                        : ListView.builder(
+                            itemCount: currentPost.comments.length,
+                            itemBuilder: (context, i) {
+                              final author = currentPost.commentAuthors[i];
+                              final comment = currentPost.comments[i];
+                              final isAI = author.contains('AI');
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor: isAI ? cs.primaryContainer : cs.surfaceContainerHighest,
+                                      child: isAI
+                                          ? const Icon(Icons.smart_toy_rounded, size: 16, color: Colors.blue)
+                                          : const Icon(Icons.person_rounded, size: 16),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(author, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isAI ? cs.primary : cs.onSurface)),
+                                          const SizedBox(height: 2),
+                                          Text(comment, style: TextStyle(fontSize: 14, color: cs.onSurface)),
+                                          const SizedBox(height: 4),
+                                          GestureDetector(
+                                            onTap: () {
+                                              _commentCtrl.text = '@$author ';
+                                              _commentCtrl.selection = TextSelection.fromPosition(
+                                                TextPosition(offset: _commentCtrl.text.length),
+                                              );
+                                            },
+                                            child: Text(
+                                              'Reply',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: cs.onSurfaceVariant,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                  const Divider(height: 1),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _commentCtrl,
+                          decoration: const InputDecoration(
+                            hintText: 'Add a comment…',
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                          textInputAction: TextInputAction.send,
+                          onSubmitted: (val) async {
+                            final text = val.trim();
+                            if (text.isNotEmpty) {
+                              await ref.read(postsNotifierProvider.notifier).addComment(currentPost, text);
+                              _commentCtrl.clear();
+                            }
+                          },
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          final text = _commentCtrl.text.trim();
+                          if (text.isNotEmpty) {
+                            await ref.read(postsNotifierProvider.notifier).addComment(currentPost, text);
+                            _commentCtrl.clear();
+                          }
+                        },
+                        child: const Text('Post', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:pocketdesk/core/theme/app_spacing.dart';
 import 'package:pocketdesk/features/auth/presentation/providers/auth_notifier.dart';
 import 'package:pocketdesk/features/settings/presentation/providers/ai_settings_notifier.dart';
 import 'package:pocketdesk/features/dashboard/presentation/widgets/app_hamburger_drawer.dart';
+import 'package:pocketdesk/features/chat/presentation/widgets/ai_cardano_dots_widget.dart';
 
 class ChatMessage {
   ChatMessage({
@@ -112,7 +113,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         _messages.add(ChatMessage(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           senderId: 'ai',
-          senderName: 'Pocketdesk AI 🤖',
+          senderName: 'Pocketdesk AI',
           text: 'yo $username! I am your AI friend. To enable real-time AI replies here, make sure to add your OpenRouter API key in Settings → AI.',
           timestamp: DateTime.now(),
           isMe: false,
@@ -125,7 +126,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
     final historyContext = _messages.take(6).map((m) => '${m.senderName}: ${m.text}').join('\n');
     final prompt = 'Chat history:\n$historyContext\n$username: ${userMsg.text}';
-    final systemPrompt = 'You are Pocketdesk AI, a close, casual, super friendly companion and buddy to $username. Always start your response or address the user warmly using "yo $username". Be relaxed, supportive, informal, and fun! Keep your replies concise (1-3 casual sentences).';
+    const systemPrompt = 'You are Pocketdesk AI, a close, casual, super friendly companion and buddy. Always start your response or address the user warmly using "yo <username>". Be relaxed, supportive, informal, and fun! Keep your replies concise (1-3 casual sentences).';
 
     final reply = await ref.read(aiSettingsProvider.notifier).generateCompletion(
       prompt: prompt,
@@ -138,7 +139,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       _messages.add(ChatMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         senderId: 'ai',
-        senderName: 'Pocketdesk AI 🤖',
+        senderName: 'Pocketdesk AI',
         text: reply ?? 'yo $username! Something went wrong reaching OpenRouter, but I am still right here for you buddy!',
         timestamp: DateTime.now(),
         isMe: false,
@@ -157,13 +158,21 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     return Scaffold(
       drawer: const AppHamburgerDrawer(),
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
           children: [
-            Text(_activePeerName ?? 'Chat with Pocketdesk AI 🤖'),
-            Text(
-              _activePeerName != null ? 'P2P Connected • Code: $_myFriendCode' : 'AI Companion Mode (yo $username)',
-              style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 11),
+            if (_activePeerName == null) ...[
+              AiCardanoDotsWidget(size: 28, color: colorScheme.primary, animate: _isAITyping),
+              const SizedBox(width: 10),
+            ],
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(_activePeerName ?? 'Pocketdesk AI'),
+                Text(
+                  _activePeerName != null ? 'P2P Connected • Code: $_myFriendCode' : 'AI Matrix Companion Mode (yo $username)',
+                  style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 11),
+                ),
+              ],
             ),
           ],
         ),
@@ -200,13 +209,13 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.mark_chat_read_rounded, size: 60, color: colorScheme.primary.withOpacity(0.6)),
-                          const SizedBox(height: 12),
+                          AiCardanoDotsWidget(size: 110, color: colorScheme.primary, animate: true),
+                          const SizedBox(height: 20),
                           Text(
                             'yo $username!',
                             style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.primary),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
                           Text(
                             'No peer connected right now. Say hi to Pocketdesk AI — your 24/7 buddy!',
                             textAlign: TextAlign.center,
@@ -223,43 +232,55 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       final msg = _messages[index];
                       return Align(
                         alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: msg.isMe ? colorScheme.primary : colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.only(
-                              topLeft: const Radius.circular(16),
-                              topRight: const Radius.circular(16),
-                              bottomLeft: Radius.circular(msg.isMe ? 16 : 2),
-                              bottomRight: Radius.circular(msg.isMe ? 2 : 16),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: msg.isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                            children: [
-                              if (!msg.isMe)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 2),
-                                  child: Text(
-                                    msg.senderName,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: colorScheme.primary,
-                                    ),
-                                  ),
-                                ),
-                              Text(
-                                msg.text,
-                                style: TextStyle(
-                                  color: msg.isMe ? colorScheme.onPrimary : colorScheme.onSurface,
-                                  fontSize: 14,
-                                ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (!msg.isMe) ...[
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4, right: 8),
+                                child: AiCardanoDotsWidget(size: 24, color: colorScheme.primary, animate: false),
                               ),
                             ],
-                          ),
+                            Container(
+                              margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
+                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: msg.isMe ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.only(
+                                  topLeft: const Radius.circular(16),
+                                  topRight: const Radius.circular(16),
+                                  bottomLeft: Radius.circular(msg.isMe ? 16 : 2),
+                                  bottomRight: Radius.circular(msg.isMe ? 2 : 16),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: msg.isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                children: [
+                                  if (!msg.isMe)
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 2),
+                                      child: Text(
+                                        msg.senderName,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: colorScheme.primary,
+                                        ),
+                                      ),
+                                    ),
+                                  Text(
+                                    msg.text,
+                                    style: TextStyle(
+                                      color: msg.isMe ? colorScheme.onPrimary : colorScheme.onSurface,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -268,12 +289,12 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
           if (_isAITyping)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Row(
                 children: [
-                  const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
-                  const SizedBox(width: 8),
-                  Text('Pocketdesk AI is typing…', style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.primary)),
+                  AiCardanoDotsWidget(size: 22, color: colorScheme.primary, animate: true),
+                  const SizedBox(width: 10),
+                  Text('Pocketdesk AI is processing…', style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -287,7 +308,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   child: TextField(
                     controller: _msgCtrl,
                     decoration: InputDecoration(
-                      hintText: 'Type a message to $username\'s buddy…',
+                      hintText: 'Type a message to $username\'s AI buddy…',
                       border: InputBorder.none,
                     ),
                     onSubmitted: (_) => _sendMessage(),
@@ -305,3 +326,4 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     );
   }
 }
+

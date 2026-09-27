@@ -224,6 +224,20 @@ void main() {
 
     expect(find.text('tell me all event task name'), findsNWidgets(2));
     expect(tester.widget<TextField>(input).focusNode!.hasPrimaryFocus, isTrue);
+
+    for (var i = 0; i < 10; i++) {
+      await tester.enterText(input, 'tell me all event task name');
+      await tester.tap(find.byIcon(Icons.send_rounded));
+      await tester.pumpAndSettle();
+    }
+
+    final messageList = find.byType(ListView);
+    final scrollable = find.descendant(
+      of: messageList,
+      matching: find.byType(Scrollable),
+    );
+    final position = tester.state<ScrollableState>(scrollable).position;
+    expect(position.pixels, closeTo(position.maxScrollExtent, 1));
   });
 
   testWidgets('yes follow-up executes the pending create once', (tester) async {

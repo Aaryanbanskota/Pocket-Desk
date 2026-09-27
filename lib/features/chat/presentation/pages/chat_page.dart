@@ -43,6 +43,7 @@ class ChatPage extends ConsumerStatefulWidget {
 class _ChatPageState extends ConsumerState<ChatPage> {
   final TextEditingController _friendCodeCtrl = TextEditingController();
   final TextEditingController _msgCtrl = TextEditingController();
+  final ScrollController _messageScrollController = ScrollController();
 
   String? _myFriendCode;
   String? _activePeerName;
@@ -93,6 +94,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       _showSlashOverlay = false;
       _filteredActions = const [];
     });
+    _scrollToLatestMessage();
 
     _msgCtrl.clear();
     _keepMessageInputFocused();
@@ -135,6 +137,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             isMe: false,
           ));
         });
+        _scrollToLatestMessage();
       }
     } finally {
       _isSending = false;
@@ -156,6 +159,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           isMe: false,
         ));
       });
+      _scrollToLatestMessage();
       return;
     }
 
@@ -180,6 +184,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           isMe: false,
         ));
       });
+      _scrollToLatestMessage();
       return;
     }
 
@@ -198,6 +203,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           isMe: false,
         ));
       });
+      _scrollToLatestMessage();
       return;
     }
 
@@ -329,6 +335,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
         isMe: false,
       ));
     });
+    _scrollToLatestMessage();
   }
 
   Future<String?> _answerRecordListRequest(String text) async {
@@ -670,6 +677,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
   void dispose() {
     _friendCodeCtrl.dispose();
     _msgCtrl.dispose();
+    _messageScrollController.dispose();
     _msgFocusNode.dispose();
     _keyboardFocusNode.dispose();
     super.dispose();
@@ -736,6 +744,18 @@ Sanitize all inputs: NEVER include executable code or script tags.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _msgFocusNode.requestFocus();
+      }
+    });
+  }
+
+  void _scrollToLatestMessage() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_messageScrollController.hasClients) {
+        _messageScrollController.animateTo(
+          _messageScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
       }
     });
   }
@@ -855,6 +875,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
                     ),
                   )
                 : ListView.builder(
+                    controller: _messageScrollController,
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {

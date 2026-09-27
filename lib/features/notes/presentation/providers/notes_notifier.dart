@@ -142,6 +142,28 @@ class NotesNotifier extends AutoDisposeAsyncNotifier<NotesState> {
     ref.invalidateSelf();
   }
 
+  Future<void> duplicateNote(NoteModel note) async {
+    final auth = ref.read(authNotifierProvider).valueOrNull;
+    if (auth is! AuthAuthenticated) return;
+    final repo = await ref.read(noteRepositoryProvider.future);
+
+    final dup = NoteModel()
+      ..userId = auth.user.id
+      ..title = '${note.title} (Copy)'
+      ..content = note.content
+      ..folderName = note.folderName
+      ..tags = List.from(note.tags)
+      ..isPinned = note.isPinned
+      ..isFavorite = note.isFavorite
+      ..hasChecklist = note.hasChecklist
+      ..checklistItems = List.from(note.checklistItems)
+      ..checklistDone = List.from(note.checklistDone)
+      ..imagePaths = List.from(note.imagePaths);
+
+    await repo.saveNote(dup);
+    ref.invalidateSelf();
+  }
+
   Future<List<NoteModel>> searchNotes(String query) async {
     final auth = ref.read(authNotifierProvider).valueOrNull;
     if (auth is! AuthAuthenticated) return [];

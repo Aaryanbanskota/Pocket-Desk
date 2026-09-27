@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketdesk/core/theme/app_spacing.dart';
@@ -17,6 +19,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
   final _titleCtrl = TextEditingController();
   final _tagsCtrl = TextEditingController();
   final _commentCtrl = TextEditingController();
+  final List<String> _selectedImagePaths = [];
 
   @override
   void dispose() {
@@ -27,10 +30,29 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     super.dispose();
   }
 
+  Future<void> _pickMedia() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'avi'],
+      allowMultiple: true,
+    );
+
+    if (result != null && result.paths.isNotEmpty) {
+      setState(() {
+        for (final p in result.paths) {
+          if (p != null && !_selectedImagePaths.contains(p)) {
+            _selectedImagePaths.add(p);
+          }
+        }
+      });
+    }
+  }
+
   void _showCreatePostModal() {
     _contentCtrl.clear();
     _titleCtrl.clear();
     _tagsCtrl.clear();
+    _selectedImagePaths.clear();
 
     showModalBottomSheet<void>(
       context: context,
@@ -82,13 +104,52 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  await _pickMedia();
+                  (ctx as Element).markNeedsBuild();
+                },
+                icon: const Icon(Icons.perm_media_rounded),
+                label: Text(_selectedImagePaths.isEmpty
+                    ? 'Attach Images / Videos'
+                    : '${_selectedImagePaths.length} Media Attached'),
+              ),
+              if (_selectedImagePaths.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 60,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _selectedImagePaths.length,
+                    itemBuilder: (c, i) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          File(_selectedImagePaths[i]),
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            width: 60,
+                            height: 60,
+                            color: Colors.grey.shade300,
+                            child: const Icon(Icons.movie_rounded, size: 24),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.md),
               Row(
                 children: [
                   Icon(Icons.lock_outline_rounded, size: 16, color: Theme.of(ctx).colorScheme.primary),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      '🔒 Private — only you and Pocketdesk AI can access this text.',
+                      '🔒 Private — AI reads your post text only; attached media is never sent to AI.',
                       style: TextStyle(fontSize: 12, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
                     ),
                   ),
@@ -98,7 +159,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
               FilledButton(
                 onPressed: () {
                   final text = _contentCtrl.text.trim();
-                  if (text.isEmpty) return;
+                  if (text.isEmpty && _selectedImagePaths.isEmpty) return;
                   final tags = _tagsCtrl.text
                       .split(',')
                       .map((t) => t.trim())
@@ -108,6 +169,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                   ref.read(postsNotifierProvider.notifier).createPost(
                     content: text,
                     title: _titleCtrl.text.trim().isEmpty ? null : _titleCtrl.text.trim(),
+                    imagePaths: List.from(_selectedImagePaths),
                     tags: tags,
                   );
 
@@ -260,6 +322,53 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                       ],
 
                       Text(post.content, style: theme.textTheme.bodyMedium?.copyWith(height: 1.4)),
+
+                      if (post.imagePaths.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: SizedBox(
+                            height: 160,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: post.imagePaths.length,
+                              itemBuilder: (context, i) {
+                                final path = post.imagePaths[i];
+                                final isVideo = path.endsWith('.mp4') || path.endsWith('.mov') || path.endsWith('.avi');
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Image.file(
+                                        File(path),
+                                        width: 220,
+                                        height: 160,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => Container(
+                                          width: 180,
+                                          height: 160,
+                                          color: cs.surfaceContainerHighest,
+                                          child: Icon(isVideo ? Icons.movie_rounded : Icons.image_rounded, size: 40, color: cs.primary),
+                                        ),
+                                      ),
+                                      if (isVideo)
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withOpacity(0.5),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 32),
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
 
                       if (post.tags.isNotEmpty) ...[
                         const SizedBox(height: 8),

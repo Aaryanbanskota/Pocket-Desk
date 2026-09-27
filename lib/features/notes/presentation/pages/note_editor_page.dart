@@ -232,6 +232,20 @@ class _NoteEditorPageState extends ConsumerState<NoteEditorPage> {
               onPressed: () => setState(() { _isFavorite = !_isFavorite; _dirty = true; }),
               tooltip: 'Favorite',
             ),
+            if (widget.note != null)
+              IconButton(
+                icon: const Icon(Icons.copy_rounded),
+                onPressed: () async {
+                  await ref.read(notesProvider.notifier).duplicateNote(widget.note!);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Note duplicated successfully!')),
+                    );
+                    Navigator.of(context).pop();
+                  }
+                },
+                tooltip: 'Duplicate Note',
+              ),
             FilledButton(
               onPressed: _save,
               child: const Text('Save'),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../auth/presentation/providers/auth_notifier.dart';
 
 class PrivacySettingsWidget extends ConsumerStatefulWidget {
   const PrivacySettingsWidget({super.key});
@@ -125,13 +126,7 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                 children: [
                   Material(
                     child: InkWell(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Change password'),
-                          ),
-                        );
-                      },
+                      onTap: _showChangePasswordDialog,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.md,
@@ -381,6 +376,99 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                   )
                 : null,
             child: Text(isDangerous ? 'Delete' : 'Confirm'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showChangePasswordDialog() {
+    final currentCtrl = TextEditingController();
+    final newCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+
+    showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Change Password'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: currentCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Current Password',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                controller: newCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'New Password',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                controller: confirmCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm New Password',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final currentPwd = currentCtrl.text.trim();
+              final newPwd = newCtrl.text.trim();
+              final confirmPwd = confirmCtrl.text.trim();
+
+              if (currentPwd.isEmpty || newPwd.isEmpty) {
+                ScaffoldMessenger.of(dialogCtx).showSnackBar(
+                  const SnackBar(content: Text('Please fill all password fields.')),
+                );
+                return;
+              }
+
+              if (newPwd != confirmPwd) {
+                ScaffoldMessenger.of(dialogCtx).showSnackBar(
+                  const SnackBar(content: Text('New passwords do not match!')),
+                );
+                return;
+              }
+
+              final messenger = ScaffoldMessenger.of(context);
+              final failure = await ref.read(authNotifierProvider.notifier).changePassword(
+                currentPassword: currentPwd,
+                newPassword: newPwd,
+              );
+
+              if (!dialogCtx.mounted) return;
+
+              if (failure != null) {
+                ScaffoldMessenger.of(dialogCtx).showSnackBar(
+                  SnackBar(content: Text(failure.message)),
+                );
+              } else {
+                Navigator.pop(dialogCtx);
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Password changed successfully!')),
+                );
+              }
+            },
+            child: const Text('Save Password'),
           ),
         ],
       ),

@@ -56,9 +56,18 @@ class TaskRepository {
     try {
       final now = DateTime.now();
       task.updatedAt = now;
-      if (task.id == Isar.autoIncrement) task.createdAt = now;
+      if (task.id != Isar.autoIncrement && task.id > 0) {
+        final existing = await _isar.taskModels.get(task.id);
+        if (existing != null) {
+          task.createdAt = existing.createdAt;
+        } else {
+          task.createdAt = now;
+        }
+      } else {
+        task.createdAt = now;
+      }
       await _isar.writeTxn(() => _isar.taskModels.put(task));
-      AppLogger.i('Saved task: ${task.title}', tag: 'TaskRepo');
+      AppLogger.i('Saved task: ${task.title} (ID: ${task.id})', tag: 'TaskRepo');
       return (task: task, error: null);
     } catch (e, st) {
       AppLogger.e('Failed to save task', tag: 'TaskRepo', error: e, st: st);

@@ -94,7 +94,18 @@ class TasksNotifier extends AutoDisposeAsyncNotifier<TasksState> {
       ..recurrenceRule = recurrenceRule
       ..parentTaskId = parentTaskId;
 
-    if (taskId != null) task.id = taskId;
+    if (taskId != null) {
+      task.id = taskId;
+      final existing = await repo.getTaskById(taskId);
+      if (existing != null) {
+        task.status = existing.status;
+        task.reminderMinutesRaw = existing.reminderMinutesRaw;
+        // Match subtaskDone states for matching titles if subtasks weren't modified
+        if (existing.subtaskTitles.length == subtaskTitles.length) {
+          task.subtaskDone = List.from(existing.subtaskDone);
+        }
+      }
+    }
 
     final result = await repo.saveTask(task);
     if (result.error != null) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/date_time_utils.dart';
+import '../../../../core/utils/nepali_date.dart';
 import '../../data/models/calendar_event_model.dart';
 
 class MonthViewWidget extends StatelessWidget {
@@ -22,32 +23,35 @@ class MonthViewWidget extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final firstDayOfMonth = DateTime(focusedDay.year, focusedDay.month, 1);
-    final lastDayOfMonth = DateTime(focusedDay.year, focusedDay.month + 1, 0);
+    final nepaliFocused = NepaliDate.fromDateTime(focusedDay);
+    final firstDayOfBsMonth = NepaliDate(year: nepaliFocused.year, month: nepaliFocused.month, day: 1);
+    final daysInBsMonth = NepaliDate.getDaysInBsMonth(nepaliFocused.year, nepaliFocused.month);
 
-    // Calculate padding days for the start of the week
-    final int leadingEmptyDays = firstDayOfMonth.weekday - 1; // 0 = Mon
-    final List<DateTime?> gridDays = [];
+    // Calculate leading padding days (Sunday = 7 -> 0 mod 7)
+    final firstDayWeekday = firstDayOfBsMonth.weekday; // 1 = Mon, 7 = Sun
+    final int leadingEmptyDays = firstDayWeekday % 7;
+    final List<DateTime> gridDays = [];
 
     // Prior month overflow days
-    final prevMonthLastDay = DateTime(focusedDay.year, focusedDay.month, 0);
-    for (int i = leadingEmptyDays - 1; i >= 0; i--) {
-      gridDays.add(prevMonthLastDay.subtract(Duration(days: i)));
+    final firstDayAd = firstDayOfBsMonth.toDateTime();
+    for (int i = leadingEmptyDays; i > 0; i--) {
+      gridDays.add(firstDayAd.subtract(Duration(days: i)));
     }
 
     // Current month days
-    for (int i = 1; i <= lastDayOfMonth.day; i++) {
-      gridDays.add(DateTime(focusedDay.year, focusedDay.month, i));
+    for (int i = 0; i < daysInBsMonth; i++) {
+      gridDays.add(firstDayAd.add(Duration(days: i)));
     }
 
-    // Future month overflow days to pad the grid to complete weeks
+    // Future month overflow days
     final totalGridCells = ((gridDays.length / 7).ceil()) * 7;
     final remainingCells = totalGridCells - gridDays.length;
+    final lastDayAd = gridDays.last;
     for (int i = 1; i <= remainingCells; i++) {
-      gridDays.add(DateTime(focusedDay.year, focusedDay.month + 1, i));
+      gridDays.add(lastDayAd.add(Duration(days: i)));
     }
 
-    final weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return Column(
       children: [
@@ -88,9 +92,9 @@ class MonthViewWidget extends StatelessWidget {
                 itemCount: totalGridCells,
                 itemBuilder: (context, idx) {
                   final date = gridDays[idx];
-                  if (date == null) return const SizedBox.shrink();
 
-                  final isCurrentMonth = date.month == focusedDay.month;
+                  final nepaliDate = NepaliDate.fromDateTime(date);
+                  final isCurrentMonth = nepaliDate.month == nepaliFocused.month && nepaliDate.year == nepaliFocused.year;
                   final isToday = DateTimeUtils.isToday(date);
                   final isFocused = DateTimeUtils.isSameDay(date, focusedDay);
                   final dayEvents = events.where((e) => DateTimeUtils.isSameDay(e.startTime, date)).toList();
@@ -123,7 +127,7 @@ class MonthViewWidget extends StatelessWidget {
                                 shape: BoxShape.circle,
                               ),
                               child: Text(
-                                date.day.toString(),
+                                nepaliDate.day.toString(),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: isToday

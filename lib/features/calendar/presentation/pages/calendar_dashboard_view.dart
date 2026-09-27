@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/date_time_utils.dart';
+import '../../../../core/utils/nepali_date.dart';
 import '../../data/models/calendar_event_model.dart';
 import '../../data/models/recurrence_engine.dart';
 import '../providers/calendar_events_notifier.dart';
@@ -192,13 +193,14 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
   }
 
   Widget _buildMonthHeader(ThemeData theme) {
+    final nepaliFocused = NepaliDate.fromDateTime(_focusedDay);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            DateTimeUtils.toMonthYear(_focusedDay),
+            nepaliFocused.monthYearEn,
             style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           Row(
@@ -211,10 +213,8 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
                   } else if (_currentView == CalendarViewType.week) {
                     _focusedDay = _focusedDay.subtract(const Duration(days: 7));
                   } else {
-                    final prevMonth = DateTime(_focusedDay.year, _focusedDay.month - 1, 1);
-                    final lastDayOfPrevMonth = DateTime(_focusedDay.year, _focusedDay.month, 0).day;
-                    final targetDay = _focusedDay.day > lastDayOfPrevMonth ? lastDayOfPrevMonth : _focusedDay.day;
-                    _focusedDay = DateTime(prevMonth.year, prevMonth.month, targetDay);
+                    final prevBs = nepaliFocused.addMonths(-1);
+                    _focusedDay = prevBs.toDateTime();
                   }
                 }),
               ),
@@ -226,10 +226,8 @@ class _CalendarDashboardViewState extends ConsumerState<CalendarDashboardView> {
                   } else if (_currentView == CalendarViewType.week) {
                     _focusedDay = _focusedDay.add(const Duration(days: 7));
                   } else {
-                    final nextMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 1);
-                    final lastDayOfNextMonth = DateTime(_focusedDay.year, _focusedDay.month + 2, 0).day;
-                    final targetDay = _focusedDay.day > lastDayOfNextMonth ? lastDayOfNextMonth : _focusedDay.day;
-                    _focusedDay = DateTime(nextMonth.year, nextMonth.month, targetDay);
+                    final nextBs = nepaliFocused.addMonths(1);
+                    _focusedDay = nextBs.toDateTime();
                   }
                 }),
               ),

@@ -19,12 +19,13 @@ final bool _isTest = Platform.environment.containsKey('FLUTTER_TEST');
 /// On Linux: uses libsecret (GNOME Keyring / KWallet).
 /// On Android: uses Android Keystore.
 class SecureAuthStorage {
-  SecureAuthStorage() : _storage = const FlutterSecureStorage(
-    // Android options: encrypted shared prefs backed by Keystore
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-    // Linux: use libsecret
-    lOptions: LinuxOptions(),
-  );
+  SecureAuthStorage()
+      : _storage = const FlutterSecureStorage(
+          // Android options: encrypted shared prefs backed by Keystore
+          aOptions: AndroidOptions(encryptedSharedPreferences: true),
+          // Linux: use libsecret
+          lOptions: LinuxOptions(),
+        );
 
   final FlutterSecureStorage _storage;
 
@@ -38,7 +39,9 @@ class SecureAuthStorage {
         key: _Keys.activeUserId,
         value: userId.toString(),
       );
-      await (_isTest ? writeFuture : writeFuture.timeout(const Duration(seconds: 1)));
+      await (_isTest
+          ? writeFuture
+          : writeFuture.timeout(const Duration(seconds: 1)));
       AppLogger.d('Saved active user ID: $userId', tag: 'SecureAuthStorage');
     } catch (e, st) {
       AppLogger.e('Failed to save active user ID',
@@ -50,7 +53,9 @@ class SecureAuthStorage {
   Future<int?> getActiveUserId() async {
     try {
       final Future<String?> readFuture = _storage.read(key: _Keys.activeUserId);
-      final value = await (_isTest ? readFuture : readFuture.timeout(const Duration(seconds: 1)));
+      final value = await (_isTest
+          ? readFuture
+          : readFuture.timeout(const Duration(seconds: 1)));
       return value != null ? int.tryParse(value) : null;
     } catch (e, st) {
       AppLogger.e('Failed to read active user ID',
@@ -61,8 +66,11 @@ class SecureAuthStorage {
 
   Future<void> clearActiveUserId() async {
     try {
-      final Future<void> deleteFuture = _storage.delete(key: _Keys.activeUserId);
-      await (_isTest ? deleteFuture : deleteFuture.timeout(const Duration(seconds: 1)));
+      final Future<void> deleteFuture =
+          _storage.delete(key: _Keys.activeUserId);
+      await (_isTest
+          ? deleteFuture
+          : deleteFuture.timeout(const Duration(seconds: 1)));
     } catch (e, st) {
       AppLogger.e('Failed to delete active user ID',
           tag: 'SecureAuthStorage', error: e, st: st);
@@ -75,8 +83,11 @@ class SecureAuthStorage {
 
   Future<void> saveSessionToken(String token) async {
     try {
-      final Future<void> writeFuture = _storage.write(key: _Keys.sessionToken, value: token);
-      await (_isTest ? writeFuture : writeFuture.timeout(const Duration(seconds: 1)));
+      final Future<void> writeFuture =
+          _storage.write(key: _Keys.sessionToken, value: token);
+      await (_isTest
+          ? writeFuture
+          : writeFuture.timeout(const Duration(seconds: 1)));
     } catch (e, st) {
       AppLogger.e('Failed to save session token',
           tag: 'SecureAuthStorage', error: e, st: st);
@@ -86,7 +97,9 @@ class SecureAuthStorage {
   Future<String?> getSessionToken() async {
     try {
       final Future<String?> readFuture = _storage.read(key: _Keys.sessionToken);
-      return await (_isTest ? readFuture : readFuture.timeout(const Duration(seconds: 1)));
+      return await (_isTest
+          ? readFuture
+          : readFuture.timeout(const Duration(seconds: 1)));
     } catch (e, st) {
       AppLogger.e('Failed to read session token',
           tag: 'SecureAuthStorage', error: e, st: st);
@@ -96,8 +109,11 @@ class SecureAuthStorage {
 
   Future<void> clearSessionToken() async {
     try {
-      final Future<void> deleteFuture = _storage.delete(key: _Keys.sessionToken);
-      await (_isTest ? deleteFuture : deleteFuture.timeout(const Duration(seconds: 1)));
+      final Future<void> deleteFuture =
+          _storage.delete(key: _Keys.sessionToken);
+      await (_isTest
+          ? deleteFuture
+          : deleteFuture.timeout(const Duration(seconds: 1)));
     } catch (e, st) {
       AppLogger.e('Failed to delete session token',
           tag: 'SecureAuthStorage', error: e, st: st);
@@ -114,7 +130,9 @@ class SecureAuthStorage {
         key: _Keys.lastUsername,
         value: username,
       );
-      await (_isTest ? writeFuture : writeFuture.timeout(const Duration(seconds: 1)));
+      await (_isTest
+          ? writeFuture
+          : writeFuture.timeout(const Duration(seconds: 1)));
     } catch (e, st) {
       AppLogger.e('Failed to save last username',
           tag: 'SecureAuthStorage', error: e, st: st);
@@ -124,7 +142,9 @@ class SecureAuthStorage {
   Future<String?> getLastUsername() async {
     try {
       final Future<String?> readFuture = _storage.read(key: _Keys.lastUsername);
-      return await (_isTest ? readFuture : readFuture.timeout(const Duration(seconds: 1)));
+      return await (_isTest
+          ? readFuture
+          : readFuture.timeout(const Duration(seconds: 1)));
     } catch (e, st) {
       AppLogger.e('Failed to read last username',
           tag: 'SecureAuthStorage', error: e, st: st);
@@ -134,8 +154,11 @@ class SecureAuthStorage {
 
   Future<void> clearLastUsername() async {
     try {
-      final Future<void> deleteFuture = _storage.delete(key: _Keys.lastUsername);
-      await (_isTest ? deleteFuture : deleteFuture.timeout(const Duration(seconds: 1)));
+      final Future<void> deleteFuture =
+          _storage.delete(key: _Keys.lastUsername);
+      await (_isTest
+          ? deleteFuture
+          : deleteFuture.timeout(const Duration(seconds: 1)));
     } catch (e, st) {
       AppLogger.e('Failed to delete last username',
           tag: 'SecureAuthStorage', error: e, st: st);
@@ -152,17 +175,23 @@ class SecureAuthStorage {
         key: _Keys.biometricEnabled,
         value: enabled ? '1' : '0',
       );
-      await (_isTest ? writeFuture : writeFuture.timeout(const Duration(seconds: 1)));
+      await (_isTest
+          ? writeFuture
+          : writeFuture.timeout(const Duration(seconds: 1)));
     } catch (e, st) {
       AppLogger.e('Failed to save biometric preference',
           tag: 'SecureAuthStorage', error: e, st: st);
+      rethrow;
     }
   }
 
   Future<bool> getBiometricEnabled() async {
     try {
-      final Future<String?> readFuture = _storage.read(key: _Keys.biometricEnabled);
-      final value = await (_isTest ? readFuture : readFuture.timeout(const Duration(seconds: 1)));
+      final Future<String?> readFuture =
+          _storage.read(key: _Keys.biometricEnabled);
+      final value = await (_isTest
+          ? readFuture
+          : readFuture.timeout(const Duration(seconds: 1)));
       return value == '1';
     } catch (e, st) {
       AppLogger.e('Failed to read biometric preference',
@@ -178,7 +207,9 @@ class SecureAuthStorage {
   Future<void> clearAll() async {
     try {
       final Future<void> deleteAllFuture = _storage.deleteAll();
-      await (_isTest ? deleteAllFuture : deleteAllFuture.timeout(const Duration(seconds: 1)));
+      await (_isTest
+          ? deleteAllFuture
+          : deleteAllFuture.timeout(const Duration(seconds: 1)));
       AppLogger.i('Secure storage cleared', tag: 'SecureAuthStorage');
     } catch (e, st) {
       AppLogger.e('Failed to clear secure storage',

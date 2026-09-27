@@ -5,13 +5,13 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/services/qr_data_share_service.dart';
+import 'qr_login_host_widget.dart';
 
 class QrDataShareWidget extends ConsumerStatefulWidget {
   const QrDataShareWidget({super.key});
 
   @override
-  ConsumerState<QrDataShareWidget> createState() =>
-      _QrDataShareWidgetState();
+  ConsumerState<QrDataShareWidget> createState() => _QrDataShareWidgetState();
 }
 
 class _QrDataShareWidgetState extends ConsumerState<QrDataShareWidget> {
@@ -92,6 +92,8 @@ class _QrDataShareWidgetState extends ConsumerState<QrDataShareWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const QrLoginHostWidget(),
+            const SizedBox(height: AppSpacing.xl),
             // Header
             Text(
               'Sync Data Between Devices',
@@ -147,7 +149,8 @@ class _QrDataShareWidgetState extends ConsumerState<QrDataShareWidget> {
                       ),
                     ),
                     onChanged: (value) {
-                      setState(() => _deviceName = value.isEmpty ? null : value);
+                      setState(
+                          () => _deviceName = value.isEmpty ? null : value);
                     },
                     controller: _deviceNameController,
                   ),
@@ -300,15 +303,18 @@ class _QrDataShareWidgetState extends ConsumerState<QrDataShareWidget> {
                       ).then((scannedCode) async {
                         if (scannedCode != null && context.mounted) {
                           final ctx = context;
-                          final payload = await _qrDataShareService.verifyQrString(scannedCode);
+                          final payload = await _qrDataShareService
+                              .verifyQrString(scannedCode);
                           if (payload != null && ctx.mounted) {
                             ScaffoldMessenger.of(ctx).showSnackBar(
                               SnackBar(
-                                content: Text('Scanned successfully: Syncing with ${payload.deviceName}'),
+                                content: Text(
+                                    'Scanned successfully: Syncing with ${payload.deviceName}'),
                                 backgroundColor: Colors.green,
                               ),
                             );
-                            await _qrDataShareService.confirmSync(payload.sessionId, payload.data);
+                            await _qrDataShareService.confirmSync(
+                                payload.sessionId, payload.data);
                           } else if (ctx.mounted) {
                             ScaffoldMessenger.of(ctx).showSnackBar(
                               const SnackBar(

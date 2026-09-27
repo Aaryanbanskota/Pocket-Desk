@@ -21,6 +21,7 @@ class SecuritySettingsWidget extends ConsumerStatefulWidget {
 class _SecuritySettingsWidgetState
     extends ConsumerState<SecuritySettingsWidget> {
   bool? _biometricEnabled; // null = loading
+  bool _savingBiometric = false;
 
   @override
   void initState() {
@@ -35,25 +36,42 @@ class _SecuritySettingsWidgetState
   }
 
   Future<void> _toggleBiometric(bool value) async {
-    // Optimistic update
-    setState(() => _biometricEnabled = value);
-    await ref.read(authNotifierProvider.notifier).setBiometricEnabled(value);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            value
-                ? 'Biometric login enabled. You\'ll be prompted on next launch.'
-                : 'Biometric login disabled.',
-          ),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(AppSpacing.md),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          ),
-        ),
-      );
+    if (_savingBiometric) return;
+    setState(() => _savingBiometric = true);
+    try {
+      if (value &&
+          !await BiometricService().authenticate(
+            localizedReason: 'Confirm your identity to enable biometric login',
+          )) {
+        _showMessage(
+            'Authentication cancelled. Biometric login was not enabled.');
+        return;
+      }
+      await ref.read(authNotifierProvider.notifier).setBiometricEnabled(value);
+      if (mounted) {
+        setState(() => _biometricEnabled = value);
+        _showMessage(value
+            ? 'Biometric login enabled. You will be prompted when you reopen the app.'
+            : 'Biometric login disabled.');
+      }
+    } catch (e) {
+      if (mounted) _showMessage(e.toString());
+    } finally {
+      if (mounted) setState(() => _savingBiometric = false);
     }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(AppSpacing.md),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        ),
+      ),
+    );
   }
 
   @override
@@ -113,7 +131,7 @@ class _SecuritySettingsWidgetState
                   theme: theme,
                   colorScheme: colorScheme,
                   enabled: _biometricEnabled ?? false,
-                  loading: _biometricEnabled == null,
+                  loading: _biometricEnabled == null || _savingBiometric,
                   onToggle: _toggleBiometric,
                 );
               },
@@ -248,7 +266,7 @@ class _BiometricToggleTile extends StatelessWidget {
   final ColorScheme colorScheme;
   final bool enabled;
   final bool loading;
-  final ValueChanged<bool> onToggle;
+  final Future<void> Function(bool) onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -274,11 +292,10 @@ class _BiometricToggleTile extends StatelessWidget {
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 250),
             child: Icon(
-              enabled
-                  ? Icons.fingerprint_rounded
-                  : Icons.fingerprint_rounded,
+              enabled ? Icons.fingerprint_rounded : Icons.fingerprint_rounded,
               key: ValueKey(enabled),
-              color: enabled ? colorScheme.primary : colorScheme.onSurfaceVariant,
+              color:
+                  enabled ? colorScheme.primary : colorScheme.onSurfaceVariant,
               size: 28,
             ),
           ),
@@ -291,9 +308,8 @@ class _BiometricToggleTile extends StatelessWidget {
                   'Biometric Login',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: enabled
-                        ? colorScheme.primary
-                        : colorScheme.onSurface,
+                    color:
+                        enabled ? colorScheme.primary : colorScheme.onSurface,
                   ),
                 ),
                 Text(
@@ -351,8 +367,7 @@ class _BiometricUnavailableTile extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         children: [
-          Icon(Icons.warning_amber_rounded,
-              color: colorScheme.error, size: 24),
+          Icon(Icons.warning_amber_rounded, color: colorScheme.error, size: 24),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(

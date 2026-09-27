@@ -63,8 +63,11 @@ class AuthRepository {
         ..lastLoginAt = now
         ..deviceId = _generateDeviceId();
 
-      if (securityQuestion != null && securityAnswer != null && securityAnswer.trim().isNotEmpty) {
-        final answerHashResult = await PasswordHasher.hash(securityAnswer.toLowerCase().trim());
+      if (securityQuestion != null &&
+          securityAnswer != null &&
+          securityAnswer.trim().isNotEmpty) {
+        final answerHashResult =
+            await PasswordHasher.hash(securityAnswer.toLowerCase().trim());
         user
           ..securityQuestion = securityQuestion
           ..securityAnswerHash = answerHashResult.hash
@@ -79,10 +82,12 @@ class AuthRepository {
       AppLogger.i('User registered: ${user.username}', tag: 'AuthRepository');
       return (user: user, error: null);
     } catch (e, st) {
-      AppLogger.e('Registration failed', tag: 'AuthRepository', error: e, st: st);
+      AppLogger.e('Registration failed',
+          tag: 'AuthRepository', error: e, st: st);
       return (
         user: UserModel(),
-        error: UnexpectedFailure('Registration failed', error: e, stackTrace: st),
+        error:
+            UnexpectedFailure('Registration failed', error: e, stackTrace: st),
       );
     }
   }
@@ -93,7 +98,10 @@ class AuthRepository {
 
   Future<String?> getSecurityQuestion(String username) async {
     try {
-      final user = await _isar.userModels.where().usernameEqualTo(username.trim()).findFirst();
+      final user = await _isar.userModels
+          .where()
+          .usernameEqualTo(username.trim())
+          .findFirst();
       return user?.securityQuestion;
     } catch (e) {
       return null;
@@ -106,10 +114,14 @@ class AuthRepository {
     required String newPassword,
   }) async {
     try {
-      final user = await _isar.userModels.where().usernameEqualTo(username.trim()).findFirst();
+      final user = await _isar.userModels
+          .where()
+          .usernameEqualTo(username.trim())
+          .findFirst();
       if (user == null) return const AuthFailure('User not found');
       if (user.securityAnswerHash == null || user.securityAnswerSalt == null) {
-        return const AuthFailure('No security question was set for this account');
+        return const AuthFailure(
+            'No security question was set for this account');
       }
 
       final valid = await PasswordHasher.verify(
@@ -128,10 +140,12 @@ class AuthRepository {
         await _isar.userModels.put(user);
       });
 
-      AppLogger.i('Password reset via security question for ${user.username}', tag: 'AuthRepository');
+      AppLogger.i('Password reset via security question for ${user.username}',
+          tag: 'AuthRepository');
       return null;
     } catch (e, st) {
-      return UnexpectedFailure('Password reset failed', error: e, stackTrace: st);
+      return UnexpectedFailure('Password reset failed',
+          error: e, stackTrace: st);
     }
   }
 
@@ -145,11 +159,14 @@ class AuthRepository {
         await _isar.clear();
       });
       await _secureStorage.clearAll();
-      AppLogger.i('Account and all database records wiped completely', tag: 'AuthRepository');
+      AppLogger.i('Account and all database records wiped completely',
+          tag: 'AuthRepository');
       return null;
     } catch (e, st) {
-      AppLogger.e('Failed to delete account', tag: 'AuthRepository', error: e, st: st);
-      return UnexpectedFailure('Account deletion failed', error: e, stackTrace: st);
+      AppLogger.e('Failed to delete account',
+          tag: 'AuthRepository', error: e, st: st);
+      return UnexpectedFailure('Account deletion failed',
+          error: e, stackTrace: st);
     }
   }
 
@@ -216,7 +233,8 @@ class AuthRepository {
       if (userId == null) return null;
       return _isar.userModels.get(userId);
     } catch (e, st) {
-      AppLogger.w('Session restore failed', tag: 'AuthRepository', error: e, st: st);
+      AppLogger.w('Session restore failed',
+          tag: 'AuthRepository', error: e, st: st);
       return null;
     }
   }
@@ -227,9 +245,15 @@ class AuthRepository {
 
   Future<void> logout() async {
     await _secureStorage.clearActiveUserId();
+    await _secureStorage.saveBiometricEnabled(false);
     // Note: we intentionally keep lastUsername so the login page can still
     // suggest the username after logout.
     AppLogger.i('User logged out', tag: 'AuthRepository');
+  }
+
+  Future<void> saveTransferredSession(UserModel user) async {
+    await _secureStorage.saveActiveUserId(user.id);
+    await _secureStorage.saveLastUsername(user.username);
   }
 
   // --------------------------------------------------------------------------
@@ -279,7 +303,8 @@ class AuthRepository {
           tag: 'AuthRepository', error: e, st: st);
       return (
         user: null,
-        error: UnexpectedFailure('Profile update failed', error: e, stackTrace: st),
+        error: UnexpectedFailure('Profile update failed',
+            error: e, stackTrace: st),
       );
     }
   }
@@ -318,7 +343,8 @@ class AuthRepository {
     } catch (e, st) {
       AppLogger.e('Password change failed',
           tag: 'AuthRepository', error: e, st: st);
-      return UnexpectedFailure('Password change failed', error: e, stackTrace: st);
+      return UnexpectedFailure('Password change failed',
+          error: e, stackTrace: st);
     }
   }
 
@@ -326,7 +352,8 @@ class AuthRepository {
     try {
       final user = await _isar.userModels.get(userId);
       if (user == null) return false;
-      return PasswordHasher.verify(password, user.passwordHash, user.passwordSalt);
+      return PasswordHasher.verify(
+          password, user.passwordHash, user.passwordSalt);
     } catch (e) {
       return false;
     }
@@ -349,7 +376,8 @@ class AuthRepository {
       );
       if (!valid) return const AuthFailure('Password is incorrect');
 
-      final answerHashResult = await PasswordHasher.hash(securityAnswer.toLowerCase().trim());
+      final answerHashResult =
+          await PasswordHasher.hash(securityAnswer.toLowerCase().trim());
       await _isar.writeTxn(() async {
         user
           ..securityQuestion = securityQuestion
@@ -358,11 +386,14 @@ class AuthRepository {
         await _isar.userModels.put(user);
       });
 
-      AppLogger.i('Security questions updated for ${user.username}', tag: 'AuthRepository');
+      AppLogger.i('Security questions updated for ${user.username}',
+          tag: 'AuthRepository');
       return null;
     } catch (e, st) {
-      AppLogger.e('Failed to update security questions', tag: 'AuthRepository', error: e, st: st);
-      return UnexpectedFailure('Failed to update security questions', error: e, stackTrace: st);
+      AppLogger.e('Failed to update security questions',
+          tag: 'AuthRepository', error: e, st: st);
+      return UnexpectedFailure('Failed to update security questions',
+          error: e, stackTrace: st);
     }
   }
 

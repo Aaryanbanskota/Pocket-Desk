@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -28,7 +29,8 @@ class ClockPage extends ConsumerStatefulWidget {
   ConsumerState<ClockPage> createState() => _ClockPageState();
 }
 
-class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProviderStateMixin {
+class _ClockPageState extends ConsumerState<ClockPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   Timer? _clockTimer;
   DateTime _now = DateTime.now();
@@ -46,8 +48,18 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
 
   // Alarm list state
   final List<AlarmItem> _alarms = [
-    AlarmItem(id: 1, time: const TimeOfDay(hour: 7, minute: 0), label: 'Morning Wake Up', days: 'Weekdays', isEnabled: true),
-    AlarmItem(id: 2, time: const TimeOfDay(hour: 8, minute: 30), label: 'Work Start', days: 'Daily', isEnabled: false),
+    AlarmItem(
+        id: 1,
+        time: const TimeOfDay(hour: 7, minute: 0),
+        label: 'Morning Wake Up',
+        days: 'Weekdays',
+        isEnabled: false),
+    AlarmItem(
+        id: 2,
+        time: const TimeOfDay(hour: 8, minute: 30),
+        label: 'Work Start',
+        days: 'Daily',
+        isEnabled: false),
   ];
 
   @override
@@ -88,12 +100,32 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
     });
   }
 
-  void _toggleTimer() {
+  Future<void> _toggleTimer() async {
     if (_isTimerRunning) {
       _countDownTimer?.cancel();
+      await NotificationService.instance.cancelTimer(999001);
       setState(() => _isTimerRunning = false);
     } else {
       if (_timerSeconds <= 0) return;
+      late final bool scheduled;
+      try {
+        scheduled = await NotificationService.instance.scheduleTimer(
+          id: 999001,
+          duration: Duration(seconds: _timerSeconds),
+        );
+      } catch (e) {
+        if (mounted) {
+          _showClockMessage('Could not schedule timer notification: $e');
+        }
+        return;
+      }
+      if (!mounted) return;
+      if (!scheduled) {
+        _showClockMessage(
+          'Allow notifications in Android Settings to use the timer alarm.',
+        );
+        return;
+      }
       setState(() => _isTimerRunning = true);
       _countDownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (!mounted) return;
@@ -105,14 +137,20 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
             _timerSeconds = 0;
             _isTimerRunning = false;
           });
-          NotificationService.instance.showNotification(
-            id: 999001,
-            title: 'Timer Finished! ⏰',
-            body: 'Your countdown timer has ended.',
-          );
+          if (!Platform.isAndroid) {
+            unawaited(
+              NotificationService.instance.showNotification(
+                id: 999001,
+                title: 'Timer Finished',
+                body: 'Your countdown timer has ended.',
+              ),
+            );
+          }
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Timer Finished! ⏰'), backgroundColor: Colors.green),
+              const SnackBar(
+                  content: Text('Timer Finished! ⏰'),
+                  backgroundColor: Colors.green),
             );
           }
         }
@@ -122,6 +160,7 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
 
   void _resetTimer() {
     _countDownTimer?.cancel();
+    unawaited(NotificationService.instance.cancelTimer(999001));
     setState(() {
       _isTimerRunning = false;
       _timerSeconds = _timerInitialSeconds;
@@ -130,6 +169,7 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
 
   void _setTimerDuration(int seconds) {
     _countDownTimer?.cancel();
+    unawaited(NotificationService.instance.cancelTimer(999001));
     setState(() {
       _isTimerRunning = false;
       _timerInitialSeconds = seconds;
@@ -138,8 +178,10 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
   }
 
   Future<void> _showCustomTimerDialog() async {
-    final minutesController = TextEditingController(text: (_timerInitialSeconds ~/ 60).toString());
-    final secondsController = TextEditingController(text: (_timerInitialSeconds % 60).toString());
+    final minutesController =
+        TextEditingController(text: (_timerInitialSeconds ~/ 60).toString());
+    final secondsController =
+        TextEditingController(text: (_timerInitialSeconds % 60).toString());
 
     await showDialog<void>(
       context: context,
@@ -165,7 +207,8 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
               final m = int.tryParse(minutesController.text.trim()) ?? 0;
@@ -185,8 +228,10 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
 
   Future<void> _addOrEditAlarm({AlarmItem? existingAlarm}) async {
     TimeOfDay selectedTime = existingAlarm?.time ?? TimeOfDay.now();
-    final labelController = TextEditingController(text: existingAlarm?.label ?? 'Alarm');
+    final labelController =
+        TextEditingController(text: existingAlarm?.label ?? 'Alarm');
     String selectedDays = existingAlarm?.days ?? 'Daily';
+    AlarmItem? alarmToSchedule;
 
     await showDialog<void>(
       context: context,
@@ -200,10 +245,12 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
                 title: const Text('Time'),
                 trailing: Text(
                   selectedTime.format(context),
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 onTap: () async {
-                  final picked = await showTimePicker(context: context, initialTime: selectedTime);
+                  final picked = await showTimePicker(
+                      context: context, initialTime: selectedTime);
                   if (picked != null) {
                     setDialogState(() => selectedTime = picked);
                   }
@@ -234,32 +281,40 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
               IconButton(
                 icon: const Icon(Icons.delete, color: Colors.red),
                 onPressed: () {
+                  unawaited(
+                    NotificationService.instance.cancelAlarm(existingAlarm.id),
+                  );
                   setState(() => _alarms.remove(existingAlarm));
                   Navigator.pop(ctx);
                 },
               ),
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel')),
             ElevatedButton(
               onPressed: () {
-                final label = labelController.text.trim().isEmpty ? 'Alarm' : labelController.text.trim();
+                final label = labelController.text.trim().isEmpty
+                    ? 'Alarm'
+                    : labelController.text.trim();
                 if (existingAlarm != null) {
                   setState(() {
                     existingAlarm.time = selectedTime;
                     existingAlarm.label = label;
                     existingAlarm.days = selectedDays;
                   });
+                  alarmToSchedule = existingAlarm;
                 } else {
+                  final alarm = AlarmItem(
+                    id: DateTime.now().millisecondsSinceEpoch % 100000,
+                    time: selectedTime,
+                    label: label,
+                    days: selectedDays,
+                    isEnabled: false,
+                  );
                   setState(() {
-                    _alarms.add(
-                      AlarmItem(
-                        id: DateTime.now().millisecondsSinceEpoch % 100000,
-                        time: selectedTime,
-                        label: label,
-                        days: selectedDays,
-                        isEnabled: true,
-                      ),
-                    );
+                    _alarms.add(alarm);
                   });
+                  alarmToSchedule = alarm;
                 }
                 Navigator.pop(ctx);
               },
@@ -269,20 +324,51 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
         ),
       ),
     );
+    labelController.dispose();
+    final alarm = alarmToSchedule;
+    if (alarm != null && (existingAlarm == null || alarm.isEnabled)) {
+      await _scheduleAlarm(alarm);
+    }
   }
 
-  void _toggleAlarmState(AlarmItem alarm, bool val) {
-    setState(() => alarm.isEnabled = val);
-    if (val) {
-      NotificationService.instance.showNotification(
+  Future<void> _scheduleAlarm(AlarmItem alarm) async {
+    late final bool scheduled;
+    try {
+      scheduled = await NotificationService.instance.scheduleAlarm(
         id: alarm.id,
-        title: 'Alarm Set ⏰',
-        body: '${alarm.label} scheduled for ${alarm.time.format(context)} (${alarm.days})',
+        title: alarm.label,
+        days: alarm.days,
+        hour: alarm.time.hour,
+        minute: alarm.time.minute,
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Alarm set for ${alarm.time.format(context)}')),
+    } catch (e) {
+      if (mounted) _showClockMessage('Could not schedule alarm: $e');
+      return;
+    }
+    if (!mounted) return;
+    if (scheduled) {
+      setState(() => alarm.isEnabled = true);
+      _showClockMessage('Alarm set for ${alarm.time.format(context)}');
+    } else {
+      _showClockMessage(
+        'Allow notifications in Android Settings to use alarms.',
       );
     }
+  }
+
+  Future<void> _toggleAlarmState(AlarmItem alarm, bool enabled) async {
+    if (enabled) {
+      await _scheduleAlarm(alarm);
+    } else {
+      await NotificationService.instance.cancelAlarm(alarm.id);
+      if (mounted) setState(() => alarm.isEnabled = false);
+    }
+  }
+
+  void _showClockMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -313,12 +399,14 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
               children: [
                 Text(
                   '${_now.hour.toString().padLeft(2, '0')}:${_now.minute.toString().padLeft(2, '0')}:${_now.second.toString().padLeft(2, '0')}',
-                  style: theme.textTheme.displayLarge?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.primary),
+                  style: theme.textTheme.displayLarge?.copyWith(
+                      fontWeight: FontWeight.bold, color: colorScheme.primary),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   '${_now.day}/${_now.month}/${_now.year}',
-                  style: theme.textTheme.titleMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -339,7 +427,8 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
                 return SwitchListTile(
                   title: Text(
                     alarm.time.format(context),
-                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 26, fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text('${alarm.days} • ${alarm.label}'),
                   value: alarm.isEnabled,
@@ -362,18 +451,29 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
                 children: [
                   Text(
                     '${(_timerSeconds ~/ 60).toString().padLeft(2, '0')}:${(_timerSeconds % 60).toString().padLeft(2, '0')}',
-                    style: theme.textTheme.displayLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 64),
+                    style: theme.textTheme.displayLarge
+                        ?.copyWith(fontWeight: FontWeight.bold, fontSize: 64),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Wrap(
                     spacing: 8,
                     alignment: WrapAlignment.center,
                     children: [
-                      ActionChip(label: const Text('1 min'), onPressed: () => _setTimerDuration(60)),
-                      ActionChip(label: const Text('5 min'), onPressed: () => _setTimerDuration(300)),
-                      ActionChip(label: const Text('10 min'), onPressed: () => _setTimerDuration(600)),
-                      ActionChip(label: const Text('15 min'), onPressed: () => _setTimerDuration(900)),
-                      ActionChip(label: const Text('Custom'), onPressed: _showCustomTimerDialog),
+                      ActionChip(
+                          label: const Text('1 min'),
+                          onPressed: () => _setTimerDuration(60)),
+                      ActionChip(
+                          label: const Text('5 min'),
+                          onPressed: () => _setTimerDuration(300)),
+                      ActionChip(
+                          label: const Text('10 min'),
+                          onPressed: () => _setTimerDuration(600)),
+                      ActionChip(
+                          label: const Text('15 min'),
+                          onPressed: () => _setTimerDuration(900)),
+                      ActionChip(
+                          label: const Text('Custom'),
+                          onPressed: _showCustomTimerDialog),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.xl),
@@ -382,7 +482,8 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
                     children: [
                       FilledButton.icon(
                         onPressed: _toggleTimer,
-                        icon: Icon(_isTimerRunning ? Icons.pause : Icons.play_arrow),
+                        icon: Icon(
+                            _isTimerRunning ? Icons.pause : Icons.play_arrow),
                         label: Text(_isTimerRunning ? 'Pause' : 'Start'),
                       ),
                       const SizedBox(width: AppSpacing.md),
@@ -405,7 +506,8 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
               children: [
                 Text(
                   '${(_stopwatchMilliseconds ~/ 1000).toString().padLeft(2, '0')}.${((_stopwatchMilliseconds % 1000) ~/ 100)}',
-                  style: theme.textTheme.displayLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 64),
+                  style: theme.textTheme.displayLarge
+                      ?.copyWith(fontWeight: FontWeight.bold, fontSize: 64),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 Row(
@@ -413,7 +515,8 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
                   children: [
                     FilledButton.icon(
                       onPressed: _toggleStopwatch,
-                      icon: Icon(_isStopwatchRunning ? Icons.pause : Icons.play_arrow),
+                      icon: Icon(
+                          _isStopwatchRunning ? Icons.pause : Icons.play_arrow),
                       label: Text(_isStopwatchRunning ? 'Pause' : 'Start'),
                     ),
                     const SizedBox(width: AppSpacing.md),
@@ -432,4 +535,3 @@ class _ClockPageState extends ConsumerState<ClockPage> with SingleTickerProvider
     );
   }
 }
-

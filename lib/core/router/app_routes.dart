@@ -4,6 +4,7 @@ abstract final class AppRoutes {
   // Auth
   static const String splash = '/';
   static const String login = '/login';
+  static const String qrLogin = '/login/qr';
   static const String register = '/register';
   static const String setupOnboarding = '/setup';
 
@@ -37,6 +38,9 @@ abstract final class AppRoutes {
   static const String moneyTracker = '/money';
   static const String clock = '/clock';
   static const String aboutApp = '/about';
+  static const String termsAndConditions = '/about/terms-and-conditions';
+  static const String privacyPolicy = '/about/privacy-policy';
+  static const String licenses = '/about/licenses';
   static const String trash = '/trash';
 
   // Error

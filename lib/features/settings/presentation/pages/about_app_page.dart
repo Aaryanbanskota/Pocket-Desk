@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../dashboard/presentation/widgets/app_hamburger_drawer.dart';
@@ -20,11 +22,6 @@ class _AboutAppPageState extends State<AboutAppPage> {
 
   static const String _logsUrl =
       'https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/refs/heads/main/website/logs.html?token=GHSAT0AAAAAAEIYBMYEOAP22DFD5JVV4HIE2VYUQBA';
-  static const String _termsUrl =
-      'https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/main/TERMS_OF_SERVICE.md';
-  static const String _privacyUrl =
-      'https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/main/PRIVACY_POLICY.md';
-
   @override
   void initState() {
     super.initState();
@@ -202,7 +199,7 @@ class _AboutAppPageState extends State<AboutAppPage> {
                           '1',
                           'Terms of Service',
                           icon: Icons.description_outlined,
-                          onTap: () => _openWebUrl(_termsUrl),
+                          onTap: () => context.push(AppRoutes.termsAndConditions),
                         ),
                         Divider(height: 1, color: colorScheme.outlineVariant.withAlpha(80)),
                         _buildPolicyTile(
@@ -210,7 +207,7 @@ class _AboutAppPageState extends State<AboutAppPage> {
                           '2',
                           'Privacy Policy',
                           icon: Icons.shield_outlined,
-                          onTap: () => _openWebUrl(_privacyUrl),
+                          onTap: () => context.push(AppRoutes.privacyPolicy),
                         ),
                         Divider(height: 1, color: colorScheme.outlineVariant.withAlpha(80)),
                         _buildPolicyTile(
@@ -219,7 +216,7 @@ class _AboutAppPageState extends State<AboutAppPage> {
                           'Open Source Licenses',
                           icon: Icons.code_rounded,
                           trailingIcon: Icons.arrow_forward_ios_rounded,
-                          onTap: () => showLicensePage(context: context),
+                          onTap: () => context.push(AppRoutes.licenses),
                         ),
                       ],
                     ),

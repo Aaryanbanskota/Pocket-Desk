@@ -67,25 +67,33 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   // Session restore
   // --------------------------------------------------------------------------
 
-  Future<AuthState> _restoreSession() async {
+  Future<AuthState> _restoreSession(
+      {bool biometricAuthenticated = false}) async {
     try {
       final repo = await ref.read(authRepositoryProvider.future);
       final user = await repo.restoreSession();
       if (user != null) {
-        AppLogger.i('Session restored for ${user.username}', tag: 'AuthNotifier');
+        if (!biometricAuthenticated && await repo.getBiometricEnabled()) {
+          return const AuthUnauthenticated();
+        }
+        AppLogger.i('Session restored for ${user.username}',
+            tag: 'AuthNotifier');
         return AuthAuthenticated(user);
       }
       return const AuthUnauthenticated();
     } catch (e, st) {
-      AppLogger.e('Session restore error', tag: 'AuthNotifier', error: e, st: st);
+      AppLogger.e('Session restore error',
+          tag: 'AuthNotifier', error: e, st: st);
       return const AuthUnauthenticated();
     }
   }
 
   /// Public entry-point for biometric login — re-checks the stored session.
-  Future<void> restoreSession() async {
+  Future<void> restoreSession({bool biometricAuthenticated = false}) async {
     state = const AsyncValue.loading();
-    final result = await _restoreSession();
+    final result = await _restoreSession(
+      biometricAuthenticated: biometricAuthenticated,
+    );
     state = AsyncValue.data(result);
   }
 
@@ -113,18 +121,22 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       if (result.error != null) {
         state = AsyncValue.data(AuthError(result.error!));
       } else {
-        state = AsyncValue.data(AuthAuthenticated(result.user, isNewRegistration: true));
+        state = AsyncValue.data(
+            AuthAuthenticated(result.user, isNewRegistration: true));
       }
     } catch (e, st) {
       state = AsyncValue.data(
-        AuthError(UnexpectedFailure('Registration failed', error: e, stackTrace: st)),
+        AuthError(
+            UnexpectedFailure('Registration failed', error: e, stackTrace: st)),
       );
     }
   }
 
   Future<AppFailure?> deleteAccount() async {
     final current = state.valueOrNull;
-    if (current is! AuthAuthenticated) return const AuthFailure('Not logged in');
+    if (current is! AuthAuthenticated) {
+      return const AuthFailure('Not logged in');
+    }
     try {
       final repo = await ref.read(authRepositoryProvider.future);
       final err = await repo.deleteAccount(current.user.id);
@@ -133,7 +145,8 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       }
       return err;
     } catch (e, st) {
-      return UnexpectedFailure('Account deletion failed', error: e, stackTrace: st);
+      return UnexpectedFailure('Account deletion failed',
+          error: e, stackTrace: st);
     }
   }
 
@@ -179,6 +192,12 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     }
   }
 
+  Future<void> loginWithTransferredUser(UserModel user) async {
+    final repo = await ref.read(authRepositoryProvider.future);
+    await repo.saveTransferredSession(user);
+    state = AsyncValue.data(AuthAuthenticated(user));
+  }
+
   // --------------------------------------------------------------------------
   // Logout
   // --------------------------------------------------------------------------
@@ -206,7 +225,9 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     bool? notificationsEnabled,
   }) async {
     final current = state.valueOrNull;
-    if (current is! AuthAuthenticated) return const AuthFailure('Not logged in');
+    if (current is! AuthAuthenticated) {
+      return const AuthFailure('Not logged in');
+    }
 
     try {
       final repo = await ref.read(authRepositoryProvider.future);
@@ -221,7 +242,8 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       state = AsyncValue.data(AuthAuthenticated(result.user!));
       return null;
     } catch (e, st) {
-      return UnexpectedFailure('Profile update failed', error: e, stackTrace: st);
+      return UnexpectedFailure('Profile update failed',
+          error: e, stackTrace: st);
     }
   }
 
@@ -241,7 +263,9 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     required String newPassword,
   }) async {
     final current = state.valueOrNull;
-    if (current is! AuthAuthenticated) return const AuthFailure('Not logged in');
+    if (current is! AuthAuthenticated) {
+      return const AuthFailure('Not logged in');
+    }
 
     final repo = await ref.read(authRepositoryProvider.future);
     return repo.changePassword(
@@ -279,7 +303,9 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     required String securityAnswer,
   }) async {
     final current = state.valueOrNull;
-    if (current is! AuthAuthenticated) return const AuthFailure('Not logged in');
+    if (current is! AuthAuthenticated) {
+      return const AuthFailure('Not logged in');
+    }
 
     final repo = await ref.read(authRepositoryProvider.future);
     return repo.updateSecurityQuestions(

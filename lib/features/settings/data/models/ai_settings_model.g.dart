@@ -47,38 +47,43 @@ const AISettingsModelSchema = CollectionSchema(
       name: r'isEnabled',
       type: IsarType.bool,
     ),
-    r'moneyAnalysisEnabled': PropertySchema(
+    r'masterControlEnabled': PropertySchema(
       id: 6,
+      name: r'masterControlEnabled',
+      type: IsarType.bool,
+    ),
+    r'moneyAnalysisEnabled': PropertySchema(
+      id: 7,
       name: r'moneyAnalysisEnabled',
       type: IsarType.bool,
     ),
     r'noteAssistanceEnabled': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'noteAssistanceEnabled',
       type: IsarType.bool,
     ),
     r'postReactionsEnabled': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'postReactionsEnabled',
       type: IsarType.bool,
     ),
     r'provider': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'provider',
       type: IsarType.string,
     ),
     r'selectedModel': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'selectedModel',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'userId': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'userId',
       type: IsarType.long,
     )
@@ -135,13 +140,14 @@ void _aISettingsModelSerialize(
   writer.writeBool(offsets[3], object.allowPostsAccess);
   writer.writeString(offsets[4], object.apiKey);
   writer.writeBool(offsets[5], object.isEnabled);
-  writer.writeBool(offsets[6], object.moneyAnalysisEnabled);
-  writer.writeBool(offsets[7], object.noteAssistanceEnabled);
-  writer.writeBool(offsets[8], object.postReactionsEnabled);
-  writer.writeString(offsets[9], object.provider);
-  writer.writeString(offsets[10], object.selectedModel);
-  writer.writeDateTime(offsets[11], object.updatedAt);
-  writer.writeLong(offsets[12], object.userId);
+  writer.writeBool(offsets[6], object.masterControlEnabled);
+  writer.writeBool(offsets[7], object.moneyAnalysisEnabled);
+  writer.writeBool(offsets[8], object.noteAssistanceEnabled);
+  writer.writeBool(offsets[9], object.postReactionsEnabled);
+  writer.writeString(offsets[10], object.provider);
+  writer.writeString(offsets[11], object.selectedModel);
+  writer.writeDateTime(offsets[12], object.updatedAt);
+  writer.writeLong(offsets[13], object.userId);
 }
 
 AISettingsModel _aISettingsModelDeserialize(
@@ -158,13 +164,14 @@ AISettingsModel _aISettingsModelDeserialize(
   object.apiKey = reader.readString(offsets[4]);
   object.id = id;
   object.isEnabled = reader.readBool(offsets[5]);
-  object.moneyAnalysisEnabled = reader.readBool(offsets[6]);
-  object.noteAssistanceEnabled = reader.readBool(offsets[7]);
-  object.postReactionsEnabled = reader.readBool(offsets[8]);
-  object.provider = reader.readString(offsets[9]);
-  object.selectedModel = reader.readString(offsets[10]);
-  object.updatedAt = reader.readDateTime(offsets[11]);
-  object.userId = reader.readLong(offsets[12]);
+  object.masterControlEnabled = reader.readBool(offsets[6]);
+  object.moneyAnalysisEnabled = reader.readBool(offsets[7]);
+  object.noteAssistanceEnabled = reader.readBool(offsets[8]);
+  object.postReactionsEnabled = reader.readBool(offsets[9]);
+  object.provider = reader.readString(offsets[10]);
+  object.selectedModel = reader.readString(offsets[11]);
+  object.updatedAt = reader.readDateTime(offsets[12]);
+  object.userId = reader.readLong(offsets[13]);
   return object;
 }
 
@@ -194,12 +201,14 @@ P _aISettingsModelDeserializeProp<P>(
     case 8:
       return (reader.readBool(offset)) as P;
     case 9:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 10:
       return (reader.readString(offset)) as P;
     case 11:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 12:
+      return (reader.readDateTime(offset)) as P;
+    case 13:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -639,6 +648,16 @@ extension AISettingsModelQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isEnabled',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterFilterCondition>
+      masterControlEnabledEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'masterControlEnabled',
         value: value,
       ));
     });
@@ -1151,6 +1170,20 @@ extension AISettingsModelQuerySortBy
   }
 
   QueryBuilder<AISettingsModel, AISettingsModel, QAfterSortBy>
+      sortByMasterControlEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'masterControlEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterSortBy>
+      sortByMasterControlEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'masterControlEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterSortBy>
       sortByMoneyAnalysisEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'moneyAnalysisEnabled', Sort.asc);
@@ -1346,6 +1379,20 @@ extension AISettingsModelQuerySortThenBy
   }
 
   QueryBuilder<AISettingsModel, AISettingsModel, QAfterSortBy>
+      thenByMasterControlEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'masterControlEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterSortBy>
+      thenByMasterControlEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'masterControlEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterSortBy>
       thenByMoneyAnalysisEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'moneyAnalysisEnabled', Sort.asc);
@@ -1488,6 +1535,13 @@ extension AISettingsModelQueryWhereDistinct
   }
 
   QueryBuilder<AISettingsModel, AISettingsModel, QDistinct>
+      distinctByMasterControlEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'masterControlEnabled');
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QDistinct>
       distinctByMoneyAnalysisEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'moneyAnalysisEnabled');
@@ -1582,6 +1636,13 @@ extension AISettingsModelQueryProperty
   QueryBuilder<AISettingsModel, bool, QQueryOperations> isEnabledProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isEnabled');
+    });
+  }
+
+  QueryBuilder<AISettingsModel, bool, QQueryOperations>
+      masterControlEnabledProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'masterControlEnabled');
     });
   }
 

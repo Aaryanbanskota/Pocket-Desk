@@ -90,53 +90,68 @@ class _FileSharePageState extends ConsumerState<FileSharePage> {
         final uri = request.uri;
         final response = request.response;
 
-        response.headers.set('Access-Control-Allow-Origin', '*');
+        try {
+          response.headers.set('Access-Control-Allow-Origin', '*');
 
-        if (uri.path == '/') {
-          response.headers.contentType = ContentType.html;
-          response.write(_buildWebPortalHtml());
-          await response.close();
-        } else if (uri.path == '/api/verify' || uri.path == '/api/files') {
-          final queryPin = uri.queryParameters['pin'];
-          response.headers.contentType = ContentType.json;
-          if (queryPin == _accessPin) {
-            final filesJson = _selectedFiles
-                .map((f) => {'name': f.name, 'size': f.size})
-                .toList();
-            response.write(jsonEncode({'success': true, 'files': filesJson}));
-          } else {
-            response
-                .write(jsonEncode({'success': false, 'error': 'Invalid PIN'}));
-          }
-          await response.close();
-        } else if (uri.path == '/download') {
-          final queryPin = uri.queryParameters['pin'];
-          final fileName = uri.queryParameters['file'];
-          if (queryPin == _accessPin && fileName != null) {
-            final file = _selectedFiles.firstWhere(
-              (f) => f.name == fileName,
-              orElse: () => PlatformFile(name: '', size: 0),
-            );
-            if (file.path != null && File(file.path!).existsSync()) {
-              final realFile = File(file.path!);
-              response.headers.contentType = ContentType.binary;
-              response.headers.contentLength = await realFile.length();
-              final safeName = file.name.replaceAll(RegExp(r'["\r\n]'), '_');
-              response.headers.set(
-                'Content-Disposition',
-                "attachment; filename=\"$safeName\"; filename*=UTF-8''${Uri.encodeComponent(file.name)}",
-              );
-              await realFile.openRead().pipe(response);
-              return;
+          if (uri.path == '/') {
+            response.headers.contentType = ContentType.html;
+            response.write(_buildWebPortalHtml());
+            await response.close();
+          } else if (uri.path == '/api/verify' || uri.path == '/api/files') {
+            final queryPin = uri.queryParameters['pin'];
+            response.headers.contentType = ContentType.json;
+            if (queryPin == _accessPin) {
+              final filesJson = _selectedFiles
+                  .map((f) => {'name': f.name, 'size': f.size})
+                  .toList();
+              response.write(jsonEncode({'success': true, 'files': filesJson}));
+            } else {
+              response.statusCode = HttpStatus.unauthorized;
+              response.write(
+                  jsonEncode({'success': false, 'error': 'Invalid PIN'}));
             }
+            await response.close();
+          } else if (uri.path == '/download') {
+            final queryPin = uri.queryParameters['pin'];
+            final fileName = uri.queryParameters['file'];
+            if (queryPin == _accessPin && fileName != null) {
+              final file = _selectedFiles.firstWhere(
+                (f) => f.name == fileName,
+                orElse: () => PlatformFile(name: '', size: 0),
+              );
+              if (file.path != null && await File(file.path!).exists()) {
+                final realFile = File(file.path!);
+                response.headers.contentType = ContentType.binary;
+                response.headers.contentLength = await realFile.length();
+                final safeName = file.name.replaceAll(RegExp(r'["\r\n]'), '_');
+                response.headers.set(
+                  'Content-Disposition',
+                  "attachment; filename=\"$safeName\"; filename*=UTF-8''${Uri.encodeComponent(file.name)}",
+                );
+                await realFile.openRead().pipe(response);
+                return;
+              }
+            }
+            response.statusCode = HttpStatus.notFound;
+            response.write('File is no longer available. Select it again.');
+            await response.close();
+          } else {
+            response.statusCode = HttpStatus.notFound;
+            response.write('404 Not Found');
+            await response.close();
           }
-          response.statusCode = HttpStatus.unauthorized;
-          response.write('Unauthorized or File not found');
-          await response.close();
-        } else {
-          response.statusCode = HttpStatus.notFound;
-          response.write('404 Not Found');
-          await response.close();
+        } catch (error, stackTrace) {
+          debugPrint('File share request failed: $error\n$stackTrace');
+          try {
+            response.statusCode = HttpStatus.internalServerError;
+            response.write('File share request failed.');
+            await response.close();
+          } catch (closeError, closeStackTrace) {
+            debugPrint(
+              'Could not close failed file share response: '
+              '$closeError\n$closeStackTrace',
+            );
+          }
         }
       });
       if (mounted) setState(() => _serverReady = true);
@@ -406,7 +421,9 @@ class _FileSharePageState extends ConsumerState<FileSharePage> {
                       padding: const EdgeInsets.only(bottom: AppSpacing.md),
                       child: Text(
                         _serverReady
-                            ? 'Open this address on a device connected to the same Wi-Fi. Keep this page open while sharing. If it cannot connect, allow TCP port $_port through the computer firewall.'
+                            ? Platform.isAndroid
+                                ? 'Connect devices to the same non-guest Wi-Fi. Keep PocketDesk open on this screen while other devices connect.'
+                                : 'Open this address on a device connected to the same Wi-Fi. Keep this page open while sharing. If it cannot connect, allow TCP port $_port through the computer firewall.'
                             : 'Starting local share server…',
                         style: tt.bodySmall?.copyWith(
                           color: cs.onSurfaceVariant,

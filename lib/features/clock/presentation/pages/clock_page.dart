@@ -118,7 +118,11 @@ class _ClockPageState extends ConsumerState<ClockPage>
       _countDownTimer?.cancel();
       final remaining = _remainingTimerSeconds();
       if (remaining > 0) {
-        await NotificationService.instance.cancelTimer(999001);
+        if (!await NotificationService.instance.cancelTimer(999001)) {
+          _startTimerTicker();
+          _showClockMessage('Could not cancel the scheduled timer alert.');
+          return;
+        }
       }
       if (!mounted) return;
       setState(() {
@@ -144,24 +148,30 @@ class _ClockPageState extends ConsumerState<ClockPage>
       if (!mounted) return;
       if (!scheduled) {
         _showClockMessage(
-          'Allow notifications in Android Settings to use the timer alarm.',
+          Platform.isLinux
+              ? 'Enable desktop notifications to receive timer alerts.'
+              : 'Allow notifications and Alarms & reminders access in Android Settings to use the timer.',
         );
         return;
       }
       _timerDeadline = DateTime.now().add(Duration(seconds: _timerSeconds));
       setState(() => _isTimerRunning = true);
-      _countDownTimer = Timer.periodic(const Duration(milliseconds: 250), (_) {
-        if (!mounted) return;
-        final remaining = _remainingTimerSeconds();
-        if (remaining > 0) {
-          if (remaining != _timerSeconds) {
-            setState(() => _timerSeconds = remaining);
-          }
-        } else {
-          _finishTimer();
-        }
-      });
+      _startTimerTicker();
     }
+  }
+
+  void _startTimerTicker() {
+    _countDownTimer = Timer.periodic(const Duration(milliseconds: 250), (_) {
+      if (!mounted) return;
+      final remaining = _remainingTimerSeconds();
+      if (remaining > 0) {
+        if (remaining != _timerSeconds) {
+          setState(() => _timerSeconds = remaining);
+        }
+      } else {
+        _finishTimer();
+      }
+    });
   }
 
   int _remainingTimerSeconds() {
@@ -201,7 +211,9 @@ class _ClockPageState extends ConsumerState<ClockPage>
   void _resetTimer() {
     _countDownTimer?.cancel();
     _timerDeadline = null;
-    unawaited(NotificationService.instance.cancelTimer(999001));
+    unawaited(
+      NotificationService.instance.cancelTimer(999001).then<void>((_) {}),
+    );
     setState(() {
       _isTimerRunning = false;
       _timerSeconds = _timerInitialSeconds;
@@ -211,7 +223,9 @@ class _ClockPageState extends ConsumerState<ClockPage>
   void _setTimerDuration(int seconds) {
     _countDownTimer?.cancel();
     _timerDeadline = null;
-    unawaited(NotificationService.instance.cancelTimer(999001));
+    unawaited(
+      NotificationService.instance.cancelTimer(999001).then<void>((_) {}),
+    );
     setState(() {
       _isTimerRunning = false;
       _timerInitialSeconds = seconds;
@@ -333,8 +347,12 @@ class _ClockPageState extends ConsumerState<ClockPage>
                 icon: Icon(Icons.delete,
                     color: Theme.of(context).colorScheme.error),
                 onPressed: () async {
-                  await NotificationService.instance
+                  final cancelled = await NotificationService.instance
                       .cancelAlarm(existingAlarm.id);
+                  if (!cancelled) {
+                    _showClockMessage('Could not cancel this alarm.');
+                    return;
+                  }
                   if (!mounted) return;
                   setState(() => _alarms.remove(existingAlarm));
                   await _saveAlarms();
@@ -414,7 +432,9 @@ class _ClockPageState extends ConsumerState<ClockPage>
       setState(() => alarm.isEnabled = false);
       await _saveAlarms();
       _showClockMessage(
-        'Allow notifications in Android Settings to use alarms.',
+        Platform.isLinux
+            ? 'Enable desktop notifications to receive alarm alerts.'
+            : 'Allow notifications and Alarms & reminders access in Android Settings to use alarms.',
       );
     }
   }
@@ -423,7 +443,10 @@ class _ClockPageState extends ConsumerState<ClockPage>
     if (enabled) {
       await _scheduleAlarm(alarm);
     } else {
-      await NotificationService.instance.cancelAlarm(alarm.id);
+      if (!await NotificationService.instance.cancelAlarm(alarm.id)) {
+        _showClockMessage('Could not cancel this alarm.');
+        return;
+      }
       if (mounted) setState(() => alarm.isEnabled = false);
       await _saveAlarms();
     }
@@ -447,6 +470,23 @@ class _ClockPageState extends ConsumerState<ClockPage>
               ..clear()
               ..addAll(saved);
           });
+        }
+        if (Platform.isLinux) {
+          for (final alarm in saved.where((alarm) => alarm.isEnabled)) {
+            final scheduled = await NotificationService.instance.scheduleAlarm(
+              id: alarm.id,
+              title: alarm.label,
+              days: alarm.days,
+              hour: alarm.time.hour,
+              minute: alarm.time.minute,
+            );
+            if (!scheduled) {
+              AppLogger.w(
+                'Could not restore Linux alarm ${alarm.id}.',
+                tag: 'ClockPage',
+              );
+            }
+          }
         }
       }
     } catch (error, stackTrace) {
@@ -548,6 +588,20 @@ class _ClockPageState extends ConsumerState<ClockPage>
                                 ?.copyWith(color: colorScheme.error),
                           ),
                         ),
+                      if (Platform.isLinux)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.lg,
+                            AppSpacing.md,
+                            AppSpacing.lg,
+                            0,
+                          ),
+                          child: Text(
+                            'Keep PocketDesk running for alarms to fire on Linux.',
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: colorScheme.onSurfaceVariant),
+                          ),
+                        ),
                       Expanded(
                         child: _alarms.isEmpty
                             ? Center(
@@ -564,7 +618,9 @@ class _ClockPageState extends ConsumerState<ClockPage>
                                           style: theme.textTheme.titleLarge),
                                       const SizedBox(height: AppSpacing.xs),
                                       Text(
-                                        'Add an alarm to schedule a local notification.',
+                                        Platform.isLinux
+                                            ? 'Add an alarm. PocketDesk must remain running for it to fire.'
+                                            : 'Add an alarm to schedule a local notification.',
                                         textAlign: TextAlign.center,
                                         style: theme.textTheme.bodyMedium
                                             ?.copyWith(

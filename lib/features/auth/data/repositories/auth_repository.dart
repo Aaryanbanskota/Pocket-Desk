@@ -3,6 +3,16 @@ import 'dart:math';
 import 'package:isar/isar.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../features/calendar/data/models/calendar_event_model.dart';
+import '../../../../features/calendar/data/models/calendar_model.dart';
+import '../../../../features/money_tracker/data/models/expense_model.dart';
+import '../../../../features/money_tracker/data/models/wallet_model.dart';
+import '../../../../features/notes/data/models/note_model.dart';
+import '../../../../features/posts/data/models/instant_model.dart';
+import '../../../../features/posts/data/models/post_model.dart';
+import '../../../../features/settings/data/models/ai_settings_model.dart';
+import '../../../../features/tasks/data/models/task_model.dart';
+import '../../../../features/trash/data/models/trash_item_model.dart';
 import '../../../../core/error/app_failure.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../models/user_model.dart';
@@ -170,6 +180,36 @@ class AuthRepository {
     }
   }
 
+  Future<List<UserModel>> getStoredAccounts() async {
+    final accounts = await _isar.userModels.where().findAll();
+    accounts.sort((a, b) => a.username.compareTo(b.username));
+    return accounts;
+  }
+
+  Future<void> deleteStoredAccount(int userId) async {
+    final account = await _isar.userModels.get(userId);
+    if (account == null) {
+      throw StateError('The stored account no longer exists.');
+    }
+
+    await _isar.writeTxn(() async {
+      await _isar.calendarEventModels
+          .filter()
+          .userIdEqualTo(userId)
+          .deleteAll();
+      await _isar.calendarModels.filter().userIdEqualTo(userId).deleteAll();
+      await _isar.taskModels.filter().userIdEqualTo(userId).deleteAll();
+      await _isar.noteModels.filter().userIdEqualTo(userId).deleteAll();
+      await _isar.walletModels.filter().userIdEqualTo(userId).deleteAll();
+      await _isar.expenseModels.filter().userIdEqualTo(userId).deleteAll();
+      await _isar.postModels.filter().userIdEqualTo(userId).deleteAll();
+      await _isar.instantModels.filter().userIdEqualTo(userId).deleteAll();
+      await _isar.aISettingsModels.filter().userIdEqualTo(userId).deleteAll();
+      await _isar.trashItemModels.filter().userIdEqualTo(userId).deleteAll();
+      await _isar.userModels.delete(userId);
+    });
+  }
+
   // --------------------------------------------------------------------------
   // Login
   // --------------------------------------------------------------------------
@@ -244,10 +284,11 @@ class AuthRepository {
   // --------------------------------------------------------------------------
 
   Future<void> logout() async {
-    await _secureStorage.clearActiveUserId();
-    await _secureStorage.saveBiometricEnabled(false);
+    if (!await _secureStorage.getBiometricEnabled()) {
+      await _secureStorage.clearActiveUserId();
+    }
     // Note: we intentionally keep lastUsername so the login page can still
-    // suggest the username after logout.
+    // suggest the username and preserve the biometric preference after logout.
     AppLogger.i('User logged out', tag: 'AuthRepository');
   }
 

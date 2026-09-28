@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
@@ -19,8 +21,10 @@ class WeatherNotifier extends StateNotifier<AsyncValue<WeatherInfo>> {
   Future<void> fetchWeather() async {
     state = const AsyncValue.loading();
     try {
-      if (!await Geolocator.isLocationServiceEnabled()) {
-        throw Exception('Turn on Location Services to get local weather.');
+      if (Platform.isLinux) {
+        throw UnsupportedError(
+          'Automatic location is not available on Linux in this app build.',
+        );
       }
 
       var permission = await Geolocator.checkPermission();
@@ -33,6 +37,12 @@ class WeatherNotifier extends StateNotifier<AsyncValue<WeatherInfo>> {
           permission == LocationPermission.deniedForever
               ? 'Location permission is blocked. Enable it in app settings.'
               : 'Location permission is needed for local weather.',
+        );
+      }
+
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        throw Exception(
+          'Location Services are off. Turn them on to get local weather.',
         );
       }
 
@@ -62,8 +72,37 @@ class WeatherNotifier extends StateNotifier<AsyncValue<WeatherInfo>> {
           accuracyMeters: position.accuracy,
         ),
       );
+    } on MissingPluginException {
+      state = AsyncValue.error(
+        UnsupportedError(
+          'The location service is unavailable in this app build.',
+        ),
+        StackTrace.current,
+      );
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
+  Future<void> openLocationSettings() async {
+    if (Platform.isLinux) {
+      throw UnsupportedError(
+        'Location settings are not available on Linux in this app build.',
+      );
+    }
+    if (!await Geolocator.openLocationSettings()) {
+      throw Exception('Could not open Location settings.');
+    }
+  }
+
+  Future<void> openAppSettings() async {
+    if (Platform.isLinux) {
+      throw UnsupportedError(
+        'App permission settings are not available on Linux.',
+      );
+    }
+    if (!await Geolocator.openAppSettings()) {
+      throw Exception('Could not open app permission settings.');
     }
   }
 }

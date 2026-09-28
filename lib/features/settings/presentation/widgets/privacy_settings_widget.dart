@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../auth/data/models/user_model.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 
 class PrivacySettingsWidget extends ConsumerStatefulWidget {
@@ -238,6 +239,36 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                       ),
                     ),
                   ),
+                  Divider(height: 1, color: colorScheme.outlineVariant),
+                  Material(
+                    child: InkWell(
+                      onTap: _checkStoredAccounts,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.md,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.storage_rounded,
+                                color: colorScheme.primary),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Text(
+                                'Check Data',
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 16,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -266,7 +297,8 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                 children: [
                   Icon(Icons.delete_forever_rounded),
                   SizedBox(width: AppSpacing.md),
-                  Text('Delete Account', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Delete Account',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -324,6 +356,124 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
         ],
       ),
     );
+  }
+
+  Future<void> _checkStoredAccounts() async {
+    try {
+      final accounts =
+          await ref.read(authNotifierProvider.notifier).getStoredAccounts();
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Stored Accounts'),
+          content: SizedBox(
+            width: 420,
+            child: accounts.length <= 1
+                ? Text(
+                    '${accounts.length} account${accounts.length == 1 ? '' : 's'} stored on this device.',
+                  )
+                : ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 400),
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        Text(
+                          '${accounts.length} accounts are stored on this device. '
+                          'Secondary accounts can be permanently removed without their password.',
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        for (final account in accounts)
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              account.displayName?.isNotEmpty == true
+                                  ? account.displayName!
+                                  : account.username,
+                            ),
+                            subtitle: Text(account.username),
+                            trailing: _isCurrentAccount(account.id)
+                                ? const Chip(label: Text('Current'))
+                                : IconButton(
+                                    tooltip: 'Permanently delete account',
+                                    onPressed: () =>
+                                        _confirmStoredAccountDeletion(
+                                      account,
+                                      dialogContext,
+                                    ),
+                                    icon: const Icon(Icons.delete_forever),
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                          ),
+                      ],
+                    ),
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not check stored accounts: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmStoredAccountDeletion(
+    UserModel account,
+    BuildContext dialogContext,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: dialogContext,
+      builder: (confirmContext) => AlertDialog(
+        title: const Text('Delete stored account?'),
+        content: Text(
+          'Permanently delete ${account.username} and its local data? This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(confirmContext, false),
+            child: const Text('Keep'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(confirmContext, true),
+            child: const Text('Delete permanently'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await ref
+          .read(authNotifierProvider.notifier)
+          .deleteStoredAccount(account.id);
+      if (!dialogContext.mounted) return;
+      Navigator.pop(dialogContext);
+      await _checkStoredAccounts();
+    } catch (e) {
+      if (dialogContext.mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('Could not delete account: $e')),
+        );
+      }
+    }
+  }
+
+  bool _isCurrentAccount(int userId) {
+    final authState = ref.read(authNotifierProvider).valueOrNull;
+    return authState is AuthAuthenticated && authState.user.id == userId;
   }
 
   void _showConfirmDialog(
@@ -418,7 +568,8 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
 
               if (currentPwd.isEmpty || newPwd.isEmpty) {
                 ScaffoldMessenger.of(dialogCtx).showSnackBar(
-                  const SnackBar(content: Text('Please fill all password fields.')),
+                  const SnackBar(
+                      content: Text('Please fill all password fields.')),
                 );
                 return;
               }
@@ -431,10 +582,11 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
               }
 
               final messenger = ScaffoldMessenger.of(context);
-              final failure = await ref.read(authNotifierProvider.notifier).changePassword(
-                currentPassword: currentPwd,
-                newPassword: newPwd,
-              );
+              final failure =
+                  await ref.read(authNotifierProvider.notifier).changePassword(
+                        currentPassword: currentPwd,
+                        newPassword: newPwd,
+                      );
 
               if (!dialogCtx.mounted) return;
 
@@ -445,7 +597,8 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
               } else {
                 Navigator.pop(dialogCtx);
                 messenger.showSnackBar(
-                  const SnackBar(content: Text('Password changed successfully!')),
+                  const SnackBar(
+                      content: Text('Password changed successfully!')),
                 );
               }
             },
@@ -523,11 +676,16 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                         ),
                         child: Text(
                           dialogError!,
-                          style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
-                    const Text('Confirm your password to update your security questions:', style: TextStyle(fontSize: 13)),
+                    const Text(
+                        'Confirm your password to update your security questions:',
+                        style: TextStyle(fontSize: 13)),
                     const SizedBox(height: 8),
                     TextField(
                       controller: pwdCtrl,
@@ -541,14 +699,21 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                       ),
                     ),
                     const Divider(height: 20),
-                    const Text('Question 1', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const Text('Question 1',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 14)),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
                       initialValue: selectedQ1,
                       isExpanded: true,
-                      decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          isDense: true, border: OutlineInputBorder()),
                       items: presetQuestions1
-                          .map((q) => DropdownMenuItem(value: q, child: Text(q, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))))
+                          .map((q) => DropdownMenuItem(
+                              value: q,
+                              child: Text(q,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 13))))
                           .toList(),
                       onChanged: (val) {
                         if (val != null) setDialogState(() => selectedQ1 = val);
@@ -559,24 +724,37 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                       TextField(
                         controller: customQ1Ctrl,
                         maxLength: 100,
-                        decoration: const InputDecoration(labelText: 'Custom Question 1', isDense: true, border: OutlineInputBorder()),
+                        decoration: const InputDecoration(
+                            labelText: 'Custom Question 1',
+                            isDense: true,
+                            border: OutlineInputBorder()),
                       ),
                     ],
                     const SizedBox(height: 8),
                     TextField(
                       controller: ans1Ctrl,
                       maxLength: 64,
-                      decoration: const InputDecoration(labelText: 'Answer 1', isDense: true, border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Answer 1',
+                          isDense: true,
+                          border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 12),
-                    const Text('Question 2', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const Text('Question 2',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 14)),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
                       initialValue: selectedQ2,
                       isExpanded: true,
-                      decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          isDense: true, border: OutlineInputBorder()),
                       items: presetQuestions2
-                          .map((q) => DropdownMenuItem(value: q, child: Text(q, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))))
+                          .map((q) => DropdownMenuItem(
+                              value: q,
+                              child: Text(q,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 13))))
                           .toList(),
                       onChanged: (val) {
                         if (val != null) setDialogState(() => selectedQ2 = val);
@@ -587,14 +765,20 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                       TextField(
                         controller: customQ2Ctrl,
                         maxLength: 100,
-                        decoration: const InputDecoration(labelText: 'Custom Question 2', isDense: true, border: OutlineInputBorder()),
+                        decoration: const InputDecoration(
+                            labelText: 'Custom Question 2',
+                            isDense: true,
+                            border: OutlineInputBorder()),
                       ),
                     ],
                     const SizedBox(height: 8),
                     TextField(
                       controller: ans2Ctrl,
                       maxLength: 64,
-                      decoration: const InputDecoration(labelText: 'Answer 2', isDense: true, border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Answer 2',
+                          isDense: true,
+                          border: OutlineInputBorder()),
                     ),
                   ],
                 ),
@@ -610,17 +794,24 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                     ? null
                     : () async {
                         final pwd = pwdCtrl.text.trim();
-                        final q1 = isCustom1 ? customQ1Ctrl.text.trim() : selectedQ1;
+                        final q1 =
+                            isCustom1 ? customQ1Ctrl.text.trim() : selectedQ1;
                         final a1 = ans1Ctrl.text.trim();
-                        final q2 = isCustom2 ? customQ2Ctrl.text.trim() : selectedQ2;
+                        final q2 =
+                            isCustom2 ? customQ2Ctrl.text.trim() : selectedQ2;
                         final a2 = ans2Ctrl.text.trim();
 
                         if (pwd.isEmpty) {
-                          setDialogState(() => dialogError = 'Password is required to confirm changes.');
+                          setDialogState(() => dialogError =
+                              'Password is required to confirm changes.');
                           return;
                         }
-                        if (q1.isEmpty || a1.isEmpty || q2.isEmpty || a2.isEmpty) {
-                          setDialogState(() => dialogError = 'Please complete both questions and answers.');
+                        if (q1.isEmpty ||
+                            a1.isEmpty ||
+                            q2.isEmpty ||
+                            a2.isEmpty) {
+                          setDialogState(() => dialogError =
+                              'Please complete both questions and answers.');
                           return;
                         }
 
@@ -632,7 +823,9 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                         final combinedQ = '$q1 | $q2';
                         final combinedA = '$a1 | $a2';
 
-                        final err = await ref.read(authNotifierProvider.notifier).updateSecurityQuestions(
+                        final err = await ref
+                            .read(authNotifierProvider.notifier)
+                            .updateSecurityQuestions(
                               password: pwd,
                               securityQuestion: combinedQ,
                               securityAnswer: combinedA,
@@ -648,14 +841,20 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                             Navigator.pop(dialogCtx);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Security recovery questions updated successfully!')),
+                                const SnackBar(
+                                    content: Text(
+                                        'Security recovery questions updated successfully!')),
                               );
                             }
                           }
                         }
                       },
                 child: isSubmitting
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
                     : const Text('Update Questions'),
               ),
             ],
@@ -682,12 +881,14 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
             actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             title: Row(
               children: [
-                const Icon(Icons.delete_forever_rounded, color: Colors.red, size: 26),
+                const Icon(Icons.delete_forever_rounded,
+                    color: Colors.red, size: 26),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     isStepTwo ? 'Confirm Account Deletion' : 'Delete Account?',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -711,14 +912,18 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                         ),
                         child: Text(
                           errorMsg!,
-                          style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
                     if (!isStepTwo) ...[
                       const Text(
                         'Are you sure you want to delete your account?',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       const SizedBox(height: 8),
                       const Text(
@@ -738,7 +943,8 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                           labelText: 'Type DELETE',
                           isDense: true,
                           border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
+                          prefixIcon: Icon(Icons.warning_amber_rounded,
+                              color: Colors.red, size: 20),
                         ),
                         onChanged: (_) => setDialogState(() {}),
                       ),
@@ -773,7 +979,9 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                             errorMsg = null;
                           });
 
-                          final err = await ref.read(authNotifierProvider.notifier).deleteAccount();
+                          final err = await ref
+                              .read(authNotifierProvider.notifier)
+                              .deleteAccount();
 
                           if (ctx.mounted) {
                             if (err != null) {
@@ -786,7 +994,8 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Account and all app data erased completely. Starting fresh!'),
+                                    content: Text(
+                                        'Account and all app data erased completely. Starting fresh!'),
                                     backgroundColor: Colors.red,
                                   ),
                                 );
@@ -795,7 +1004,11 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
                           }
                         },
                   child: isDeleting
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
                       : const Text('Delete Everything'),
                 ),
             ],

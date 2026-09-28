@@ -103,24 +103,66 @@ class WeatherWidget extends ConsumerWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
-        error: (err, _) => Row(
-          children: [
-            Icon(Icons.error_outline_rounded, color: colorScheme.error),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Text(
-                err.toString().replaceFirst('Exception: ', ''),
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: colorScheme.onSurface),
+        error: (err, _) {
+          final message = err.toString();
+          final locationDisabled =
+              message.contains('Location Services are off');
+          final permissionBlocked =
+              message.contains('Location permission is blocked');
+          return Row(
+            children: [
+              Icon(Icons.error_outline_rounded, color: colorScheme.error),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      message.replaceFirst(
+                        RegExp(r'^(Exception|Unsupported operation): '),
+                        '',
+                      ),
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(color: colorScheme.onSurface),
+                    ),
+                    if (locationDisabled || permissionBlocked)
+                      TextButton.icon(
+                        onPressed: () async {
+                          try {
+                            final notifier = ref.read(weatherProvider.notifier);
+                            if (locationDisabled) {
+                              await notifier.openLocationSettings();
+                            } else {
+                              await notifier.openAppSettings();
+                            }
+                          } catch (error) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Could not open system settings: $error',
+                                  ),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        icon: const Icon(Icons.settings_outlined),
+                        label: Text(locationDisabled
+                            ? 'Open location settings'
+                            : 'Open app settings'),
+                      ),
+                  ],
+                ),
               ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.refresh_rounded),
-              onPressed: () =>
-                  ref.read(weatherProvider.notifier).fetchWeather(),
-            ),
-          ],
-        ),
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded),
+                onPressed: () =>
+                    ref.read(weatherProvider.notifier).fetchWeather(),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

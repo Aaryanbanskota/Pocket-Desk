@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../data/models/task_model.dart';
 import '../providers/tasks_notifier.dart';
 
@@ -17,8 +18,10 @@ class TaskFormSheet extends ConsumerStatefulWidget {
         context: context,
         barrierDismissible: true,
         builder: (_) => Dialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
             child: TaskFormSheet(task: task),
@@ -111,9 +114,11 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
       description: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
       priority: _priority,
       dueDate: _dueDate,
-      category: _categoryCtrl.text.trim().isEmpty ? null : _categoryCtrl.text.trim(),
+      category:
+          _categoryCtrl.text.trim().isEmpty ? null : _categoryCtrl.text.trim(),
       listName: _listCtrl.text.trim().isEmpty ? null : _listCtrl.text.trim(),
-      folderName: _folderCtrl.text.trim().isEmpty ? null : _folderCtrl.text.trim(),
+      folderName:
+          _folderCtrl.text.trim().isEmpty ? null : _folderCtrl.text.trim(),
       subtaskTitles: List.from(_subtasks),
       isRecurring: _isRecurring,
       recurrenceRule: _isRecurring ? _recurrenceRule : null,
@@ -150,7 +155,8 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Discard changes?'),
-        content: const Text('You have unsaved changes. Are you sure you want to leave?'),
+        content: const Text(
+            'You have unsaved changes. Are you sure you want to leave?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -270,12 +276,14 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Row(
                   children: [
                     Text(
                       widget.task == null ? 'New Task' : 'Edit Task',
-                      style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      style:
+                          tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const Spacer(),
                     IconButton(
@@ -328,8 +336,7 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
           labelText: 'Task title *',
           prefixIcon: Icon(Icons.task_alt_outlined),
         ),
-        validator: (v) =>
-            (v == null || v.trim().isEmpty) ? 'Required' : null,
+        validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
       ),
       const SizedBox(height: 12),
       // Description
@@ -344,7 +351,8 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
       ),
       const SizedBox(height: 16),
       // Priority chips
-      Text('Priority', style: tt.labelMedium?.copyWith(color: cs.onSurfaceVariant)),
+      Text('Priority',
+          style: tt.labelMedium?.copyWith(color: cs.onSurfaceVariant)),
       const SizedBox(height: 8),
       Wrap(
         spacing: 8,
@@ -436,7 +444,8 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
       ],
       const SizedBox(height: 16),
       // Subtasks
-      Text('Subtasks', style: tt.labelMedium?.copyWith(color: cs.onSurfaceVariant)),
+      Text('Subtasks',
+          style: tt.labelMedium?.copyWith(color: cs.onSurfaceVariant)),
       const SizedBox(height: 8),
       ..._subtasks.asMap().entries.map((e) => ListTile(
             contentPadding: EdgeInsets.zero,
@@ -501,11 +510,18 @@ class _TaskFormSheetState extends ConsumerState<TaskFormSheet> {
         TaskPriority.urgent => 'Urgent',
       };
 
-  Color _priorityColor(TaskPriority p) => switch (p) {
-        TaskPriority.none => Colors.grey,
-        TaskPriority.low => Colors.blue,
-        TaskPriority.medium => Colors.orange,
-        TaskPriority.high => Colors.red,
-        TaskPriority.urgent => Colors.purple,
-      };
+  Color _priorityColor(TaskPriority p) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return switch (p) {
+      TaskPriority.none => Theme.of(context).colorScheme.onSurfaceVariant,
+      TaskPriority.low =>
+        isDark ? const Color(0xFF4ADE80) : AppColors.priorityLow,
+      TaskPriority.medium =>
+        isDark ? const Color(0xFFFBBF24) : AppColors.priorityMedium,
+      TaskPriority.high =>
+        isDark ? const Color(0xFFFB923C) : AppColors.priorityHigh,
+      TaskPriority.urgent =>
+        isDark ? const Color(0xFFF87171) : AppColors.priorityUrgent,
+    };
+  }
 }

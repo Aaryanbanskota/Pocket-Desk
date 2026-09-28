@@ -1,7 +1,10 @@
-import 'dart:io' show Platform;
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io' show File, Platform;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../logging/app_logger.dart';
@@ -15,7 +18,14 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
+  final Map<int, Set<Timer>> _linuxAlarmTimers = {};
+  final Map<int, Timer> _linuxSnoozeTimers = {};
   static const _timezoneChannel = MethodChannel('pocketdesk/device');
+
+  Future<bool> _ensureInitialized() async {
+    if (!_isInitialized) await initialize();
+    return _isInitialized;
+  }
 
   /// Initializes the local notification plugin and configures timezone database.
   Future<void> initialize() async {
@@ -62,6 +72,12 @@ class NotificationService {
         onDidReceiveNotificationResponse: (NotificationResponse response) {
           AppLogger.i('Notification clicked: ${response.payload}',
               tag: 'NotificationService');
+          if (response.actionId == 'snooze_alarm' && response.payload != null) {
+            unawaited(_handleSnoozeAction(response.payload!));
+          } else if (response.actionId == 'dismiss_alarm' &&
+              response.payload != null) {
+            unawaited(_disableAlarmFromNotification(response.payload!));
+          }
         },
       );
 
@@ -77,7 +93,7 @@ class NotificationService {
   }
 
   Future<bool> requestNotificationPermission() async {
-    if (!_isInitialized) await initialize();
+    if (!await _ensureInitialized()) return false;
     final androidImpl =
         _notificationsPlugin.resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
@@ -97,22 +113,26 @@ class NotificationService {
     }
   }
 
-  Future<AndroidScheduleMode> _scheduleMode() async {
+  Future<AndroidScheduleMode> _scheduleMode({
+    bool requestExactAlarmAccess = false,
+  }) async {
     if (!Platform.isAndroid) return AndroidScheduleMode.inexactAllowWhileIdle;
     final androidImpl =
         _notificationsPlugin.resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
-    if (androidImpl == null) return AndroidScheduleMode.inexactAllowWhileIdle;
+    if (androidImpl == null) {
+      return AndroidScheduleMode.inexactAllowWhileIdle;
+    }
 
     try {
       var canScheduleExact = await androidImpl.canScheduleExactNotifications();
-      if (canScheduleExact != true) {
+      if (canScheduleExact != true && requestExactAlarmAccess) {
         await androidImpl.requestExactAlarmsPermission();
         canScheduleExact = await androidImpl.canScheduleExactNotifications();
       }
       if (canScheduleExact != true) {
         AppLogger.w(
-          'Exact alarm access is disabled; scheduling reminders with inexact timing.',
+          'Exact alarm access is disabled.',
           tag: 'NotificationService',
         );
         return AndroidScheduleMode.inexactAllowWhileIdle;
@@ -129,38 +149,72 @@ class NotificationService {
     }
   }
 
+  Future<void> _requestFullScreenAlarmAccess() async {
+    if (!Platform.isAndroid) return;
+    final androidImpl =
+        _notificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImpl == null) return;
+    try {
+      final allowed = await androidImpl.requestFullScreenIntentPermission();
+      if (allowed != true) {
+        AppLogger.w(
+          'Full-screen alarm access is disabled; alarms will appear as notifications.',
+          tag: 'NotificationService',
+        );
+      }
+    } catch (e, st) {
+      AppLogger.e('Full-screen alarm permission request failed',
+          tag: 'NotificationService', error: e, st: st);
+    }
+  }
+
   Future<bool> scheduleAlarm({
     required int id,
     required String title,
     required String days,
     required int hour,
     required int minute,
+    int snoozeMinutes = 10,
   }) async {
-    if (!Platform.isAndroid) return false;
-    if (!_isInitialized) await initialize();
-    await cancelAlarm(id);
+    if (!await _ensureInitialized()) return false;
     if (!await requestNotificationPermission()) return false;
 
-    final mode = await _scheduleMode();
-    final now = DateTime.now();
-    final occurrences = days == 'Weekdays'
-        ? [
-            DateTime.monday,
-            DateTime.tuesday,
-            DateTime.wednesday,
-            DateTime.thursday,
-            DateTime.friday
-          ]
-        : days == 'Weekends'
-            ? [DateTime.saturday, DateTime.sunday]
-            : days == 'Daily'
-                ? [null]
-                : [0];
     try {
+      if (!await cancelAlarm(id)) return false;
+      if (Platform.isLinux) {
+        _scheduleLinuxAlarmOccurrence(
+          id: id,
+          title: title,
+          days: days,
+          hour: hour,
+          minute: minute,
+          snoozeMinutes: snoozeMinutes,
+        );
+        return true;
+      }
+      if (!Platform.isAndroid) return false;
+
+      final mode = await _scheduleMode(requestExactAlarmAccess: true);
+      await _requestFullScreenAlarmAccess();
+      final now = DateTime.now();
+      final occurrences = days == 'Weekdays'
+          ? [
+              DateTime.monday,
+              DateTime.tuesday,
+              DateTime.wednesday,
+              DateTime.thursday,
+              DateTime.friday
+            ]
+          : days == 'Weekends'
+              ? [DateTime.saturday, DateTime.sunday]
+              : days == 'Daily'
+                  ? [null]
+                  : [0];
       for (final weekday in occurrences) {
         var next = DateTime(now.year, now.month, now.day, hour, minute);
         while (next.isBefore(now) ||
-            (weekday != null && weekday != 0 && next.weekday != weekday)) {
+            (weekday != null && weekday > 0 && next.weekday != weekday)) {
           next = next.add(const Duration(days: 1));
         }
         final notificationId = _alarmNotificationId(id, weekday);
@@ -169,7 +223,7 @@ class NotificationService {
           title,
           'Alarm',
           tz.TZDateTime.from(next, tz.local),
-          const NotificationDetails(
+          NotificationDetails(
             android: AndroidNotificationDetails(
               'pocketdesk_alarms_channel',
               'Alarms & Timers',
@@ -178,6 +232,20 @@ class NotificationService {
               priority: Priority.high,
               playSound: true,
               enableVibration: true,
+              fullScreenIntent: true,
+              actions: [
+                AndroidNotificationAction(
+                  'snooze_alarm',
+                  'Snooze $snoozeMinutes min',
+                  showsUserInterface: true,
+                ),
+                const AndroidNotificationAction(
+                  'dismiss_alarm',
+                  'Dismiss',
+                  showsUserInterface: true,
+                  cancelNotification: true,
+                ),
+              ],
             ),
           ),
           androidScheduleMode: mode,
@@ -188,7 +256,7 @@ class NotificationService {
               : weekday > 0
                   ? DateTimeComponents.dayOfWeekAndTime
                   : null,
-          payload: 'alarm_id=$id',
+          payload: _alarmPayload(id, snoozeMinutes),
         );
       }
       return true;
@@ -199,13 +267,203 @@ class NotificationService {
     }
   }
 
-  Future<void> cancelAlarm(int id) async {
-    if (!_isInitialized) await initialize();
-    for (var weekday = 0; weekday <= 8; weekday++) {
-      await _notificationsPlugin.cancel(_alarmNotificationId(
-        id,
-        weekday == 8 ? null : weekday,
-      ));
+  void _scheduleLinuxAlarmOccurrence({
+    required int id,
+    required String title,
+    required String days,
+    required int hour,
+    required int minute,
+    required int snoozeMinutes,
+  }) {
+    // ponytail: Linux alarms stay in-process; add a system service backend if
+    // they must fire after PocketDesk exits.
+    final now = DateTime.now();
+    final weekdays = switch (days) {
+      'Weekdays' => {
+          DateTime.monday,
+          DateTime.tuesday,
+          DateTime.wednesday,
+          DateTime.thursday,
+          DateTime.friday,
+        },
+      'Weekends' => {DateTime.saturday, DateTime.sunday},
+      _ => <int>{},
+    };
+    final repeats = days != 'Once';
+    DateTime? occurrence;
+    for (var offset = 0; offset <= (repeats ? 7 : 1); offset++) {
+      final candidate = DateTime(
+        now.year,
+        now.month,
+        now.day + offset,
+        hour,
+        minute,
+      );
+      final matchesDay = days == 'Daily' ||
+          (weekdays.isNotEmpty && weekdays.contains(candidate.weekday)) ||
+          !repeats;
+      if (candidate.isAfter(now) && matchesDay) {
+        occurrence = candidate;
+        break;
+      }
+    }
+    if (occurrence == null) return;
+
+    late final Timer timer;
+    timer = Timer(occurrence.difference(now), () {
+      _linuxAlarmTimers[id]?.remove(timer);
+      if (!repeats) _linuxAlarmTimers.remove(id);
+      unawaited(() async {
+        await showAlarmNotification(
+          id: id,
+          title: title,
+          snoozeMinutes: snoozeMinutes,
+        );
+        if (repeats) {
+          _scheduleLinuxAlarmOccurrence(
+            id: id,
+            title: title,
+            days: days,
+            hour: hour,
+            minute: minute,
+            snoozeMinutes: snoozeMinutes,
+          );
+        }
+      }());
+    });
+    (_linuxAlarmTimers[id] ??= <Timer>{}).add(timer);
+  }
+
+  String _alarmPayload(int id, int snoozeMinutes) =>
+      'alarm_id=$id&snooze_minutes=$snoozeMinutes';
+
+  Future<void> _handleSnoozeAction(String payload) async {
+    try {
+      final values = Uri.splitQueryString(payload);
+      final id = int.parse(values['alarm_id']!);
+      final minutes = int.parse(values['snooze_minutes'] ?? '10');
+      await _snoozeAlarm(id, minutes);
+    } catch (e, st) {
+      AppLogger.e('Could not snooze alarm from notification',
+          tag: 'NotificationService', error: e, st: st);
+    }
+  }
+
+  Future<void> _disableAlarmFromNotification(String payload) async {
+    try {
+      final id = int.parse(Uri.splitQueryString(payload)['alarm_id']!);
+      if (!await cancelAlarm(id)) {
+        throw StateError('Could not cancel alarm $id.');
+      }
+
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/alarms.json');
+      if (!await file.exists()) {
+        throw StateError('Saved alarm data was not found.');
+      }
+      final alarms = jsonDecode(await file.readAsString()) as List<dynamic>;
+      var found = false;
+      for (final value in alarms) {
+        final alarm = value as Map<String, dynamic>;
+        if (alarm['id'] == id) {
+          alarm['isEnabled'] = false;
+          found = true;
+          break;
+        }
+      }
+      if (!found) throw StateError('Saved alarm $id was not found.');
+
+      final temporary = File('${file.path}.tmp');
+      await temporary.writeAsString(jsonEncode(alarms), flush: true);
+      await temporary.rename(file.path);
+      AppLogger.i('Alarm $id dismissed and disabled.',
+          tag: 'NotificationService');
+    } catch (e, st) {
+      AppLogger.e('Failed to disable dismissed alarm',
+          tag: 'NotificationService', error: e, st: st);
+    }
+  }
+
+  Future<void> _snoozeAlarm(int id, int minutes) async {
+    if (minutes < 1 || minutes > 60 || !await _ensureInitialized()) return;
+    if (Platform.isLinux) {
+      _linuxSnoozeTimers.remove(id)?.cancel();
+      _linuxSnoozeTimers[id] = Timer(Duration(minutes: minutes), () {
+        _linuxSnoozeTimers.remove(id);
+        unawaited(showAlarmNotification(
+          id: id,
+          title: 'Snoozed alarm',
+          snoozeMinutes: minutes,
+        ));
+      });
+      return;
+    }
+    if (!Platform.isAndroid) return;
+    try {
+      await _notificationsPlugin.zonedSchedule(
+        _alarmNotificationId(id, 9),
+        'Snoozed alarm',
+        'Your alarm is ringing again.',
+        tz.TZDateTime.now(tz.local).add(Duration(minutes: minutes)),
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'pocketdesk_alarms_channel',
+            'Alarms & Timers',
+            channelDescription: 'Alerts for alarms, timers, and countdowns',
+            importance: Importance.max,
+            priority: Priority.high,
+            playSound: true,
+            enableVibration: true,
+            fullScreenIntent: true,
+            actions: [
+              AndroidNotificationAction(
+                'snooze_alarm',
+                'Snooze $minutes min',
+                showsUserInterface: true,
+              ),
+              const AndroidNotificationAction(
+                'dismiss_alarm',
+                'Dismiss',
+                showsUserInterface: true,
+                cancelNotification: true,
+              ),
+            ],
+          ),
+        ),
+        androidScheduleMode: await _scheduleMode(),
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: _alarmPayload(id, minutes),
+      );
+    } catch (e, st) {
+      AppLogger.e('Failed to schedule snoozed alarm $id',
+          tag: 'NotificationService', error: e, st: st);
+    }
+  }
+
+  Future<bool> cancelAlarm(int id) async {
+    if (!await _ensureInitialized()) return false;
+    try {
+      if (Platform.isLinux) {
+        for (final timer in _linuxAlarmTimers.remove(id) ?? <Timer>{}) {
+          timer.cancel();
+        }
+        _linuxSnoozeTimers.remove(id)?.cancel();
+        await _notificationsPlugin.cancel(_alarmNotificationId(id, null));
+        await _notificationsPlugin.cancel(_alarmNotificationId(id, 9));
+        return true;
+      }
+      for (var weekday = 0; weekday <= 9; weekday++) {
+        await _notificationsPlugin.cancel(_alarmNotificationId(
+          id,
+          weekday == 8 ? null : weekday,
+        ));
+      }
+      return true;
+    } catch (e, st) {
+      AppLogger.e('Failed to cancel alarm $id',
+          tag: 'NotificationService', error: e, st: st);
+      return false;
     }
   }
 
@@ -214,11 +472,11 @@ class NotificationService {
     required Duration duration,
   }) async {
     if (!Platform.isAndroid) return true;
-    if (!_isInitialized) await initialize();
-    await cancelTimer(id);
+    if (!await _ensureInitialized()) return false;
     if (!await requestNotificationPermission()) return false;
-    final mode = await _scheduleMode();
+    final mode = await _scheduleMode(requestExactAlarmAccess: true);
     try {
+      if (!await cancelTimer(id)) return false;
       await _notificationsPlugin.zonedSchedule(
         id,
         'Timer finished',
@@ -247,9 +505,16 @@ class NotificationService {
     }
   }
 
-  Future<void> cancelTimer(int id) async {
-    if (!_isInitialized) await initialize();
-    await _notificationsPlugin.cancel(id);
+  Future<bool> cancelTimer(int id) async {
+    if (!await _ensureInitialized()) return false;
+    try {
+      await _notificationsPlugin.cancel(id);
+      return true;
+    } catch (e, st) {
+      AppLogger.e('Failed to cancel timer $id',
+          tag: 'NotificationService', error: e, st: st);
+      return false;
+    }
   }
 
   int _alarmNotificationId(int id, int? weekday) =>
@@ -262,7 +527,7 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
-    if (!_isInitialized) await initialize();
+    if (!await _ensureInitialized()) return;
     if (!await requestNotificationPermission()) {
       AppLogger.w(
         'Notification permission denied; "$title" was not shown.',
@@ -295,9 +560,73 @@ class NotificationService {
     }
   }
 
+  Future<void> showAlarmNotification({
+    required int id,
+    required String title,
+    int snoozeMinutes = 10,
+  }) async {
+    if (!await _ensureInitialized()) return;
+    if (!Platform.isLinux && !Platform.isAndroid) return;
+    if (!await requestNotificationPermission()) return;
+    try {
+      await _notificationsPlugin.show(
+        _alarmNotificationId(id, null),
+        title,
+        'Alarm',
+        NotificationDetails(
+          android: Platform.isAndroid
+              ? AndroidNotificationDetails(
+                  'pocketdesk_alarms_channel',
+                  'Alarms & Timers',
+                  channelDescription:
+                      'Alerts for alarms, timers, and countdowns',
+                  importance: Importance.max,
+                  priority: Priority.high,
+                  playSound: true,
+                  enableVibration: true,
+                  fullScreenIntent: true,
+                  actions: [
+                    AndroidNotificationAction(
+                      'snooze_alarm',
+                      'Snooze $snoozeMinutes min',
+                      showsUserInterface: true,
+                    ),
+                    const AndroidNotificationAction(
+                      'dismiss_alarm',
+                      'Dismiss',
+                      showsUserInterface: true,
+                      cancelNotification: true,
+                    ),
+                  ],
+                )
+              : null,
+          linux: Platform.isLinux
+              ? LinuxNotificationDetails(
+                  urgency: LinuxNotificationUrgency.critical,
+                  actions: [
+                    LinuxNotificationAction(
+                      key: 'snooze_alarm',
+                      label: 'Snooze $snoozeMinutes min',
+                    ),
+                    const LinuxNotificationAction(
+                      key: 'dismiss_alarm',
+                      label: 'Dismiss',
+                    ),
+                  ],
+                )
+              : null,
+        ),
+        payload: _alarmPayload(id, snoozeMinutes),
+      );
+    } catch (e, st) {
+      AppLogger.e('Failed to show alarm alert',
+          tag: 'NotificationService', error: e, st: st);
+    }
+  }
+
   /// Cancels all scheduled notifications for a specific event.
   Future<void> cancelEventReminders(int eventId) async {
-    if (!_isInitialized) await initialize();
+    if (!await _ensureInitialized()) return;
 
     try {
       // Up to 5 reminders per event
@@ -315,7 +644,7 @@ class NotificationService {
 
   /// Schedules notifications for an event based on its reminderMinutes settings.
   Future<void> scheduleEventReminders(CalendarEventModel event) async {
-    if (!_isInitialized) await initialize();
+    if (!await _ensureInitialized()) return;
 
     // First cancel any existing reminders for this event
     await cancelEventReminders(event.id);
@@ -411,7 +740,7 @@ class NotificationService {
 
   /// Cancels all scheduled notifications for a task.
   Future<void> cancelTaskReminder(int taskId) async {
-    if (!_isInitialized) await initialize();
+    if (!await _ensureInitialized()) return;
     try {
       // Use a dedicated range (offset by 1_000_000) to avoid collision with event IDs.
       for (int i = 0; i < 5; i++) {
@@ -429,7 +758,7 @@ class NotificationService {
   /// Each string in [reminderMinutesRaw] is expected to be an integer number
   /// of minutes before [dueDate] to fire the reminder.
   Future<void> scheduleTaskReminder(TaskModel task) async {
-    if (!_isInitialized) await initialize();
+    if (!await _ensureInitialized()) return;
     await cancelTaskReminder(task.id);
 
     if (task.dueDate == null || task.reminderMinutesRaw.isEmpty) return;

@@ -198,6 +198,27 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     state = AsyncValue.data(AuthAuthenticated(user));
   }
 
+  Future<List<UserModel>> getStoredAccounts() async {
+    final current = state.valueOrNull;
+    if (current is! AuthAuthenticated) {
+      throw StateError('Sign in to manage stored accounts.');
+    }
+    final repo = await ref.read(authRepositoryProvider.future);
+    return repo.getStoredAccounts();
+  }
+
+  Future<void> deleteStoredAccount(int userId) async {
+    final current = state.valueOrNull;
+    if (current is! AuthAuthenticated) {
+      throw StateError('Sign in to manage stored accounts.');
+    }
+    if (current.user.id == userId) {
+      throw StateError('The account currently in use cannot be removed here.');
+    }
+    final repo = await ref.read(authRepositoryProvider.future);
+    await repo.deleteStoredAccount(userId);
+  }
+
   // --------------------------------------------------------------------------
   // Logout
   // --------------------------------------------------------------------------

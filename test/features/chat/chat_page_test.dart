@@ -124,6 +124,7 @@ class _ChatAISettingsNotifier extends AISettingsNotifier {
     required String prompt,
     required String systemPrompt,
     int? userId,
+    int maxTokens = 200,
   }) async {
     _chatPrompts.add(prompt);
     _chatSystemPrompts.add(systemPrompt);

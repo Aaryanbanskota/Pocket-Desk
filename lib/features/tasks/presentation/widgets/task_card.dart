@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../data/models/task_model.dart';
 import '../providers/tasks_notifier.dart';
 import 'task_form_sheet.dart';
@@ -74,19 +75,22 @@ class TaskCard extends ConsumerWidget {
                       Text(
                         task.title,
                         style: tt.bodyMedium?.copyWith(
-                          decoration: isDone ? TextDecoration.lineThrough : null,
+                          decoration:
+                              isDone ? TextDecoration.lineThrough : null,
                           color: isDone ? cs.onSurfaceVariant : cs.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      if (task.description != null && task.description!.isNotEmpty)
+                      if (task.description != null &&
+                          task.description!.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(
                             task.description!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                            style: tt.bodySmall
+                                ?.copyWith(color: cs.onSurfaceVariant),
                           ),
                         ),
                       const SizedBox(height: 6),
@@ -104,13 +108,15 @@ class TaskCard extends ConsumerWidget {
                                   ? cs.error
                                   : cs.onSurfaceVariant,
                             ),
-                          if (task.listName != null && task.listName!.isNotEmpty)
+                          if (task.listName != null &&
+                              task.listName!.isNotEmpty)
                             _InfoChip(
                               icon: Icons.list_outlined,
                               label: task.listName!,
                               color: cs.onSurfaceVariant,
                             ),
-                          if (task.category != null && task.category!.isNotEmpty)
+                          if (task.category != null &&
+                              task.category!.isNotEmpty)
                             _InfoChip(
                               icon: Icons.label_outline,
                               label: task.category!,
@@ -141,21 +147,25 @@ class TaskCard extends ConsumerWidget {
                     IconButton(
                       icon: const Icon(Icons.edit_outlined, size: 18),
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints:
+                          const BoxConstraints(minWidth: 32, minHeight: 32),
                       tooltip: 'Edit task',
                       onPressed: () => TaskFormSheet.show(context, task: task),
                     ),
                     IconButton(
-                      icon: Icon(Icons.delete_outline, size: 18, color: cs.error),
+                      icon:
+                          Icon(Icons.delete_outline, size: 18, color: cs.error),
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints:
+                          const BoxConstraints(minWidth: 32, minHeight: 32),
                       tooltip: 'Delete task',
                       onPressed: () async {
                         final confirm = await showDialog<bool>(
                           context: context,
                           builder: (ctx) => AlertDialog(
                             title: const Text('Delete Task?'),
-                            content: Text('Are you sure you want to delete "${task.title}"?'),
+                            content: Text(
+                                'Are you sure you want to delete "${task.title}"?'),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(ctx, false),
@@ -163,7 +173,8 @@ class TaskCard extends ConsumerWidget {
                               ),
                               FilledButton(
                                 onPressed: () => Navigator.pop(ctx, true),
-                                style: FilledButton.styleFrom(backgroundColor: cs.error),
+                                style: FilledButton.styleFrom(
+                                    backgroundColor: cs.error),
                                 child: const Text('Delete'),
                               ),
                             ],
@@ -198,8 +209,7 @@ class TaskCard extends ConsumerWidget {
         ),
       );
 
-  String _formatDate(DateTime d) =>
-      '${d.day}/${d.month}/${d.year}';
+  String _formatDate(DateTime d) => '${d.day}/${d.month}/${d.year}';
 
   bool _isOverdue(DateTime d) =>
       d.isBefore(DateTime.now().subtract(const Duration(hours: 24)));
@@ -289,13 +299,17 @@ class TaskCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 6),
                 ...task.subtaskTitles.asMap().entries.map((e) {
-                  final subDone = task.subtaskDone.length > e.key ? task.subtaskDone[e.key] : false;
+                  final subDone = task.subtaskDone.length > e.key
+                      ? task.subtaskDone[e.key]
+                      : false;
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
                     child: Row(
                       children: [
                         Icon(
-                          subDone ? Icons.check_box : Icons.check_box_outline_blank,
+                          subDone
+                              ? Icons.check_box
+                              : Icons.check_box_outline_blank,
                           size: 16,
                           color: subDone ? cs.primary : cs.onSurfaceVariant,
                         ),
@@ -304,8 +318,10 @@ class TaskCard extends ConsumerWidget {
                           child: Text(
                             e.value,
                             style: tt.bodySmall?.copyWith(
-                              decoration: subDone ? TextDecoration.lineThrough : null,
-                              color: subDone ? cs.onSurfaceVariant : cs.onSurface,
+                              decoration:
+                                  subDone ? TextDecoration.lineThrough : null,
+                              color:
+                                  subDone ? cs.onSurfaceVariant : cs.onSurface,
                             ),
                           ),
                         ),
@@ -347,12 +363,25 @@ class _PriorityBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final (label, color) = switch (priority) {
-      TaskPriority.low => ('Low', Colors.blue),
-      TaskPriority.medium => ('Medium', Colors.orange),
-      TaskPriority.high => ('High', Colors.red),
-      TaskPriority.urgent => ('Urgent', Colors.purple),
-      TaskPriority.none => ('', Colors.grey),
+      TaskPriority.low => (
+          'Low',
+          isDark ? const Color(0xFF4ADE80) : AppColors.priorityLow
+        ),
+      TaskPriority.medium => (
+          'Medium',
+          isDark ? const Color(0xFFFBBF24) : AppColors.priorityMedium
+        ),
+      TaskPriority.high => (
+          'High',
+          isDark ? const Color(0xFFFB923C) : AppColors.priorityHigh
+        ),
+      TaskPriority.urgent => (
+          'Urgent',
+          isDark ? const Color(0xFFF87171) : AppColors.priorityUrgent
+        ),
+      TaskPriority.none => ('', Theme.of(context).colorScheme.onSurfaceVariant),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),

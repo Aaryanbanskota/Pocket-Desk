@@ -48,7 +48,7 @@ abstract final class AppTheme {
     onPrimaryContainer: AppColors.primaryLight,
     secondary: AppColors.secondaryLight,
     onSecondary: AppColors.secondaryDark,
-    secondaryContainer: Color(0xFF075985),
+    secondaryContainer: Color(0xFF082F49),
     onSecondaryContainer: AppColors.secondaryLight,
     tertiary: AppColors.success,
     onTertiary: Colors.white,

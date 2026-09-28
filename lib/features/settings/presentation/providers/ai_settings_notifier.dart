@@ -7,7 +7,8 @@ import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../data/models/ai_settings_model.dart';
 import '../../data/repositories/ai_settings_repository.dart';
 
-final aiSettingsRepositoryProvider = FutureProvider<AISettingsRepository>((ref) async {
+final aiSettingsRepositoryProvider =
+    FutureProvider<AISettingsRepository>((ref) async {
   final isar = await ref.watch(isarProvider.future);
   return AISettingsRepository(isar: isar);
 });
@@ -29,7 +30,8 @@ class AISettingsNotifier extends AutoDisposeAsyncNotifier<AISettingsModel> {
     ref.invalidateSelf();
   }
 
-  Future<({bool success, String message})> testConnection(String apiKey, String model) async {
+  Future<({bool success, String message})> testConnection(
+      String apiKey, String model) async {
     if (apiKey.trim().isEmpty) {
       return (success: false, message: 'Please enter an API key');
     }
@@ -66,6 +68,7 @@ class AISettingsNotifier extends AutoDisposeAsyncNotifier<AISettingsModel> {
     required String prompt,
     required String systemPrompt,
     int? userId,
+    int maxTokens = 200,
   }) async {
     final auth = ref.read(authNotifierProvider).valueOrNull;
     final uid = userId ?? (auth is AuthAuthenticated ? auth.user.id : 0);
@@ -73,7 +76,9 @@ class AISettingsNotifier extends AutoDisposeAsyncNotifier<AISettingsModel> {
     final settings = await repo.getOrCreateSettings(uid);
 
     if (!settings.isEnabled || settings.apiKey.trim().isEmpty) {
-      AppLogger.w('AI completion aborted: isEnabled=${settings.isEnabled}, apiKeyLength=${settings.apiKey.length}', tag: 'AIService');
+      AppLogger.w(
+          'AI completion aborted: isEnabled=${settings.isEnabled}, apiKeyLength=${settings.apiKey.length}',
+          tag: 'AIService');
       return null;
     }
 
@@ -90,7 +95,7 @@ class AISettingsNotifier extends AutoDisposeAsyncNotifier<AISettingsModel> {
             {'role': 'system', 'content': systemPrompt},
             {'role': 'user', 'content': prompt},
           ],
-          'max_tokens': 200,
+          'max_tokens': maxTokens,
         }),
       );
 
@@ -99,7 +104,9 @@ class AISettingsNotifier extends AutoDisposeAsyncNotifier<AISettingsModel> {
         final content = data['choices']?[0]?['message']?['content'] as String?;
         return content?.trim();
       } else {
-        AppLogger.e('OpenRouter API returned status ${res.statusCode}: ${res.body}', tag: 'AIService');
+        AppLogger.e(
+            'OpenRouter API returned status ${res.statusCode}: ${res.body}',
+            tag: 'AIService');
       }
     } catch (e, st) {
       AppLogger.e('AI Completion failed', tag: 'AIService', error: e, st: st);
@@ -108,6 +115,7 @@ class AISettingsNotifier extends AutoDisposeAsyncNotifier<AISettingsModel> {
   }
 }
 
-final aiSettingsProvider = AutoDisposeAsyncNotifierProvider<AISettingsNotifier, AISettingsModel>(
+final aiSettingsProvider =
+    AutoDisposeAsyncNotifierProvider<AISettingsNotifier, AISettingsModel>(
   AISettingsNotifier.new,
 );

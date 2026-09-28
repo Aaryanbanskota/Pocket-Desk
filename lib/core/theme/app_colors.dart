@@ -4,20 +4,20 @@ import 'package:flutter/material.dart';
 /// Never use raw color values outside this class.
 abstract final class AppColors {
   // ─── Primary Brand Colors ───────────────────────────────────────────────────
-  static const Color primary = Color(0xFF4F46E5);       // Indigo 600
-  static const Color primaryLight = Color(0xFF818CF8);  // Indigo 400
-  static const Color primaryDark = Color(0xFF3730A3);   // Indigo 800
+  static const Color primary = Color(0xFF4F46E5); // Indigo 600
+  static const Color primaryLight = Color(0xFFA5B4FC); // Indigo 300
+  static const Color primaryDark = Color(0xFF3730A3); // Indigo 800
 
   // ─── Secondary / Accent ─────────────────────────────────────────────────────
-  static const Color secondary = Color(0xFF0EA5E9);     // Sky 500
+  static const Color secondary = Color(0xFF0369A1); // Sky 700
   static const Color secondaryLight = Color(0xFF38BDF8); // Sky 400
-  static const Color secondaryDark = Color(0xFF0284C7); // Sky 600
+  static const Color secondaryDark = Color(0xFF082F49); // Sky 950
 
   // ─── Semantic Colors ─────────────────────────────────────────────────────────
-  static const Color success = Color(0xFF22C55E);       // Green 500
-  static const Color warning = Color(0xFFF59E0B);       // Amber 500
-  static const Color error = Color(0xFFEF4444);         // Red 500
-  static const Color info = Color(0xFF3B82F6);          // Blue 500
+  static const Color success = Color(0xFF15803D); // Green 700
+  static const Color warning = Color(0xFFF59E0B); // Amber 500
+  static const Color error = Color(0xFFB91C1C); // Red 700
+  static const Color info = Color(0xFF3B82F6); // Blue 500
 
   // ─── Light Surface Colors ────────────────────────────────────────────────────
   static const Color backgroundLight = Color(0xFFF8FAFC);
@@ -36,20 +36,20 @@ abstract final class AppColors {
   // ─── Text Colors — Light ─────────────────────────────────────────────────────
   static const Color textPrimaryLight = Color(0xFF0F172A);
   static const Color textSecondaryLight = Color(0xFF475569);
-  static const Color textHintLight = Color(0xFF94A3B8);
-  static const Color textDisabledLight = Color(0xFFCBD5E1);
+  static const Color textHintLight = Color(0xFF475569);
+  static const Color textDisabledLight = Color(0xFF64748B);
 
   // ─── Text Colors — Dark ──────────────────────────────────────────────────────
   static const Color textPrimaryDark = Color(0xFFF8FAFC);
   static const Color textSecondaryDark = Color(0xFF94A3B8);
-  static const Color textHintDark = Color(0xFF64748B);
+  static const Color textHintDark = Color(0xFF94A3B8);
   static const Color textDisabledDark = Color(0xFF334155);
 
   // ─── Task Priority Colors ────────────────────────────────────────────────────
-  static const Color priorityLow = Color(0xFF22C55E);
-  static const Color priorityMedium = Color(0xFFF59E0B);
-  static const Color priorityHigh = Color(0xFFF97316);
-  static const Color priorityUrgent = Color(0xFFEF4444);
+  static const Color priorityLow = Color(0xFF166534);
+  static const Color priorityMedium = Color(0xFF92400E);
+  static const Color priorityHigh = Color(0xFF9A3412);
+  static const Color priorityUrgent = Color(0xFF991B1B);
 
   // ─── Calendar / Event Colors ─────────────────────────────────────────────────
   static const List<Color> calendarPalette = [

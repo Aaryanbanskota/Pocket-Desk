@@ -1,77 +1,147 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+
+import '../logging/app_logger.dart';
 
 class AppUpdateInfo {
-  final String version;
-  final String url;
-  final bool required;
-  final String releaseNotes;
-
-  AppUpdateInfo({
+  const AppUpdateInfo({
     required this.version,
+    required this.buildNumber,
     required this.url,
     required this.required,
     required this.releaseNotes,
   });
 
-  factory AppUpdateInfo.fromJson(Map<String, dynamic> json) => AppUpdateInfo(
-        version: json['version'] as String? ?? '1.0.0',
-        url: json['url'] as String? ?? '',
-        required: json['required'] as bool? ?? false,
-        releaseNotes: json['releaseNotes'] as String? ?? 'New version available.',
-      );
+  final String version;
+  final int buildNumber;
+  final String url;
+  final bool required;
+  final String releaseNotes;
+
+  factory AppUpdateInfo.fromJson(Map<String, dynamic> json) {
+    final version = json['version'];
+    final buildNumber = json['buildNumber'];
+    final url = json['url'];
+    final required = json['required'] ?? false;
+    final releaseNotes = json['releaseNotes'] ?? 'New version available.';
+    final downloadUri = url is String ? Uri.tryParse(url) : null;
+
+    if (version is! String ||
+        !_isValidVersion(version) ||
+        buildNumber is! int ||
+        buildNumber <= 0 ||
+        downloadUri == null ||
+        downloadUri.scheme != 'https' ||
+        downloadUri.host.isEmpty ||
+        required is! bool ||
+        releaseNotes is! String) {
+      throw const FormatException('Invalid update manifest.');
+    }
+
+    return AppUpdateInfo(
+      version: version,
+      buildNumber: buildNumber,
+      url: downloadUri.toString(),
+      required: required,
+      releaseNotes: releaseNotes,
+    );
+  }
+
+  static bool _isValidVersion(String version) =>
+      RegExp(r'^\d+\.\d+\.\d+$').hasMatch(version);
 }
 
 class AppUpdateService {
   static const String updateJsonUrl =
       'https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/main/update.json';
 
-  /// Performs background check for app update.
-  /// Skips silently if offline or on error so app functionality is never affected.
-  static Future<void> checkForUpdates(BuildContext context) async {
+  static Future<void> checkForUpdates(
+    BuildContext context, {
+    bool showStatus = false,
+  }) async {
+    if (!Platform.isAndroid) {
+      if (showStatus && context.mounted) {
+        _showMessage(context, 'APK updates are available on Android only.');
+      }
+      return;
+    }
+
     try {
-      final response = await http.get(Uri.parse(updateJsonUrl)).timeout(
-        const Duration(seconds: 4),
-        onTimeout: () => http.Response('', 408),
-      );
-
-      if (response.statusCode != 200 || response.body.isEmpty) return;
-
-      final jsonMap = jsonDecode(response.body) as Map<String, dynamic>;
+      final response = await http
+          .get(Uri.parse(updateJsonUrl))
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode != HttpStatus.ok) {
+        throw HttpException(
+            'Update check failed (HTTP ${response.statusCode}).');
+      }
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Invalid update manifest.');
+      }
+      final jsonMap = decoded;
       final updateInfo = AppUpdateInfo.fromJson(jsonMap);
 
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
+      final currentBuildNumber = int.tryParse(packageInfo.buildNumber);
+      if (currentBuildNumber == null) {
+        throw const FormatException(
+            'The installed app has an invalid build number.');
+      }
 
-      if (_isNewerVersion(currentVersion, updateInfo.version)) {
+      if (isUpdateAvailable(
+        currentVersion: currentVersion,
+        currentBuildNumber: currentBuildNumber,
+        update: updateInfo,
+      )) {
         if (context.mounted) {
           _showUpdateDialog(context, updateInfo, currentVersion);
         }
+      } else if (showStatus && context.mounted) {
+        _showMessage(context, 'PocketDesk is up to date.');
       }
-    } catch (_) {
-      // Offline-first: ignore errors silently
+    } catch (e, st) {
+      AppLogger.w('Update check failed: $e',
+          tag: 'AppUpdateService', error: e, st: st);
+      if (showStatus && context.mounted) {
+        _showMessage(context, 'Could not check for updates: $e');
+      }
     }
   }
 
-  /// Version comparison helper (semver compliant e.g. 1.2.0 > 1.1.0)
-  static bool _isNewerVersion(String current, String latest) {
-    try {
-      final cParts = current.split('+')[0].split('.').map(int.parse).toList();
-      final lParts = latest.split('+')[0].split('.').map(int.parse).toList();
+  static bool isUpdateAvailable({
+    required String currentVersion,
+    required int currentBuildNumber,
+    required AppUpdateInfo update,
+  }) {
+    final current = _versionParts(currentVersion);
+    final latest = _versionParts(update.version);
+    if (current == null ||
+        latest == null ||
+        update.buildNumber <= currentBuildNumber) {
+      return false;
+    }
 
-      for (int i = 0; i < 3; i++) {
-        final c = i < cParts.length ? cParts[i] : 0;
-        final l = i < lParts.length ? lParts[i] : 0;
-        if (l > c) return true;
-        if (c > l) return false;
-      }
-    } catch (_) {}
-    return false;
+    for (var i = 0; i < current.length; i++) {
+      if (latest[i] != current[i]) return latest[i] > current[i];
+    }
+    return true;
+  }
+
+  static List<int>? _versionParts(String version) {
+    if (!AppUpdateInfo._isValidVersion(version)) return null;
+    return version.split('.').map(int.parse).toList();
+  }
+
+  static void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   static void _showUpdateDialog(
@@ -115,27 +185,30 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
       _statusText = 'Connecting to server...';
     });
 
+    final client = http.Client();
+    File? apkFile;
     try {
-      final client = http.Client();
       final request = http.Request('GET', Uri.parse(widget.updateInfo.url));
-      final response = await client.send(request);
+      final response =
+          await client.send(request).timeout(const Duration(seconds: 30));
 
-      if (response.statusCode != 200) {
-        setState(() {
-          _isDownloading = false;
-          _statusText = 'Download failed (HTTP ${response.statusCode})';
-        });
-        return;
+      if (response.statusCode != HttpStatus.ok ||
+          response.request?.url.scheme != 'https') {
+        throw HttpException(
+          'APK download failed (HTTP ${response.statusCode}) or was not secure.',
+        );
       }
 
       final contentLength = response.contentLength ?? 0;
       final tempDir = await getTemporaryDirectory();
-      final apkFile = File('${tempDir.path}/pocketdesk-update-${widget.updateInfo.version}.apk');
+      apkFile = File(
+        '${tempDir.path}/pocketdesk-update-${widget.updateInfo.version}.apk',
+      );
       final sink = apkFile.openWrite();
-
       int downloaded = 0;
-      response.stream.listen(
-        (chunk) {
+      try {
+        await for (final chunk
+            in response.stream.timeout(const Duration(seconds: 30))) {
           sink.add(chunk);
           downloaded += chunk.length;
           if (contentLength > 0 && mounted) {
@@ -145,47 +218,34 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
                   'Downloading update: ${(downloaded / (1024 * 1024)).toStringAsFixed(1)} / ${(contentLength / (1024 * 1024)).toStringAsFixed(1)} MB';
             });
           }
-        },
-        onDone: () async {
-          await sink.flush();
-          await sink.close();
-          client.close();
+        }
+        await sink.flush();
+      } finally {
+        await sink.close();
+      }
 
-          if (mounted) {
-            setState(() {
-              _isDownloading = false;
-              _statusText = 'Opening Android installer...';
-            });
+      if (downloaded == 0 ||
+          (contentLength > 0 && downloaded != contentLength)) {
+        throw const HttpException('The downloaded APK is incomplete.');
+      }
 
-            final fileUri = Uri.file(apkFile.path);
-            if (await canLaunchUrl(fileUri)) {
-              await launchUrl(fileUri, mode: LaunchMode.externalApplication);
-            } else if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Update downloaded. Please install the APK file from downloads.')),
-              );
-            }
-          }
-        },
-        onError: (e) async {
-          await sink.close();
-          client.close();
-          if (mounted) {
-            setState(() {
-              _isDownloading = false;
-              _statusText = 'Download interrupted';
-            });
-          }
-        },
-        cancelOnError: true,
+      await const MethodChannel('pocketdesk/device').invokeMethod<void>(
+        'installApk',
+        {'path': apkFile.path},
       );
+      if (mounted) Navigator.of(context).pop();
     } catch (e) {
+      if (apkFile != null && await apkFile.exists()) {
+        await apkFile.delete();
+      }
       if (mounted) {
         setState(() {
           _isDownloading = false;
-          _statusText = 'Download failed';
+          _statusText = 'Could not start Android installer: $e';
         });
       }
+    } finally {
+      client.close();
     }
   }
 
@@ -215,7 +275,8 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
                 const Text('Update Available'),
                 Text(
                   'v${widget.currentVersion} → v${widget.updateInfo.version}',
-                  style: tt.bodySmall?.copyWith(color: cs.primary, fontWeight: FontWeight.bold),
+                  style: tt.bodySmall?.copyWith(
+                      color: cs.primary, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -227,7 +288,8 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('What\'s New:', style: tt.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text('What\'s New:',
+                style: tt.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 6),
             Container(
               padding: const EdgeInsets.all(12),
@@ -242,7 +304,8 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
             ),
             if (_isDownloading) ...[
               const SizedBox(height: 16),
-              LinearProgressIndicator(value: _downloadProgress > 0 ? _downloadProgress : null),
+              LinearProgressIndicator(
+                  value: _downloadProgress > 0 ? _downloadProgress : null),
               const SizedBox(height: 8),
               if (_statusText != null)
                 Text(

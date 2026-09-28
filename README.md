@@ -91,7 +91,7 @@ It combines a full-featured **Calendar**, **Task Manager**, **Notes** app, and *
 | Build Type | Download | Size |
 |:-----------|:---------|:-----|
 | **Release APK** | [📥 Download APK](https://github.com/Aaryanbanskota/Pocket-Desk/raw/main/all-apk/app-release.apk) | ~78 MB |
-| **App Bundle (AAB)** | [📦 Download AAB](https://github.com/Aaryanbanskota/Pocket-Desk/releases/download/v1.0.0/app-release.aab) | ~36 MB |
+| **App Bundle (AAB)** | [📦 Download AAB](https://github.com/Aaryanbanskota/Pocket-Desk/raw/main/all-apk/app-release.apk)) | ~36 MB |
 
 > **Tip:** Prefer the AAB for Google Play / modern installers. Use the APK for sideloading.
 
@@ -105,7 +105,7 @@ To publish an in-app Android update, increment the app version and build number 
 
 | Platform | Download | Size |
 |:---------|:---------|:-----|
-| **Linux x64** | [🐧 Download tar.gz](https://github.com/Aaryanbanskota/Pocket-Desk/releases/download/v1.0.0/pocketdesk-linux-x64.tar.gz) | ~15 MB |
+| **Linux x64** | [🐧 Download tar.gz](https://github.com/Aaryanbanskota/Pocket-Desk/blob/main/pocketdesk-linux-x64.tar.gz) | ~15 MB |
 
 #### Linux Installation
 

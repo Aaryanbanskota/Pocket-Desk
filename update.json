@@ -1,6 +1,5 @@
 {
   "version": "1.2.1",
-  "buildNumber": 4,
   "url": "https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/main/all-apk/app-release.apk",
   "required": false,
   "releaseNotes": "- Improved money reports, weather accuracy, alarms, and timer behavior\n- Improved light-mode readability and chat usability\n- Added Android in-app update checks and APK installer handoff"

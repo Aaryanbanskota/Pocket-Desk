@@ -1,8 +1,10 @@
 import 'dart:async';
-import 'dart:io' show Platform;
+import 'dart:convert';
+import 'dart:io' show File, Platform;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../logging/app_logger.dart';
@@ -73,8 +75,8 @@ class NotificationService {
           if (response.actionId == 'snooze_alarm' && response.payload != null) {
             unawaited(_handleSnoozeAction(response.payload!));
           } else if (response.actionId == 'dismiss_alarm' &&
-              response.id != null) {
-            unawaited(_notificationsPlugin.cancel(response.id!));
+              response.payload != null) {
+            unawaited(_disableAlarmFromNotification(response.payload!));
           }
         },
       );
@@ -240,6 +242,7 @@ class NotificationService {
                 const AndroidNotificationAction(
                   'dismiss_alarm',
                   'Dismiss',
+                  showsUserInterface: true,
                   cancelNotification: true,
                 ),
               ],
@@ -346,6 +349,41 @@ class NotificationService {
     }
   }
 
+  Future<void> _disableAlarmFromNotification(String payload) async {
+    try {
+      final id = int.parse(Uri.splitQueryString(payload)['alarm_id']!);
+      if (!await cancelAlarm(id)) {
+        throw StateError('Could not cancel alarm $id.');
+      }
+
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/alarms.json');
+      if (!await file.exists()) {
+        throw StateError('Saved alarm data was not found.');
+      }
+      final alarms = jsonDecode(await file.readAsString()) as List<dynamic>;
+      var found = false;
+      for (final value in alarms) {
+        final alarm = value as Map<String, dynamic>;
+        if (alarm['id'] == id) {
+          alarm['isEnabled'] = false;
+          found = true;
+          break;
+        }
+      }
+      if (!found) throw StateError('Saved alarm $id was not found.');
+
+      final temporary = File('${file.path}.tmp');
+      await temporary.writeAsString(jsonEncode(alarms), flush: true);
+      await temporary.rename(file.path);
+      AppLogger.i('Alarm $id dismissed and disabled.',
+          tag: 'NotificationService');
+    } catch (e, st) {
+      AppLogger.e('Failed to disable dismissed alarm',
+          tag: 'NotificationService', error: e, st: st);
+    }
+  }
+
   Future<void> _snoozeAlarm(int id, int minutes) async {
     if (minutes < 1 || minutes > 60 || !await _ensureInitialized()) return;
     if (Platform.isLinux) {
@@ -386,6 +424,7 @@ class NotificationService {
               const AndroidNotificationAction(
                 'dismiss_alarm',
                 'Dismiss',
+                showsUserInterface: true,
                 cancelNotification: true,
               ),
             ],
@@ -555,6 +594,7 @@ class NotificationService {
                     const AndroidNotificationAction(
                       'dismiss_alarm',
                       'Dismiss',
+                      showsUserInterface: true,
                       cancelNotification: true,
                     ),
                   ],

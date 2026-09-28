@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show File, Platform;
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,6 +61,7 @@ class _ClockPageState extends ConsumerState<ClockPage>
   late TabController _tabController;
   Timer? _clockTimer;
   DateTime _now = DateTime.now();
+  bool _showAnalogClock = false;
 
   // Stopwatch state
   Timer? _stopwatchTimer;
@@ -626,50 +628,97 @@ class _ClockPageState extends ConsumerState<ClockPage>
         controller: _tabController,
         children: [
           // 1. Clock Tab
-          Center(
-            child: Card(
-              margin: const EdgeInsets.all(AppSpacing.xl),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.xl,
-                  vertical: AppSpacing.x2l,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.schedule_rounded,
-                      color: colorScheme.primary,
-                      size: 32,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      'LOCAL TIME',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        letterSpacing: 1.5,
+          LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Center(
+                  child: Card(
+                    margin: const EdgeInsets.all(AppSpacing.xl),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xl,
+                        vertical: AppSpacing.x2l,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.schedule_rounded,
+                            color: colorScheme.primary,
+                            size: 32,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            'LOCAL TIME',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          if (_showAnalogClock)
+                            Semantics(
+                              label:
+                                  'Analog clock showing ${TimeOfDay.fromDateTime(_now).format(context)}',
+                              child: CustomPaint(
+                                size: const Size(260, 260),
+                                painter: _AnalogClockPainter(
+                                  time: _now,
+                                  color: colorScheme.primary,
+                                  faceColor:
+                                      colorScheme.surfaceContainerHighest,
+                                  tickColor: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            )
+                          else
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                TimeOfDay.fromDateTime(_now).format(context),
+                                style: theme.textTheme.displayLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures()
+                                  ],
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            MaterialLocalizations.of(context)
+                                .formatMediumDate(_now),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          SegmentedButton<bool>(
+                            showSelectedIcon: false,
+                            segments: const [
+                              ButtonSegment(
+                                value: true,
+                                icon: Icon(Icons.watch_later_outlined),
+                                label: Text('Analog'),
+                              ),
+                              ButtonSegment(
+                                value: false,
+                                icon: Icon(Icons.schedule_rounded),
+                                label: Text('Digital'),
+                              ),
+                            ],
+                            selected: {_showAnalogClock},
+                            onSelectionChanged: (selection) {
+                              setState(
+                                  () => _showAnalogClock = selection.first);
+                            },
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.sm),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        TimeOfDay.fromDateTime(_now).format(context),
-                        style: theme.textTheme.displayLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.primary,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      MaterialLocalizations.of(context).formatMediumDate(_now),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -942,4 +991,93 @@ class _ClockPageState extends ConsumerState<ClockPage>
       ),
     );
   }
+}
+
+class _AnalogClockPainter extends CustomPainter {
+  const _AnalogClockPainter({
+    required this.time,
+    required this.color,
+    required this.faceColor,
+    required this.tickColor,
+  });
+
+  final DateTime time;
+  final Color color;
+  final Color faceColor;
+  final Color tickColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) / 2;
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..color = faceColor
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..color = tickColor.withAlpha(100)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+
+    for (var mark = 0; mark < 60; mark++) {
+      final angle = mark * math.pi / 30 - math.pi / 2;
+      final major = mark % 5 == 0;
+      final outer = Offset(
+        center.dx + math.cos(angle) * (radius - 8),
+        center.dy + math.sin(angle) * (radius - 8),
+      );
+      final inner = Offset(
+        center.dx + math.cos(angle) * (radius - (major ? 25 : 15)),
+        center.dy + math.sin(angle) * (radius - (major ? 25 : 15)),
+      );
+      canvas.drawLine(
+        inner,
+        outer,
+        Paint()
+          ..color = tickColor
+          ..strokeWidth = major ? 3 : 1.2
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+
+    void drawHand(double angle, double length, double width, Color handColor) {
+      canvas.drawLine(
+        center,
+        Offset(
+          center.dx + math.cos(angle) * length,
+          center.dy + math.sin(angle) * length,
+        ),
+        Paint()
+          ..color = handColor
+          ..strokeWidth = width
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+
+    final minute = time.minute + time.second / 60;
+    final hour = time.hour % 12 + minute / 60;
+    drawHand(hour * math.pi / 6 - math.pi / 2, radius * 0.48, 6, color);
+    drawHand(minute * math.pi / 30 - math.pi / 2, radius * 0.68, 4, color);
+    drawHand(
+      time.second * math.pi / 30 - math.pi / 2,
+      radius * 0.76,
+      1.5,
+      tickColor,
+    );
+    canvas.drawCircle(center, 5, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_AnalogClockPainter oldDelegate) =>
+      oldDelegate.time != time ||
+      oldDelegate.color != color ||
+      oldDelegate.faceColor != faceColor ||
+      oldDelegate.tickColor != tickColor;
 }

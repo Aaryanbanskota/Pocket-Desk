@@ -16,6 +16,7 @@ class AlarmItem {
     required this.time,
     required this.label,
     required this.days,
+    this.snoozeMinutes = 10,
     this.isEnabled = true,
   });
 
@@ -23,6 +24,7 @@ class AlarmItem {
   TimeOfDay time;
   String label;
   String days;
+  int snoozeMinutes;
   bool isEnabled;
 
   factory AlarmItem.fromJson(Map<dynamic, dynamic> json) => AlarmItem(
@@ -31,6 +33,7 @@ class AlarmItem {
             TimeOfDay(hour: json['hour'] as int, minute: json['minute'] as int),
         label: json['label'] as String,
         days: json['days'] as String,
+        snoozeMinutes: json['snoozeMinutes'] as int? ?? 10,
         isEnabled: json['isEnabled'] as bool,
       );
 
@@ -40,6 +43,7 @@ class AlarmItem {
         'minute': time.minute,
         'label': label,
         'days': days,
+        'snoozeMinutes': snoozeMinutes,
         'isEnabled': isEnabled,
       };
 }
@@ -296,103 +300,173 @@ class _ClockPageState extends ConsumerState<ClockPage>
     final labelController =
         TextEditingController(text: existingAlarm?.label ?? 'Alarm');
     String selectedDays = existingAlarm?.days ?? 'Daily';
+    var snoozeMinutes = existingAlarm?.snoozeMinutes ?? 10;
     AlarmItem? alarmToSchedule;
 
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(existingAlarm == null ? 'Add Alarm' : 'Edit Alarm'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: const Text('Time'),
-                trailing: Text(
-                  selectedTime.format(context),
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+        builder: (context, setDialogState) {
+          final colors = Theme.of(context).colorScheme;
+          return AlertDialog(
+            title: Text(existingAlarm == null ? 'New alarm' : 'Edit alarm'),
+            actionsOverflowDirection: VerticalDirection.down,
+            content: SingleChildScrollView(
+              child: SizedBox(
+                width: 360,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            'ALARM TIME',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(
+                                  color: colors.onSurfaceVariant,
+                                  letterSpacing: 1.2,
+                                ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          FilledButton.tonalIcon(
+                            onPressed: () async {
+                              final picked = await showTimePicker(
+                                context: context,
+                                initialTime: selectedTime,
+                              );
+                              if (picked != null) {
+                                setDialogState(() => selectedTime = picked);
+                              }
+                            },
+                            icon: const Icon(Icons.schedule_rounded),
+                            label: Text(
+                              selectedTime.format(context),
+                              style: Theme.of(context).textTheme.headlineMedium,
+                            ),
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.xl,
+                                vertical: AppSpacing.md,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    TextField(
+                      controller: labelController,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        labelText: 'Alarm name',
+                        hintText: 'Wake up',
+                        prefixIcon: Icon(Icons.edit_outlined),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text('Repeat',
+                        style: Theme.of(context).textTheme.titleSmall),
+                    const SizedBox(height: AppSpacing.xs),
+                    Wrap(
+                      spacing: AppSpacing.xs,
+                      runSpacing: AppSpacing.xs,
+                      children: ['Once', 'Daily', 'Weekdays', 'Weekends']
+                          .map(
+                            (days) => ChoiceChip(
+                              label: Text(days),
+                              selected: selectedDays == days,
+                              onSelected: (_) =>
+                                  setDialogState(() => selectedDays = days),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    DropdownButtonFormField<int>(
+                      initialValue: snoozeMinutes,
+                      decoration: const InputDecoration(
+                        labelText: 'Snooze duration',
+                        prefixIcon: Icon(Icons.snooze_rounded),
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [5, 10, 15, 20, 30]
+                          .map(
+                            (minutes) => DropdownMenuItem(
+                              value: minutes,
+                              child: Text('$minutes minutes'),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (minutes) {
+                        if (minutes != null) {
+                          setDialogState(() => snoozeMinutes = minutes);
+                        }
+                      },
+                    ),
+                  ],
                 ),
-                onTap: () async {
-                  final picked = await showTimePicker(
-                      context: context, initialTime: selectedTime);
-                  if (picked != null) {
-                    setDialogState(() => selectedTime = picked);
+              ),
+            ),
+            actions: [
+              if (existingAlarm != null)
+                TextButton.icon(
+                  onPressed: () async {
+                    final cancelled = await NotificationService.instance
+                        .cancelAlarm(existingAlarm.id);
+                    if (!cancelled) {
+                      _showClockMessage('Could not cancel this alarm.');
+                      return;
+                    }
+                    if (!mounted) return;
+                    setState(() => _alarms.remove(existingAlarm));
+                    await _saveAlarms();
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  label: const Text('Delete'),
+                  style: TextButton.styleFrom(foregroundColor: colors.error),
+                ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  final label = labelController.text.trim().isEmpty
+                      ? 'Alarm'
+                      : labelController.text.trim();
+                  if (existingAlarm != null) {
+                    setState(() {
+                      existingAlarm.time = selectedTime;
+                      existingAlarm.label = label;
+                      existingAlarm.days = selectedDays;
+                      existingAlarm.snoozeMinutes = snoozeMinutes;
+                    });
+                    alarmToSchedule = existingAlarm;
+                  } else {
+                    final alarm = AlarmItem(
+                      id: DateTime.now().millisecondsSinceEpoch % 100000,
+                      time: selectedTime,
+                      label: label,
+                      days: selectedDays,
+                      snoozeMinutes: snoozeMinutes,
+                      isEnabled: false,
+                    );
+                    setState(() => _alarms.add(alarm));
+                    alarmToSchedule = alarm;
                   }
+                  Navigator.pop(ctx);
                 },
-              ),
-              TextField(
-                controller: labelController,
-                decoration: const InputDecoration(labelText: 'Label'),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: selectedDays,
-                decoration: const InputDecoration(labelText: 'Repeat'),
-                items: const [
-                  DropdownMenuItem(value: 'Once', child: Text('Once')),
-                  DropdownMenuItem(value: 'Daily', child: Text('Daily')),
-                  DropdownMenuItem(value: 'Weekdays', child: Text('Weekdays')),
-                  DropdownMenuItem(value: 'Weekends', child: Text('Weekends')),
-                ],
-                onChanged: (val) {
-                  if (val != null) setDialogState(() => selectedDays = val);
-                },
+                child: const Text('Save alarm'),
               ),
             ],
-          ),
-          actions: [
-            if (existingAlarm != null)
-              IconButton(
-                icon: Icon(Icons.delete,
-                    color: Theme.of(context).colorScheme.error),
-                onPressed: () async {
-                  final cancelled = await NotificationService.instance
-                      .cancelAlarm(existingAlarm.id);
-                  if (!cancelled) {
-                    _showClockMessage('Could not cancel this alarm.');
-                    return;
-                  }
-                  if (!mounted) return;
-                  setState(() => _alarms.remove(existingAlarm));
-                  await _saveAlarms();
-                  if (ctx.mounted) Navigator.pop(ctx);
-                },
-              ),
-            TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel')),
-            ElevatedButton(
-              onPressed: () {
-                final label = labelController.text.trim().isEmpty
-                    ? 'Alarm'
-                    : labelController.text.trim();
-                if (existingAlarm != null) {
-                  setState(() {
-                    existingAlarm.time = selectedTime;
-                    existingAlarm.label = label;
-                    existingAlarm.days = selectedDays;
-                  });
-                  alarmToSchedule = existingAlarm;
-                } else {
-                  final alarm = AlarmItem(
-                    id: DateTime.now().millisecondsSinceEpoch % 100000,
-                    time: selectedTime,
-                    label: label,
-                    days: selectedDays,
-                    isEnabled: false,
-                  );
-                  setState(() {
-                    _alarms.add(alarm);
-                  });
-                  alarmToSchedule = alarm;
-                }
-                Navigator.pop(ctx);
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
     labelController.dispose();
@@ -413,6 +487,7 @@ class _ClockPageState extends ConsumerState<ClockPage>
         days: alarm.days,
         hour: alarm.time.hour,
         minute: alarm.time.minute,
+        snoozeMinutes: alarm.snoozeMinutes,
       );
     } catch (e) {
       if (mounted) {
@@ -479,6 +554,7 @@ class _ClockPageState extends ConsumerState<ClockPage>
               days: alarm.days,
               hour: alarm.time.hour,
               minute: alarm.time.minute,
+              snoozeMinutes: alarm.snoozeMinutes,
             );
             if (!scheduled) {
               AppLogger.w(
@@ -551,21 +627,51 @@ class _ClockPageState extends ConsumerState<ClockPage>
         children: [
           // 1. Clock Tab
           Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '${_now.hour.toString().padLeft(2, '0')}:${_now.minute.toString().padLeft(2, '0')}:${_now.second.toString().padLeft(2, '0')}',
-                  style: theme.textTheme.displayLarge?.copyWith(
-                      fontWeight: FontWeight.bold, color: colorScheme.primary),
+            child: Card(
+              margin: const EdgeInsets.all(AppSpacing.xl),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xl,
+                  vertical: AppSpacing.x2l,
                 ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  '${_now.day}/${_now.month}/${_now.year}',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.schedule_rounded,
+                      color: colorScheme.primary,
+                      size: 32,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      'LOCAL TIME',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        TimeOfDay.fromDateTime(_now).format(context),
+                        style: theme.textTheme.displayLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.primary,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      MaterialLocalizations.of(context).formatMediumDate(_now),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
 
@@ -659,7 +765,8 @@ class _ClockPageState extends ConsumerState<ClockPage>
                                         ),
                                       ),
                                       subtitle: Text(
-                                          '${alarm.label}  ·  ${alarm.days}'),
+                                        '${alarm.label}  ·  ${alarm.days}  ·  Snooze ${alarm.snoozeMinutes} min',
+                                      ),
                                       trailing: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [

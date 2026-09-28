@@ -497,7 +497,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
 
                               return Padding(
                                 padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
+                                    const EdgeInsets.symmetric(vertical: 4),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -525,7 +525,6 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                                   color: isAI
                                                       ? cs.primary
                                                       : cs.onSurface)),
-                                          const SizedBox(height: 2),
                                           Text(comment,
                                               style: TextStyle(
                                                   fontSize: 14,
@@ -560,30 +559,57 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                           ),
                   ),
                   const Divider(height: 1),
+                  const SizedBox(height: 8),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
-                        child: TextField(
-                          controller: _commentCtrl,
-                          decoration: const InputDecoration(
-                            hintText: 'Add a comment…',
-                            border: InputBorder.none,
-                            contentPadding:
-                                EdgeInsets.symmetric(horizontal: 12),
+                        child: SizedBox(
+                          height: 48,
+                          child: TextField(
+                            controller: _commentCtrl,
+                            textAlignVertical: TextAlignVertical.center,
+                            decoration: InputDecoration(
+                              hintText: 'Add a comment…',
+                              filled: true,
+                              fillColor: cs.surfaceContainerHighest,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: cs.primary,
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: (val) async {
+                              final text = val.trim();
+                              if (text.isNotEmpty) {
+                                await ref
+                                    .read(postsNotifierProvider.notifier)
+                                    .addComment(currentPost, text);
+                                _commentCtrl.clear();
+                              }
+                            },
                           ),
-                          textInputAction: TextInputAction.send,
-                          onSubmitted: (val) async {
-                            final text = val.trim();
-                            if (text.isNotEmpty) {
-                              await ref
-                                  .read(postsNotifierProvider.notifier)
-                                  .addComment(currentPost, text);
-                              _commentCtrl.clear();
-                            }
-                          },
                         ),
                       ),
+                      const SizedBox(width: 8),
                       TextButton(
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(52, 48),
+                        ),
                         onPressed: () async {
                           final text = _commentCtrl.text.trim();
                           if (text.isNotEmpty) {
@@ -899,7 +925,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                       fontWeight: FontWeight.bold)),
                               const SizedBox(width: 16),
                               IconButton(
-                                icon: const Icon(Icons.mode_comment_outlined),
+                                icon: const Icon(Icons.chat_rounded),
                                 onPressed: () =>
                                     _showInstagramCommentsSheet(post),
                               ),

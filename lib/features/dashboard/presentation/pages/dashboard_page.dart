@@ -135,14 +135,18 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildWelcomeHeader(theme, user?.displayName ?? user?.username ?? 'User'),
+                  Expanded(
+                    child: _buildWelcomeHeader(theme, user?.displayName ?? user?.username ?? 'User'),
+                  ),
                   if (layoutState.isEditing)
                     TextButton.icon(
                       onPressed: () => layoutNotifier.resetLayout(),
                       icon: const Icon(Icons.restart_alt_rounded, size: 18),
-                      label: const Text('Reset Layout'),
+                      label: const Text('Reset'),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
                     ),
                 ],
               ),

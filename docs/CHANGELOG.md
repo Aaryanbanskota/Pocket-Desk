@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v1.0.0] — 2026-07-24 — Release Build
+## [v1.2.2-offi] — 2026-09-30 — Version Suffix Channels & What's New Walkthrough
+
+### Added
+- **Version Channel Separation**:
+  - `-t`: Trial channel for experimental features (includes warning badges regarding potential bugs).
+  - `-rev`: Review channel for stable previews with minor risk of UI or feature adjustments.
+  - `-offi`: Official channel for fully verified, trusted releases with explicit download recommendations.
+- **Channel Precedence & Comparison**: Cleaned SemVer parsing and channel precedence comparison (`-t` < `-rev` < `-offi`).
+- **"What's New" Onboarding Walkthrough**: Step-by-step interactive PageView dialog shown automatically upon first launch after an update, with skip/back/next controls.
+- **Manual Feature Walkthrough Access**: Added a "What's New" button under Settings → Devices to allow users to review new features anytime.
+
 
 ### Release Artifacts
 - **Android APK**: `build/app/outputs/flutter-apk/app-release.apk` (77.8 MB)

@@ -230,6 +230,7 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
             title: post.title ?? 'Post',
             snippet: post.content.length > 100 ? '${post.content.substring(0, 100)}...' : post.content,
             payloadJson: jsonEncode({
+              'title': post.title,
               'content': post.content,
               'imagePaths': post.imagePaths,
               'tags': post.tags,

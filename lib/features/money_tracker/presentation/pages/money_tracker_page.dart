@@ -83,135 +83,188 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
     showDialog<void>(
       context: context,
       useSafeArea: true,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        actionsPadding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.credit_card_rounded, color: Colors.amber, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Edit Card Details',
-                style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _cardHolderCtrl,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-                decoration: InputDecoration(
-                  labelText: 'Cardholder Name',
-                  isDense: true,
-                  filled: true,
-                  fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                  prefixIcon: const Icon(Icons.person_outline_rounded),
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _cardNumberCtrl,
-                style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
-                decoration: InputDecoration(
-                  labelText: 'Card Number',
-                  isDense: true,
-                  filled: true,
-                  fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                  prefixIcon: const Icon(Icons.credit_card_rounded),
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 12),
-              Row(
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final cs = theme.colorScheme;
+
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          backgroundColor: cs.surfaceContainerHigh,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _expiryCtrl,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      decoration: InputDecoration(
-                        labelText: 'Expires',
-                        hintText: 'MM/YY',
-                        isDense: true,
-                        filled: true,
-                        fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  // Title Header
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(Icons.credit_card_rounded, color: Colors.amber, size: 24),
                       ),
-                      onChanged: (_) => setState(() {}),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          'Edit Card Details',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Cardholder Name
+                  Text('Cardholder Name', style: theme.textTheme.labelMedium?.copyWith(color: cs.onSurfaceVariant, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: _cardHolderCtrl,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: cs.surfaceContainerLowest,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      prefixIcon: const Icon(Icons.person_outline_rounded),
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Card Number
+                  Text('Card Number', style: theme.textTheme.labelMedium?.copyWith(color: cs.onSurfaceVariant, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: _cardNumberCtrl,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: cs.surfaceContainerLowest,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      prefixIcon: const Icon(Icons.credit_card_rounded),
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Expires & CVV Row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Expires', style: theme.textTheme.labelMedium?.copyWith(color: cs.onSurfaceVariant, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: _expiryCtrl,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              decoration: InputDecoration(
+                                hintText: 'MM/YY',
+                                filled: true,
+                                fillColor: cs.surfaceContainerLowest,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                              ),
+                              onChanged: (_) => setState(() {}),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('CVV / CVC', style: theme.textTheme.labelMedium?.copyWith(color: cs.onSurfaceVariant, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: _cvvCtrl,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              decoration: InputDecoration(
+                                hintText: '888',
+                                filled: true,
+                                fillColor: cs.surfaceContainerLowest,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                              ),
+                              onChanged: (_) => setState(() {}),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Wallet Balance
+                  Text('Wallet Balance (${state.currency})', style: theme.textTheme.labelMedium?.copyWith(color: cs.onSurfaceVariant, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: _balanceCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    decoration: InputDecoration(
+                      prefixText: '${state.currency} ',
+                      filled: true,
+                      fillColor: cs.surfaceContainerLowest,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: _cvvCtrl,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      decoration: InputDecoration(
-                        labelText: 'CVV / CVC',
-                        hintText: '888',
-                        isDense: true,
-                        filled: true,
-                        fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+
+                  const SizedBox(height: 24),
+
+                  // Action Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        ),
+                        child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
-                      onChanged: (_) => setState(() {}),
-                    ),
+                      const SizedBox(width: 12),
+                      FilledButton.icon(
+                        onPressed: () {
+                          final bal = double.tryParse(_balanceCtrl.text.trim());
+                          if (bal != null) {
+                            ref.read(moneyProvider.notifier).updateBalance(bal);
+                          }
+                          setState(() {});
+                          Navigator.pop(ctx);
+                        },
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        icon: const Icon(Icons.check_rounded, size: 18),
+                        label: const Text('Save Details', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _balanceCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                style: const TextStyle(fontWeight: FontWeight.bold),
-                decoration: InputDecoration(
-                  labelText: 'Wallet Balance (${state.currency})',
-                  prefixText: '${state.currency} ',
-                  isDense: true,
-                  filled: true,
-                  fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                  prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton.icon(
-            onPressed: () {
-              final bal = double.tryParse(_balanceCtrl.text.trim());
-              if (bal != null) {
-                ref.read(moneyProvider.notifier).updateBalance(bal);
-              }
-              setState(() {});
-              Navigator.pop(ctx);
-            },
-            icon: const Icon(Icons.check_rounded, size: 18),
-            label: const Text('Save Details'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

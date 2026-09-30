@@ -131,13 +131,14 @@ class TrashRepository {
             break;
           case TrashItemType.post:
             PostModel post;
+            final postTitle = (item.title.isEmpty || item.title == 'Post') ? null : item.title;
             try {
               if (item.payloadJson.isNotEmpty && item.payloadJson != '{}') {
                 final Map<String, dynamic> jsonMap = jsonDecode(item.payloadJson) as Map<String, dynamic>;
                 post = PostModel()
                   ..id = item.originalId
                   ..userId = item.userId
-                  ..title = item.title
+                  ..title = jsonMap['title']?.toString() ?? postTitle
                   ..content = jsonMap['content']?.toString() ?? item.snippet ?? ''
                   ..imagePaths = (jsonMap['imagePaths'] as List?)?.map((e) => e.toString()).toList() ?? []
                   ..tags = (jsonMap['tags'] as List?)?.map((e) => e.toString()).toList() ?? []
@@ -147,7 +148,7 @@ class TrashRepository {
                 post = PostModel()
                   ..id = item.originalId
                   ..userId = item.userId
-                  ..title = item.title
+                  ..title = postTitle
                   ..content = item.snippet ?? ''
                   ..createdAt = item.deletedAt
                   ..updatedAt = DateTime.now();
@@ -156,7 +157,7 @@ class TrashRepository {
               post = PostModel()
                 ..id = item.originalId
                 ..userId = item.userId
-                ..title = item.title
+                ..title = postTitle
                 ..content = item.snippet ?? ''
                 ..createdAt = item.deletedAt
                 ..updatedAt = DateTime.now();

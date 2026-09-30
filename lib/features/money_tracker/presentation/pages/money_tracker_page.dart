@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pocketdesk/core/theme/app_spacing.dart';
+import 'package:pocketdesk/features/auth/presentation/providers/auth_notifier.dart';
 import 'package:pocketdesk/features/dashboard/presentation/widgets/app_hamburger_drawer.dart';
 import 'package:pocketdesk/features/money_tracker/data/models/expense_model.dart';
 import 'package:pocketdesk/features/money_tracker/presentation/providers/money_notifier.dart';
@@ -23,7 +24,7 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
   final _customCategoryCtrl = TextEditingController();
 
   // Mastercard Details Controllers
-  final _cardHolderCtrl = TextEditingController(text: 'POCKETDESK USER');
+  late final TextEditingController _cardHolderCtrl;
   final _cardNumberCtrl = TextEditingController(text: '5412 7512 3412 8990');
   final _expiryCtrl = TextEditingController(text: '12/28');
   final _cvvCtrl = TextEditingController(text: '888');
@@ -54,6 +55,15 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    final authState = ref.read(authNotifierProvider).valueOrNull;
+    final user = authState is AuthAuthenticated ? authState.user : null;
+    final username = user?.displayName ?? user?.username ?? 'POCKETDESK USER';
+    _cardHolderCtrl = TextEditingController(text: username.toUpperCase());
+  }
+
+  @override
   void dispose() {
     _titleCtrl.dispose();
     _amountCtrl.dispose();
@@ -72,12 +82,22 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
     _balanceCtrl.text = state.currentBalance.toStringAsFixed(0);
     showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+        title: Row(
           children: [
-            Icon(Icons.credit_card_rounded, color: Colors.amber),
-            SizedBox(width: 8),
-            Text('Edit Mastercard Details'),
+            const Icon(Icons.credit_card_rounded, color: Colors.amber, size: 22),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Edit Card Details',
+                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         content: SingleChildScrollView(
@@ -88,22 +108,24 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                 controller: _cardHolderCtrl,
                 decoration: const InputDecoration(
                   labelText: 'Cardholder Name',
+                  isDense: true,
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person_outline_rounded),
                 ),
                 onChanged: (_) => setState(() {}),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               TextField(
                 controller: _cardNumberCtrl,
                 decoration: const InputDecoration(
                   labelText: 'Card Number',
+                  isDense: true,
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.credit_card_rounded),
                 ),
                 onChanged: (_) => setState(() {}),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
@@ -112,18 +134,20 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                       decoration: const InputDecoration(
                         labelText: 'Expires',
                         hintText: 'MM/YY',
+                        isDense: true,
                         border: OutlineInputBorder(),
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: TextField(
                       controller: _cvvCtrl,
                       decoration: const InputDecoration(
                         labelText: 'CVV / CVC',
                         hintText: '888',
+                        isDense: true,
                         border: OutlineInputBorder(),
                       ),
                       onChanged: (_) => setState(() {}),
@@ -131,13 +155,14 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               TextField(
                 controller: _balanceCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   labelText: 'Wallet Balance (${state.currency})',
                   prefixText: '${state.currency} ',
+                  isDense: true,
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
                 ),
@@ -159,7 +184,7 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
               setState(() {});
               Navigator.pop(ctx);
             },
-            child: const Text('Save Card Details'),
+            child: const Text('Save Details'),
           ),
         ],
       ),
@@ -442,23 +467,33 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                 GestureDetector(
                   onTap: () => setState(() => _showCardBack = !_showCardBack),
                   child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 500),
-                    transitionBuilder: (widget, anim) {
-                      final rotation = Tween(begin: 3.14159, end: 0.0).animate(anim);
+                    duration: const Duration(milliseconds: 600),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    transitionBuilder: (Widget child, Animation<double> animation) {
+                      final rotate = Tween(begin: 3.1415926535, end: 0.0).animate(animation);
                       return AnimatedBuilder(
-                        animation: rotation,
-                        builder: (context, child) {
-                          final isUnder = (ValueKey(_showCardBack) != widget.key);
-                          var value = isUnder ? (3.14159 - rotation.value) : rotation.value;
-                          if (value < 0) value = 0;
-                          return Transform(
-                            transform: Matrix4.identity()
-                              ..setEntry(3, 2, 0.001)
-                              ..rotateY(value),
-                            alignment: Alignment.center,
-                            child: widget,
+                        animation: rotate,
+                        builder: (BuildContext context, Widget? childWidget) {
+                          final isBack = child.key == const ValueKey(true);
+                          double value = rotate.value;
+                          if (isBack) {
+                            value = 3.1415926535 - value;
+                          }
+                          // Hide face when turned away (> 90 deg / 1.57 rad)
+                          final showFace = value < (3.1415926535 / 2);
+                          return Opacity(
+                            opacity: showFace ? 1.0 : 0.0,
+                            child: Transform(
+                              transform: Matrix4.identity()
+                                ..setEntry(3, 2, 0.001)
+                                ..rotateY(value),
+                              alignment: Alignment.center,
+                              child: childWidget,
+                            ),
                           );
                         },
+                        child: child,
                       );
                     },
                     child: _showCardBack

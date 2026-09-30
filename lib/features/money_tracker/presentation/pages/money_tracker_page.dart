@@ -84,17 +84,25 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
       context: context,
       useSafeArea: true,
       builder: (ctx) => AlertDialog(
-        titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
         title: Row(
           children: [
-            const Icon(Icons.credit_card_rounded, color: Colors.amber, size: 22),
-            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.credit_card_rounded, color: Colors.amber, size: 22),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 'Edit Card Details',
-                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -106,64 +114,79 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
             children: [
               TextField(
                 controller: _cardHolderCtrl,
-                decoration: const InputDecoration(
+                style: const TextStyle(fontWeight: FontWeight.bold),
+                decoration: InputDecoration(
                   labelText: 'Cardholder Name',
                   isDense: true,
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person_outline_rounded),
+                  filled: true,
+                  fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  prefixIcon: const Icon(Icons.person_outline_rounded),
                 ),
                 onChanged: (_) => setState(() {}),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               TextField(
                 controller: _cardNumberCtrl,
-                decoration: const InputDecoration(
+                style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+                decoration: InputDecoration(
                   labelText: 'Card Number',
                   isDense: true,
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.credit_card_rounded),
+                  filled: true,
+                  fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  prefixIcon: const Icon(Icons.credit_card_rounded),
                 ),
                 onChanged: (_) => setState(() {}),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _expiryCtrl,
-                      decoration: const InputDecoration(
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      decoration: InputDecoration(
                         labelText: 'Expires',
                         hintText: 'MM/YY',
                         isDense: true,
-                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
                       controller: _cvvCtrl,
-                      decoration: const InputDecoration(
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      decoration: InputDecoration(
                         labelText: 'CVV / CVC',
                         hintText: '888',
                         isDense: true,
-                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               TextField(
                 controller: _balanceCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: const TextStyle(fontWeight: FontWeight.bold),
                 decoration: InputDecoration(
                   labelText: 'Wallet Balance (${state.currency})',
                   prefixText: '${state.currency} ',
                   isDense: true,
-                  border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                   prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
                 ),
               ),
@@ -175,7 +198,7 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
-          FilledButton(
+          FilledButton.icon(
             onPressed: () {
               final bal = double.tryParse(_balanceCtrl.text.trim());
               if (bal != null) {
@@ -184,7 +207,8 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
               setState(() {});
               Navigator.pop(ctx);
             },
-            child: const Text('Save Details'),
+            icon: const Icon(Icons.check_rounded, size: 18),
+            label: const Text('Save Details'),
           ),
         ],
       ),

@@ -7,7 +7,7 @@ import 'package:pocketdesk/features/money_tracker/data/models/expense_model.dart
 import 'package:pocketdesk/features/money_tracker/presentation/providers/money_notifier.dart';
 import 'money_health_page.dart';
 
-/// Modern, Material 3 redesigned Money Tracker Page.
+/// Professional, Material 3 Redesigned Money Tracker Page with Interactive MasterCard.
 class MoneyTrackerPage extends ConsumerStatefulWidget {
   const MoneyTrackerPage({super.key});
 
@@ -20,8 +20,16 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
   final _amountCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
   final _tagsCtrl = TextEditingController();
+  final _customCategoryCtrl = TextEditingController();
+
+  // Mastercard Details Controllers
+  final _cardHolderCtrl = TextEditingController(text: 'POCKETDESK USER');
+  final _cardNumberCtrl = TextEditingController(text: '5412 7512 3412 8990');
+  final _expiryCtrl = TextEditingController(text: '12/28');
+  final _cvvCtrl = TextEditingController(text: '888');
   final _balanceCtrl = TextEditingController();
 
+  bool _showCardBack = false;
   String _selectedCategory = 'Food';
   static const List<String> _categories = [
     'Food',
@@ -42,7 +50,7 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
     'Bills': Icons.receipt_long_rounded,
     'Health': Icons.medical_services_rounded,
     'Education': Icons.school_rounded,
-    'Other': Icons.category_rounded,
+    'Other': Icons.more_horiz_rounded,
   };
 
   @override
@@ -51,29 +59,91 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
     _amountCtrl.dispose();
     _noteCtrl.dispose();
     _tagsCtrl.dispose();
+    _customCategoryCtrl.dispose();
+    _cardHolderCtrl.dispose();
+    _cardNumberCtrl.dispose();
+    _expiryCtrl.dispose();
+    _cvvCtrl.dispose();
     _balanceCtrl.dispose();
     super.dispose();
   }
 
-  void _showSetBalanceDialog(MoneyState state) {
+  void _showEditCardDialog(MoneyState state) {
     _balanceCtrl.text = state.currentBalance.toStringAsFixed(0);
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Set Wallet Balance'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+        title: const Row(
           children: [
-            TextField(
-              controller: _balanceCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: 'Starting Balance (${state.currency})',
-                prefixText: '${state.currency} ',
-                border: const OutlineInputBorder(),
-              ),
-            ),
+            Icon(Icons.credit_card_rounded, color: Colors.amber),
+            SizedBox(width: 8),
+            Text('Edit Mastercard Details'),
           ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _cardHolderCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Cardholder Name',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.person_outline_rounded),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _cardNumberCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Card Number',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.credit_card_rounded),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _expiryCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Expires',
+                        hintText: 'MM/YY',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _cvvCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'CVV / CVC',
+                        hintText: '888',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _balanceCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: 'Wallet Balance (${state.currency})',
+                  prefixText: '${state.currency} ',
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -86,9 +156,10 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
               if (bal != null) {
                 ref.read(moneyProvider.notifier).updateBalance(bal);
               }
+              setState(() {});
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: const Text('Save Card Details'),
           ),
         ],
       ),
@@ -99,7 +170,13 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
     if (editExpense != null) {
       _titleCtrl.text = editExpense.title;
       _amountCtrl.text = editExpense.amount.toStringAsFixed(0);
-      _selectedCategory = editExpense.category;
+      if (_categories.contains(editExpense.category)) {
+        _selectedCategory = editExpense.category;
+        _customCategoryCtrl.clear();
+      } else {
+        _selectedCategory = 'Other';
+        _customCategoryCtrl.text = editExpense.category;
+      }
       _noteCtrl.text = editExpense.note ?? '';
       _tagsCtrl.text = editExpense.tags.join(', ');
     } else {
@@ -107,6 +184,7 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
       _amountCtrl.clear();
       _noteCtrl.clear();
       _tagsCtrl.clear();
+      _customCategoryCtrl.clear();
       _selectedCategory = 'Food';
     }
 
@@ -114,6 +192,7 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -130,11 +209,22 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Theme.of(ctx).colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      editExpense == null ? 'New Expense' : 'Edit Expense',
+                      editExpense == null ? 'Record New Expense' : 'Edit Expense Record',
                       style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     IconButton(
@@ -146,31 +236,39 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                 const SizedBox(height: AppSpacing.md),
                 TextField(
                   controller: _titleCtrl,
-                  decoration: const InputDecoration(
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
                     labelText: 'Expense Title',
-                    hintText: 'e.g., Grocery Shopping',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.edit_note_rounded),
+                    hintText: 'e.g. Dinner, Rent, Flight',
+                    filled: true,
+                    fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    prefixIcon: const Icon(Icons.shopping_cart_outlined),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 TextField(
                   controller: _amountCtrl,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Theme.of(ctx).colorScheme.error),
+                  decoration: InputDecoration(
                     labelText: 'Amount',
                     hintText: '0.00',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.attach_money_rounded),
+                    filled: true,
+                    fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    prefixIcon: const Icon(Icons.attach_money_rounded),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 DropdownButtonFormField<String>(
-                  initialValue: _categories.contains(_selectedCategory) ? _selectedCategory : _categories.first,
-                  decoration: const InputDecoration(
+                  initialValue: _categories.contains(_selectedCategory) ? _selectedCategory : 'Other',
+                  decoration: InputDecoration(
                     labelText: 'Category',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.category_outlined),
+                    filled: true,
+                    fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    prefixIcon: const Icon(Icons.category_outlined),
                   ),
                   items: _categories
                       .map((c) => DropdownMenuItem(
@@ -191,28 +289,50 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                     }
                   },
                 ),
+                if (_selectedCategory == 'Other') ...[
+                  const SizedBox(height: AppSpacing.md),
+                  TextField(
+                    controller: _customCategoryCtrl,
+                    decoration: InputDecoration(
+                      labelText: 'Custom Category Name',
+                      hintText: 'Enter your custom category',
+                      filled: true,
+                      fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                      prefixIcon: const Icon(Icons.label_outline_rounded),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.md),
                 TextField(
                   controller: _noteCtrl,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Optional Note',
-                    hintText: 'Add description or location',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.notes_rounded),
+                    hintText: 'Merchant details or description',
+                    filled: true,
+                    fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    prefixIcon: const Icon(Icons.notes_rounded),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 TextField(
                   controller: _tagsCtrl,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Tags (comma separated)',
-                    hintText: 'e.g., personal, essential',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.tag_rounded),
+                    hintText: 'e.g. personal, urgent',
+                    filled: true,
+                    fillColor: Theme.of(ctx).colorScheme.surfaceContainerLow,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    prefixIcon: const Icon(Icons.tag_rounded),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
                   onPressed: () {
                     final title = _titleCtrl.text.trim();
                     final amt = double.tryParse(_amountCtrl.text.trim());
@@ -222,6 +342,10 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                       );
                       return;
                     }
+
+                    final finalCategory = _selectedCategory == 'Other' && _customCategoryCtrl.text.trim().isNotEmpty
+                        ? _customCategoryCtrl.text.trim()
+                        : _selectedCategory;
 
                     final tags = _tagsCtrl.text
                         .split(',')
@@ -233,7 +357,7 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                       ref.read(moneyProvider.notifier).addExpense(
                             title: title,
                             amount: amt,
-                            category: _selectedCategory,
+                            category: finalCategory,
                             date: DateTime.now(),
                             note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
                             tags: tags,
@@ -244,7 +368,7 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                         ..userId = editExpense.userId
                         ..title = title
                         ..amount = amt
-                        ..category = _selectedCategory
+                        ..category = finalCategory
                         ..date = editExpense.date
                         ..note = _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim()
                         ..tags = tags;
@@ -254,8 +378,11 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
 
                     Navigator.pop(ctx);
                   },
-                  icon: Icon(editExpense == null ? Icons.check_rounded : Icons.save_rounded),
-                  label: Text(editExpense == null ? 'Save Expense' : 'Update Expense'),
+                  icon: Icon(editExpense == null ? Icons.check_circle_rounded : Icons.save_rounded),
+                  label: Text(
+                    editExpense == null ? 'Add Expense' : 'Update Expense',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                 ),
               ],
             ),
@@ -299,16 +426,7 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
-                const SizedBox(height: 12),
-                Text('Could not load financial data', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 4),
-                Text('$e', style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
-              ],
-            ),
+            child: Text('Error: $e'),
           ),
         ),
         data: (state) {
@@ -316,114 +434,76 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
           final categoryBreakdown = state.categoryBreakdown;
 
           return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(moneyProvider);
-            },
+            onRefresh: () async => ref.invalidate(moneyProvider),
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.md),
               children: [
-                // Premium Balance Banner Card
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [cs.primaryContainer, cs.surfaceContainerHigh],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: cs.shadow.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: cs.primary.withValues(alpha: 0.12),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(Icons.account_balance_wallet_rounded, color: cs.primary, size: 22),
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  'Current Wallet Balance',
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: cs.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            IconButton.filledTonal(
-                              icon: const Icon(Icons.edit_outlined, size: 18),
-                              onPressed: () => _showSetBalanceDialog(state),
-                              tooltip: 'Edit Starting Balance',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          '${state.currency} ${NumberFormat('#,##0.00').format(state.currentBalance)}',
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            color: cs.onSurface,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Divider(height: 1),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _StatMetricTile(
-                                icon: Icons.today_rounded,
-                                label: 'Today',
-                                amount: state.todaySpent,
-                                currency: state.currency,
-                              ),
-                            ),
-                            Container(width: 1, height: 36, color: cs.outlineVariant.withValues(alpha: 0.5)),
-                            Expanded(
-                              child: _StatMetricTile(
-                                icon: Icons.date_range_rounded,
-                                label: 'This Week',
-                                amount: state.thisWeekSpent,
-                                currency: state.currency,
-                              ),
-                            ),
-                            Container(width: 1, height: 36, color: cs.outlineVariant.withValues(alpha: 0.5)),
-                            Expanded(
-                              child: _StatMetricTile(
-                                icon: Icons.calendar_month_rounded,
-                                label: 'This Month',
-                                amount: state.thisMonthSpent,
-                                currency: state.currency,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                // ─── Interactive MasterCard Widget ─────────────────────────────
+                GestureDetector(
+                  onTap: () => setState(() => _showCardBack = !_showCardBack),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 500),
+                    transitionBuilder: (widget, anim) {
+                      final rotation = Tween(begin: 3.14159, end: 0.0).animate(anim);
+                      return AnimatedBuilder(
+                        animation: rotation,
+                        builder: (context, child) {
+                          final isUnder = (ValueKey(_showCardBack) != widget.key);
+                          var value = isUnder ? (3.14159 - rotation.value) : rotation.value;
+                          if (value < 0) value = 0;
+                          return Transform(
+                            transform: Matrix4.identity()
+                              ..setEntry(3, 2, 0.001)
+                              ..rotateY(value),
+                            alignment: Alignment.center,
+                            child: widget,
+                          );
+                        },
+                      );
+                    },
+                    child: _showCardBack
+                        ? _buildMasterCardBack(context, state, cs)
+                        : _buildMasterCardFront(context, state, cs),
                   ),
                 ),
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // Category Quick Breakdown Chips (if expenses exist)
+                // ─── Stat Metric Row ───────────────────────────────────────────
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatMetricTile(
+                        icon: Icons.today_rounded,
+                        label: 'Today',
+                        amount: state.todaySpent,
+                        currency: state.currency,
+                      ),
+                    ),
+                    Container(width: 1, height: 32, color: cs.outlineVariant.withValues(alpha: 0.4)),
+                    Expanded(
+                      child: _StatMetricTile(
+                        icon: Icons.date_range_rounded,
+                        label: 'This Week',
+                        amount: state.thisWeekSpent,
+                        currency: state.currency,
+                      ),
+                    ),
+                    Container(width: 1, height: 32, color: cs.outlineVariant.withValues(alpha: 0.4)),
+                    Expanded(
+                      child: _StatMetricTile(
+                        icon: Icons.calendar_month_rounded,
+                        label: 'This Month',
+                        amount: state.thisMonthSpent,
+                        currency: state.currency,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: AppSpacing.lg),
+
+                // ─── Category Breakdown Horizontal List ───────────────────────
                 if (categoryBreakdown.isNotEmpty) ...[
                   Text(
                     'Category Breakdown',
@@ -453,13 +533,13 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                   const SizedBox(height: AppSpacing.lg),
                 ],
 
-                // Search & Category Filter Section
+                // ─── Search and Category Filter Bar ────────────────────────────
                 Row(
                   children: [
                     Expanded(
                       child: TextField(
                         decoration: InputDecoration(
-                          hintText: 'Search title, category, tags…',
+                          hintText: 'Search expenses or tags…',
                           prefixIcon: const Icon(Icons.search_rounded),
                           filled: true,
                           fillColor: cs.surfaceContainerLow,
@@ -491,19 +571,13 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                       itemBuilder: (ctx) => [
                         const PopupMenuItem<String?>(
                           value: null,
-                          child: Row(
-                            children: [
-                              Icon(Icons.all_inclusive_rounded, size: 20),
-                              SizedBox(width: 8),
-                              Text('All Categories'),
-                            ],
-                          ),
+                          child: Text('All Categories'),
                         ),
                         ..._categories.map((c) => PopupMenuItem<String?>(
                               value: c,
                               child: Row(
                                 children: [
-                                  Icon(_categoryIcons[c] ?? Icons.category_rounded, size: 20),
+                                  Icon(_categoryIcons[c] ?? Icons.category_rounded, size: 18),
                                   const SizedBox(width: 8),
                                   Text(c),
                                 ],
@@ -516,13 +590,13 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // Transactions Header
+                // ─── Expenses List Header ─────────────────────────────────────
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       state.filterCategory == null
-                          ? 'Recent Expenses (${expenses.length})'
+                          ? 'Recent Transactions (${expenses.length})'
                           : '${state.filterCategory} (${expenses.length})',
                       style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                     ),
@@ -533,7 +607,7 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                           ref.read(moneyProvider.notifier).setSearchQuery('');
                         },
                         icon: const Icon(Icons.clear_all_rounded, size: 16),
-                        label: const Text('Reset Filters'),
+                        label: const Text('Reset'),
                       ),
                   ],
                 ),
@@ -542,23 +616,17 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
 
                 if (expenses.isEmpty)
                   Container(
-                    padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+                    padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
                     alignment: Alignment.center,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.account_balance_wallet_outlined, size: 64, color: cs.outline.withValues(alpha: 0.5)),
-                        const SizedBox(height: 16),
+                        Icon(Icons.credit_card_off_rounded, size: 56, color: cs.outline.withValues(alpha: 0.4)),
+                        const SizedBox(height: 12),
+                        Text('No Expenses Found', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 4),
                         Text(
-                          'No Expenses Found',
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          state.searchQuery.isNotEmpty || state.filterCategory != null
-                              ? 'Try searching with another keyword or resetting filters.'
-                              : 'Tap "Add Expense" below to start tracking your daily spendings!',
-                          textAlign: TextAlign.center,
+                          'Tap "Add Expense" below to start logging your finances!',
                           style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                         ),
                       ],
@@ -579,7 +647,7 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                         color: cs.surfaceContainerLow,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                          side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3)),
                         ),
                         child: ListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -641,7 +709,6 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                                   color: cs.error,
                                 ),
                               ),
-                              const SizedBox(width: 4),
                               PopupMenuButton<String>(
                                 icon: const Icon(Icons.more_vert_rounded, size: 20),
                                 onSelected: (action) {
@@ -654,35 +721,15 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                                         content: Text('Deleted "${exp.title}"'),
                                         action: SnackBarAction(
                                           label: 'UNDO',
-                                          onPressed: () {
-                                            ref.read(moneyProvider.notifier).undoDelete();
-                                          },
+                                          onPressed: () => ref.read(moneyProvider.notifier).undoDelete(),
                                         ),
                                       ),
                                     );
                                   }
                                 },
                                 itemBuilder: (ctx) => const [
-                                  PopupMenuItem(
-                                    value: 'edit',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.edit_outlined, size: 18),
-                                        SizedBox(width: 8),
-                                        Text('Edit'),
-                                      ],
-                                    ),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'delete',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red),
-                                        SizedBox(width: 8),
-                                        Text('Delete', style: TextStyle(color: Colors.red)),
-                                      ],
-                                    ),
-                                  ),
+                                  PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                  PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
                                 ],
                               ),
                             ],
@@ -691,11 +738,185 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                       );
                     },
                   ),
-                const SizedBox(height: 80), // Bottom padding for FAB
+                const SizedBox(height: 80),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  // ─── MasterCard Front View Widget ──────────────────────────────────────────
+  Widget _buildMasterCardFront(BuildContext context, MoneyState state, ColorScheme cs) {
+    return Container(
+      key: const ValueKey(false),
+      height: 210,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E1E2C), Color(0xFF2D2B42), Color(0xFF1A1921)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(color: Colors.black38, blurRadius: 12, offset: Offset(0, 6)),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.nfc_rounded, color: Colors.white70, size: 24),
+                  const SizedBox(width: 8),
+                  Text(
+                    'POCKETDESK BANK',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.8), letterSpacing: 1.5, fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, color: Colors.white70, size: 20),
+                onPressed: () => _showEditCardDialog(state),
+                tooltip: 'Edit Card Details',
+              ),
+            ],
+          ),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('BALANCE', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 9, letterSpacing: 1.2)),
+                  Text(
+                    '${state.currency} ${NumberFormat('#,##0.00').format(state.currentBalance)}',
+                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                  ),
+                ],
+              ),
+              // Mastercard Circles Logo
+              SizedBox(
+                width: 48,
+                height: 30,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      left: 0,
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: const BoxDecoration(color: Color(0xFFEB001B), shape: BoxShape.circle),
+                      ),
+                    ),
+                    Positioned(
+                      right: 0,
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(color: const Color(0xFFF79E1B).withValues(alpha: 0.9), shape: BoxShape.circle),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _cardNumberCtrl.text.isEmpty ? '5412 7512 3412 8990' : _cardNumberCtrl.text,
+                    style: const TextStyle(color: Colors.white, letterSpacing: 2, fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _cardHolderCtrl.text.toUpperCase(),
+                    style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('EXPIRES', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 9)),
+                  Text(_expiryCtrl.text, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── MasterCard Back View Widget ───────────────────────────────────────────
+  Widget _buildMasterCardBack(BuildContext context, MoneyState state, ColorScheme cs) {
+    return Container(
+      key: const ValueKey(true),
+      height: 210,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF15141E), Color(0xFF232230)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(color: Colors.black38, blurRadius: 12, offset: Offset(0, 6)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
+          // Magnetic Stripe
+          Container(height: 40, color: Colors.black),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 36,
+                    color: Colors.white70,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Text(
+                      _cvvCtrl.text,
+                      style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14, fontStyle: FontStyle.italic),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text('CVV/CVC', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Tap card to view front', style: TextStyle(color: Colors.white54, fontSize: 10)),
+                Text('MasterCard SecureCode', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 10, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -748,4 +969,5 @@ class _StatMetricTile extends StatelessWidget {
     );
   }
 }
+
 

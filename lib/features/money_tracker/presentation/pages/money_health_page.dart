@@ -108,7 +108,7 @@ Use only the supplied expense records and balance. Do not invent income, budgets
     final colors = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Money Report')),
+      appBar: AppBar(title: const Text('Financial Report & Insights')),
       body: ref.watch(moneyProvider).when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) =>

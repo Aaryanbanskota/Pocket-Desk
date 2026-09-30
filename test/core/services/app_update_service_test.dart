@@ -2,64 +2,75 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketdesk/core/services/app_update_service.dart';
 
 void main() {
-  group('AppUpdateInfo', () {
-    test('parses a secure APK update manifest', () {
-      final update = AppUpdateInfo.fromJson({
-        'version': '1.3.0',
-        'buildNumber': 4,
+  group('AppUpdateInfo & ReleaseChannel', () {
+    test('parses version channel suffixes correctly', () {
+      final trialUpdate = AppUpdateInfo.fromJson({
+        'version': '1.3.0-t',
+        'buildNumber': 5,
         'url': 'https://example.com/pocketdesk.apk',
         'required': false,
-        'releaseNotes': 'Bug fixes',
+        'releaseNotes': 'Trial build',
+        'newFeatures': ['Feature A'],
       });
 
-      expect(update.version, '1.3.0');
-      expect(update.buildNumber, 4);
-      expect(update.url, 'https://example.com/pocketdesk.apk');
+      expect(trialUpdate.version, '1.3.0-t');
+      expect(trialUpdate.channel, ReleaseChannel.trial);
+      expect(trialUpdate.newFeatures, ['Feature A']);
+
+      final revUpdate = AppUpdateInfo.fromJson({
+        'version': '1.3.0-rev',
+        'buildNumber': 5,
+        'url': 'https://example.com/pocketdesk.apk',
+        'required': false,
+        'releaseNotes': 'Review build',
+      });
+      expect(revUpdate.channel, ReleaseChannel.review);
+
+      final offiUpdate = AppUpdateInfo.fromJson({
+        'version': '1.3.0-offi',
+        'buildNumber': 5,
+        'url': 'https://example.com/pocketdesk.apk',
+        'required': false,
+        'releaseNotes': 'Official build',
+      });
+      expect(offiUpdate.channel, ReleaseChannel.official);
     });
 
-    test('rejects an invalid version or insecure download URL', () {
+    test('rejects invalid suffixes or insecure URLs', () {
       expect(
         () => AppUpdateInfo.fromJson({
-          'version': 'latest',
+          'version': '1.3.0-invalid',
           'buildNumber': 4,
-          'url': 'http://example.com/pocketdesk.apk',
+          'url': 'https://example.com/pocketdesk.apk',
         }),
         throwsFormatException,
       );
     });
   });
 
-  group('AppUpdateService.isUpdateAvailable', () {
-    const update = AppUpdateInfo(
-      version: '1.3.0',
-      buildNumber: 4,
-      url: 'https://example.com/pocketdesk.apk',
-      required: false,
-      releaseNotes: '',
-    );
+  group('AppUpdateService.isUpdateAvailable with Channel Precedence', () {
+    test('handles channel upgrades when build number is identical', () {
+      const offiUpdate = AppUpdateInfo(
+        version: '1.2.1-offi',
+        buildNumber: 4,
+        url: 'https://example.com/pocketdesk.apk',
+        required: false,
+        releaseNotes: '',
+      );
 
-    test('requires both a newer app version and Android build number', () {
+      // Upgrading from trial to official with same build number is allowed
       expect(
         AppUpdateService.isUpdateAvailable(
-          currentVersion: '1.2.0',
-          currentBuildNumber: 3,
-          update: update,
+          currentVersion: '1.2.1-t',
+          currentBuildNumber: 4,
+          update: offiUpdate,
         ),
         isTrue,
       );
-      expect(
-        AppUpdateService.isUpdateAvailable(
-          currentVersion: '1.2.0',
-          currentBuildNumber: 4,
-          update: update,
-        ),
-        isFalse,
-      );
-    });
 
-    test('allows a build-only update but rejects version downgrades', () {
-      const buildOnlyUpdate = AppUpdateInfo(
-        version: '1.2.0',
+      // Downgrading from official to trial with same build number is rejected
+      const trialUpdate = AppUpdateInfo(
+        version: '1.2.1-t',
         buildNumber: 4,
         url: 'https://example.com/pocketdesk.apk',
         required: false,
@@ -67,17 +78,9 @@ void main() {
       );
       expect(
         AppUpdateService.isUpdateAvailable(
-          currentVersion: '1.2.0',
-          currentBuildNumber: 3,
-          update: buildOnlyUpdate,
-        ),
-        isTrue,
-      );
-      expect(
-        AppUpdateService.isUpdateAvailable(
-          currentVersion: '1.3.0',
-          currentBuildNumber: 3,
-          update: buildOnlyUpdate,
+          currentVersion: '1.2.1-offi',
+          currentBuildNumber: 4,
+          update: trialUpdate,
         ),
         isFalse,
       );

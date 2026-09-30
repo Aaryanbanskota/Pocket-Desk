@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:pocketdesk/features/auth/presentation/providers/auth_notifier.dart';
 import 'package:pocketdesk/features/money_tracker/data/models/expense_model.dart';
 import 'package:pocketdesk/features/money_tracker/presentation/providers/money_notifier.dart';
 import 'package:pocketdesk/features/settings/presentation/providers/ai_settings_notifier.dart';
@@ -62,23 +63,27 @@ class _MoneyHealthPageState extends ConsumerState<MoneyHealthPage> {
               '${DateFormat('yyyy-MM-dd').format(expense.date)} | ${expense.category} | ${expense.title} | ${state.currency} ${expense.amount.toStringAsFixed(2)}')
           .join('\n');
       final prompt = '''
-Prepare a professional monthly account activity report using only these recorded expense transactions.
+Prepare a professional monthly financial audit and receipt summary using only these recorded expense transactions.
 Reporting period: ${DateFormat('MMMM yyyy').format(now)}
 Current wallet balance: ${state.currency} ${state.currentBalance.toStringAsFixed(2)}
 Recorded expenses this month: ${state.currency} ${totalSpent.toStringAsFixed(2)}
 Transaction count: ${monthExpenses.length}
-Average recorded spend per elapsed calendar day: ${state.currency} ${(totalSpent / now.day).toStringAsFixed(2)}
+Average daily spend: ${state.currency} ${(totalSpent / now.day).toStringAsFixed(2)}
 Largest transaction: ${largest == null ? 'None' : '${largest.title} (${largest.category}), ${state.currency} ${largest.amount.toStringAsFixed(2)}'}
-Expense totals by category:
+Category breakdown:
 ${categoriesText.isEmpty ? 'None' : categoriesText}
 
-Recent transactions (up to 20):
+Recent items (up to 20):
 ${transactionsText.isEmpty ? 'None' : transactionsText}
 ''';
       const systemPrompt = '''
-You are a careful personal-finance report writer, not a bank and not a financial adviser.
-Write a concise, professional statement-style report with headings: Monthly overview, Spending mix, Notable activity, and Practical observations.
-Use only the supplied expense records and balance. Do not invent income, budgets, prior-period comparisons, account details, causes, or forecasts. State when there is not enough data to draw a conclusion. Do not repeat raw transaction data unnecessarily. Clearly call these local wallet records, not bank-verified transactions.
+You are a smart financial analyst summarizing a monthly store-style receipt/statement.
+Write a concise breakdown with thermal-bill style section headers:
+1. SPENDING SUMMARY & HEALTH RATING
+2. TOP SPENDING DRIVERS
+3. AI FINANCIAL ADVICE & AUDIT
+
+Keep formatting clean, engaging, and professional.
 ''';
 
       final report =
@@ -105,10 +110,24 @@ Use only the supplied expense records and balance. Do not invent income, budgets
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final receiptPaperColor = isDark ? const Color(0xFF1E1E24) : const Color(0xFFFAF8F5);
+    final receiptTextColor = isDark ? const Color(0xFFE2E2E8) : const Color(0xFF1F1F1F);
+    final receiptSubtextColor = isDark ? const Color(0xFF9E9EA8) : const Color(0xFF666666);
+    final dashColor = isDark ? const Color(0xFF44444E) : const Color(0xFFCCCCCC);
+
+    final authState = ref.watch(authNotifierProvider).valueOrNull;
+    String userName = 'Valued Customer';
+    if (authState is AuthAuthenticated) {
+      userName = authState.user.displayName ?? authState.user.username;
+    }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Money Report')),
+      appBar: AppBar(
+        title: const Text('Financial Report & Insights'),
+        centerTitle: true,
+      ),
       body: ref.watch(moneyProvider).when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) =>
@@ -133,286 +152,541 @@ Use only the supplied expense records and balance. Do not invent income, budgets
               }
               final orderedCategories = categories.entries.toList()
                 ..sort((a, b) => b.value.compareTo(a.value));
-              final averagePerDay = totalSpent / now.day;
-              final largestCategory =
-                  orderedCategories.isEmpty ? null : orderedCategories.first;
+              final averagePerDay = totalSpent / (now.day > 0 ? now.day : 1);
+              final receiptNo = 'INV-${now.year}${now.month.toString().padLeft(2, '0')}-${(now.day * 137) % 9000 + 1000}';
 
-              return ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  Card(
-                    margin: EdgeInsets.zero,
-                    color: colors.surface,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(color: colors.outlineVariant),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+              return SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 500),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: receiptPaperColor,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: ClipPath(
+                        clipper: ZigZagClipper(),
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              CircleAvatar(
-                                backgroundColor: colors.primaryContainer,
-                                foregroundColor: colors.onPrimaryContainer,
-                                child: const Icon(Icons.receipt_long_rounded),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
+                              Center(
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('ACCOUNT ACTIVITY',
-                                        style: theme.textTheme.labelSmall
-                                            ?.copyWith(
-                                          color: colors.onSurfaceVariant,
-                                          letterSpacing: 1.1,
-                                          fontWeight: FontWeight.w700,
-                                        )),
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: receiptTextColor.withValues(alpha: 0.08),
+                                      ),
+                                      child: Icon(
+                                        Icons.storefront_rounded,
+                                        size: 36,
+                                        color: receiptTextColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
                                     Text(
-                                      DateFormat('MMMM yyyy').format(now),
-                                      style:
-                                          theme.textTheme.titleLarge?.copyWith(
-                                        fontWeight: FontWeight.w700,
+                                      'POCKETDESK STORE',
+                                      style: TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 2.0,
+                                        color: receiptTextColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'MONTHLY EXPENSE RECEIPT',
+                                      style: TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 1.5,
+                                        color: receiptSubtextColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'PERIOD: ${DateFormat('MMMM yyyy').format(now).toUpperCase()}',
+                                      style: TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 11,
+                                        color: receiptSubtextColor,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              Icon(Icons.info_outline_rounded,
-                                  color: colors.onSurfaceVariant),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          Text('CURRENT WALLET BALANCE',
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                color: colors.onSurfaceVariant,
-                                letterSpacing: 0.8,
-                              )),
-                          const SizedBox(height: 4),
-                          Text(
-                            _money(state.currency, state.currentBalance),
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: colors.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Pocketdesk local wallet • Not a bank statement',
-                            style: theme.textTheme.bodySmall
-                                ?.copyWith(color: colors.onSurfaceVariant),
-                          ),
-                          const SizedBox(height: 20),
-                          Divider(color: colors.outlineVariant),
-                          const SizedBox(height: 16),
-                          LayoutBuilder(
-                            builder: (context, constraints) {
-                              final width = (constraints.maxWidth - 16) / 2;
-                              return Wrap(
-                                spacing: 16,
-                                runSpacing: 16,
-                                children: [
-                                  SizedBox(
-                                    width: width,
-                                    child: _ReportMetric(
-                                      label: 'Spent this month',
-                                      value: _money(state.currency, totalSpent),
-                                      icon: Icons.south_west_rounded,
-                                      color: colors.error,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: width,
-                                    child: _ReportMetric(
-                                      label: 'Daily average',
-                                      value:
-                                          _money(state.currency, averagePerDay),
-                                      icon: Icons.calendar_today_rounded,
-                                      color: colors.primary,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: width,
-                                    child: _ReportMetric(
-                                      label: 'Transactions',
-                                      value: '${monthExpenses.length}',
-                                      icon: Icons.swap_horiz_rounded,
-                                      color: colors.secondary,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: width,
-                                    child: _ReportMetric(
-                                      label: 'Top category',
-                                      value: largestCategory?.key ?? '—',
-                                      icon: Icons.pie_chart_outline_rounded,
-                                      color: colors.tertiary,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Card(
-                    margin: EdgeInsets.zero,
-                    child: Padding(
-                      padding: const EdgeInsets.all(18),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Spending by category',
-                              style: theme.textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 16),
-                          if (orderedCategories.isEmpty)
-                            Text('No expenses recorded this month.',
-                                style: theme.textTheme.bodyMedium
-                                    ?.copyWith(color: colors.onSurfaceVariant))
-                          else
-                            ...orderedCategories.map((entry) {
-                              final share = totalSpent == 0
-                                  ? 0.0
-                                  : entry.value / totalSpent;
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              const SizedBox(height: 16),
+                              _DottedDivider(color: dashColor),
+                              const SizedBox(height: 12),
+
+                              _ReceiptMetaRow(
+                                leftLabel: 'CUSTOMER:',
+                                leftValue: userName.toUpperCase(),
+                                rightLabel: 'RECEIPT #:',
+                                rightValue: receiptNo,
+                                textColor: receiptTextColor,
+                                subtextColor: receiptSubtextColor,
+                              ),
+                              const SizedBox(height: 6),
+                              _ReceiptMetaRow(
+                                leftLabel: 'DATE:',
+                                leftValue: DateFormat('yyyy-MM-dd HH:mm').format(now),
+                                rightLabel: 'STATUS:',
+                                rightValue: state.spendingStatus,
+                                textColor: receiptTextColor,
+                                subtextColor: receiptSubtextColor,
+                              ),
+
+                              const SizedBox(height: 16),
+                              _DottedDivider(color: dashColor),
+                              const SizedBox(height: 16),
+
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: dashColor, width: 1.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Row(
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Expanded(
-                                            child: Text(entry.key,
-                                                style: theme
-                                                    .textTheme.bodyMedium
-                                                    ?.copyWith(
-                                                  fontWeight: FontWeight.w600,
-                                                ))),
                                         Text(
-                                          '${_money(state.currency, entry.value)}  ·  ${(share * 100).toStringAsFixed(1)}%',
-                                          style: theme.textTheme.bodySmall
-                                              ?.copyWith(
-                                            color: colors.onSurfaceVariant,
-                                            fontWeight: FontWeight.w600,
+                                          'CURRENT WALLET BALANCE',
+                                          style: TextStyle(
+                                            fontFamily: 'monospace',
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: receiptSubtextColor,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          _money(state.currency, state.currentBalance),
+                                          style: TextStyle(
+                                            fontFamily: 'monospace',
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w800,
+                                            color: receiptTextColor,
                                           ),
                                         ),
                                       ],
                                     ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.primaryContainer,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        'SCORE: ${state.spendingScore}/100',
+                                        style: TextStyle(
+                                          fontFamily: 'monospace',
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.onPrimaryContainer,
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 20),
+                              Text(
+                                'SPENDING BY CATEGORY',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                  color: receiptTextColor,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+
+                              if (orderedCategories.isEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  child: Text(
+                                    'NO EXPENSES RECORDED THIS MONTH',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 12,
+                                      color: receiptSubtextColor,
+                                    ),
+                                  ),
+                                )
+                              else
+                                ...orderedCategories.map((entry) {
+                                  final share = totalSpent == 0
+                                      ? 0.0
+                                      : entry.value / totalSpent;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            entry.key.toUpperCase(),
+                                            style: TextStyle(
+                                              fontFamily: 'monospace',
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: receiptTextColor,
+                                            ),
+                                          ),
+                                        ),
+                                        Text(
+                                          '(${(share * 100).toStringAsFixed(0)}%) ',
+                                          style: TextStyle(
+                                            fontFamily: 'monospace',
+                                            fontSize: 11,
+                                            color: receiptSubtextColor,
+                                          ),
+                                        ),
+                                        Text(
+                                          _money(state.currency, entry.value),
+                                          style: TextStyle(
+                                            fontFamily: 'monospace',
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: receiptTextColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+
+                              const SizedBox(height: 12),
+                              _DottedDivider(color: dashColor),
+                              const SizedBox(height: 16),
+
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'ITEMIZED TRANSACTIONS',
+                                    style: TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.2,
+                                      color: receiptTextColor,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${monthExpenses.length} ITEMS',
+                                    style: TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 11,
+                                      color: receiptSubtextColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+
+                              if (monthExpenses.isEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  child: Text(
+                                    'NO RECENT TRANSACTIONS',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 12,
+                                      color: receiptSubtextColor,
+                                    ),
+                                  ),
+                                )
+                              else
+                                ...monthExpenses.take(8).map((expense) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          DateFormat('MM/dd').format(expense.date),
+                                          style: TextStyle(
+                                            fontFamily: 'monospace',
+                                            fontSize: 11,
+                                            color: receiptSubtextColor,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                expense.title.toUpperCase(),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontFamily: 'monospace',
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: receiptTextColor,
+                                                ),
+                                              ),
+                                              Text(
+                                                expense.category,
+                                                style: TextStyle(
+                                                  fontFamily: 'monospace',
+                                                  fontSize: 10,
+                                                  color: receiptSubtextColor,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _money(state.currency, expense.amount),
+                                          style: TextStyle(
+                                            fontFamily: 'monospace',
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: receiptTextColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+
+                              const SizedBox(height: 12),
+                              _DottedDivider(color: dashColor),
+                              const SizedBox(height: 16),
+
+                              _ReceiptTotalRow(
+                                label: 'SUBTOTAL (${monthExpenses.length} Txns):',
+                                value: _money(state.currency, totalSpent),
+                                textColor: receiptTextColor,
+                                subtextColor: receiptSubtextColor,
+                              ),
+                              const SizedBox(height: 4),
+                              _ReceiptTotalRow(
+                                label: 'DAILY AVG SPEND:',
+                                value: _money(state.currency, averagePerDay),
+                                textColor: receiptTextColor,
+                                subtextColor: receiptSubtextColor,
+                              ),
+                              const SizedBox(height: 4),
+                              _ReceiptTotalRow(
+                                label: 'TAX / FEES (EST. 0%):',
+                                value: _money(state.currency, 0.0),
+                                textColor: receiptTextColor,
+                                subtextColor: receiptSubtextColor,
+                              ),
+                              const SizedBox(height: 10),
+                              _DottedDivider(color: dashColor),
+                              const SizedBox(height: 10),
+
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'TOTAL SPENT:',
+                                    style: TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: receiptTextColor,
+                                    ),
+                                  ),
+                                  Text(
+                                    _money(state.currency, totalSpent),
+                                    style: TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 16),
+                              _DottedDivider(color: dashColor),
+                              const SizedBox(height: 16),
+
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.auto_awesome,
+                                        size: 18,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'AI AUDIT & INSIGHTS',
+                                          style: TextStyle(
+                                            fontFamily: 'monospace',
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.2,
+                                            color: receiptTextColor,
+                                          ),
+                                        ),
+                                      ),
+                                      InkWell(
+                                        onTap: _analyzing
+                                            ? null
+                                            : () => _runAIAnalysis(
+                                                  state,
+                                                  monthExpenses,
+                                                  categories,
+                                                  totalSpent,
+                                                ),
+                                        borderRadius: BorderRadius.circular(6),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                                color: theme.colorScheme.primary),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if (_analyzing)
+                                                const SizedBox.square(
+                                                  dimension: 12,
+                                                  child: CircularProgressIndicator(
+                                                      strokeWidth: 2),
+                                                )
+                                              else
+                                                Icon(Icons.refresh_rounded,
+                                                    size: 14,
+                                                    color:
+                                                        theme.colorScheme.primary),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                _analyzing
+                                                    ? 'AUDITING...'
+                                                    : 'GENERATE',
+                                                style: TextStyle(
+                                                  fontFamily: 'monospace',
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: theme.colorScheme.primary,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  if (_aiAnalysis == null && !_analyzing)
+                                    Text(
+                                      'TAP GENERATE TO RUN AN AUTOMATED AI AUDIT ON YOUR MONTHLY EXPENSES.',
+                                      style: TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 11,
+                                        color: receiptSubtextColor,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  if (_aiAnalysis != null)
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: receiptTextColor.withValues(alpha: 0.04),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                            color: receiptTextColor.withValues(alpha: 0.1)),
+                                      ),
+                                      child: SelectableText(
+                                        _aiAnalysis!,
+                                        style: TextStyle(
+                                          fontFamily: 'monospace',
+                                          fontSize: 11,
+                                          height: 1.5,
+                                          color: receiptTextColor,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 24),
+                              _DottedDivider(color: dashColor),
+                              const SizedBox(height: 20),
+
+                              Center(
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      'THANK YOU FOR USING POCKETDESK!',
+                                      style: TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.1,
+                                        color: receiptTextColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'KEEP TRACK • STAY FINANCIALLY FIT',
+                                      style: TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 9,
+                                        color: receiptSubtextColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _ReceiptBarcode(color: receiptTextColor),
                                     const SizedBox(height: 8),
-                                    LinearProgressIndicator(
-                                      value: share,
-                                      minHeight: 7,
-                                      borderRadius: BorderRadius.circular(8),
-                                      backgroundColor:
-                                          colors.surfaceContainerHighest,
-                                      color: colors.primary,
+                                    Text(
+                                      '* $receiptNo *',
+                                      style: TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 10,
+                                        letterSpacing: 3.0,
+                                        color: receiptSubtextColor,
+                                      ),
                                     ),
                                   ],
                                 ),
-                              );
-                            }),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Card(
-                    margin: EdgeInsets.zero,
-                    child: Padding(
-                      padding: const EdgeInsets.all(18),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Recent activity',
-                              style: theme.textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 8),
-                          if (monthExpenses.isEmpty)
-                            Text(
-                                'Transactions from this month will appear here.',
-                                style: theme.textTheme.bodyMedium
-                                    ?.copyWith(color: colors.onSurfaceVariant))
-                          else
-                            ...monthExpenses
-                                .take(8)
-                                .map((expense) => _ActivityRow(
-                                      expense: expense,
-                                      currency: state.currency,
-                                    )),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Card(
-                    margin: EdgeInsets.zero,
-                    child: Padding(
-                      padding: const EdgeInsets.all(18),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.auto_awesome_rounded,
-                                  color: colors.primary),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text('AI analyst report',
-                                    style:
-                                        theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                    )),
                               ),
-                              TextButton.icon(
-                                onPressed: _analyzing
-                                    ? null
-                                    : () => _runAIAnalysis(
-                                          state,
-                                          monthExpenses,
-                                          categories,
-                                          totalSpent,
-                                        ),
-                                icon: _analyzing
-                                    ? const SizedBox.square(
-                                        dimension: 16,
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: 2),
-                                      )
-                                    : const Icon(Icons.refresh_rounded),
-                                label:
-                                    Text(_analyzing ? 'Preparing' : 'Generate'),
-                              ),
+                              const SizedBox(height: 12),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          if (_aiAnalysis == null && !_analyzing)
-                            Text(
-                              'Generate a transaction-based summary. The report uses your local expense records and does not assume income or a budget.',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: colors.onSurfaceVariant,
-                              ),
-                            ),
-                          if (_aiAnalysis != null)
-                            SelectableText(
-                              _aiAnalysis!,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                height: 1.55,
-                                color: colors.onSurface,
-                              ),
-                            ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                ],
+                ),
               );
             },
           ),
@@ -423,46 +697,145 @@ Use only the supplied expense records and balance. Do not invent income, budgets
       '$currency ${NumberFormat('#,##0.00').format(amount)}';
 }
 
-class _ReportMetric extends StatelessWidget {
-  const _ReportMetric({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
+class _DottedDivider extends StatelessWidget {
+  const _DottedDivider({required this.color});
 
-  final String label;
-  final String value;
-  final IconData icon;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final boxWidth = constraints.maxWidth;
+        const dashWidth = 5.0;
+        const dashSpace = 3.0;
+        final dashCount = (boxWidth / (dashWidth + dashSpace)).floor();
+        return Flex(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          direction: Axis.horizontal,
+          children: List.generate(dashCount, (_) {
+            return SizedBox(
+              width: dashWidth,
+              height: 1.5,
+              child: DecoratedBox(
+                decoration: BoxDecoration(color: color),
+              ),
+            );
+          }),
+        );
+      },
+    );
+  }
+}
+
+class _ReceiptMetaRow extends StatelessWidget {
+  const _ReceiptMetaRow({
+    required this.leftLabel,
+    required this.leftValue,
+    required this.rightLabel,
+    required this.rightValue,
+    required this.textColor,
+    required this.subtextColor,
+  });
+
+  final String leftLabel;
+  final String leftValue;
+  final String rightLabel;
+  final String rightValue;
+  final Color textColor;
+  final Color subtextColor;
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: 8),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Text(label,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: colors.onSurfaceVariant)),
-              const SizedBox(height: 2),
               Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colors.onSurface,
+                '$leftLabel ',
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 10,
+                  color: subtextColor,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  leftValue,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
                 ),
               ),
             ],
+          ),
+        ),
+        Row(
+          children: [
+            Text(
+              '$rightLabel ',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 10,
+                color: subtextColor,
+              ),
+            ),
+            Text(
+              rightValue,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ReceiptTotalRow extends StatelessWidget {
+  const _ReceiptTotalRow({
+    required this.label,
+    required this.value,
+    required this.textColor,
+    required this.subtextColor,
+  });
+
+  final String label;
+  final String value;
+  final Color textColor;
+  final Color subtextColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 11,
+            color: subtextColor,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: textColor,
           ),
         ),
       ],
@@ -470,36 +843,62 @@ class _ReportMetric extends StatelessWidget {
   }
 }
 
-class _ActivityRow extends StatelessWidget {
-  const _ActivityRow({required this.expense, required this.currency});
+class _ReceiptBarcode extends StatelessWidget {
+  const _ReceiptBarcode({required this.color});
 
-  final ExpenseModel expense;
-  final String currency;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: colors.surfaceContainerHighest,
-        foregroundColor: colors.onSurfaceVariant,
-        child: const Icon(Icons.payments_outlined),
-      ),
-      title: Text(expense.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(
-        '${expense.category}  ·  ${DateFormat('MMM d').format(expense.date)}',
-        style:
-            theme.textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
-      ),
-      trailing: Text(
-        '$currency ${NumberFormat('#,##0.00').format(expense.amount)}',
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: colors.onSurface,
-        ),
+    final pattern = [2, 1, 3, 1, 2, 4, 1, 2, 3, 1, 1, 2, 3, 2, 1, 4, 2, 1, 3, 1, 2, 1, 4, 1, 2];
+    return SizedBox(
+      height: 36,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: pattern.map((width) {
+          return Container(
+            width: width.toDouble() * 1.5,
+            margin: const EdgeInsets.symmetric(horizontal: 1),
+            color: color.withValues(alpha: 0.85),
+          );
+        }).toList(),
       ),
     );
   }
+}
+
+class ZigZagClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    const toothWidth = 10.0;
+    const toothHeight = 6.0;
+
+    path.moveTo(0, toothHeight);
+
+    double x = 0;
+    while (x < size.width) {
+      path.lineTo(x + toothWidth / 2, 0);
+      path.lineTo(x + toothWidth, toothHeight);
+      x += toothWidth;
+    }
+
+    path.lineTo(size.width, size.height - toothHeight);
+
+    x = size.width;
+    while (x > 0) {
+      path.lineTo(x - toothWidth / 2, size.height);
+      path.lineTo(x - toothWidth, size.height - toothHeight);
+      x -= toothWidth;
+    }
+
+    path.lineTo(0, toothHeight);
+    path.close();
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

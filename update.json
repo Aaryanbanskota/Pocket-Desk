@@ -1,6 +1,12 @@
 {
-  "version": "1.2.1",
+  "version": "1.2.2-offi",
+  "buildNumber": 5,
   "url": "https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/main/all-apk/app-release.apk",
   "required": false,
-  "releaseNotes": "- Improved money reports, weather accuracy, alarms, and timer behavior\n- Improved light-mode readability and chat usability\n- Added Android in-app update checks and APK installer handoff"
+  "releaseNotes": "- Added version channel separation (-t trial, -rev review, -offi official)\n- Added channel risk tags and user recommendation guidance\n- Added interactive 'What's New' feature onboarding flow with skip/back navigation",
+  "newFeatures": [
+    "Version Channel Separation: Instant awareness of -t (Trial), -rev (Review), and -offi (Official) updates.",
+    "Smart Safety Recommendations: Clear risk badges helping you decide whether to install or wait.",
+    "Interactive Feature Setup: Step-by-step 'What's New' walkthrough after updating, with skip and swipe options."
+  ]
 }

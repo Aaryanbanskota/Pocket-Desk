@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import '../../../../core/services/p2p_sync_service.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/services/app_update_service.dart';
@@ -272,12 +274,35 @@ class _DeviceSettingsWidgetState extends ConsumerState<DeviceSettingsWidget> {
                       ],
                     ),
                   ),
-                  OutlinedButton(
-                    onPressed: () => AppUpdateService.checkForUpdates(
-                      context,
-                      showStatus: true,
-                    ),
-                    child: const Text('Check Now'),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => AppUpdateService.checkForUpdates(
+                          context,
+                          showStatus: true,
+                        ),
+                        child: const Text('Check Now'),
+                      ),
+                      const SizedBox(height: 6),
+                      TextButton.icon(
+                        onPressed: () async {
+                          final response = await http.get(
+                            Uri.parse(AppUpdateService.updateJsonUrl),
+                          );
+                          if (response.statusCode == 200 && context.mounted) {
+                            final decoded = jsonDecode(response.body);
+                            final info = AppUpdateInfo.fromJson(decoded);
+                            AppUpdateService.showWhatIsNewWalkthrough(
+                              context,
+                              info,
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+                        label: const Text('What\'s New', style: TextStyle(fontSize: 12)),
+                      ),
+                    ],
                   ),
                 ],
               ),

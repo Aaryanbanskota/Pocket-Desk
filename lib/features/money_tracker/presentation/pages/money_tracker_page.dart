@@ -490,39 +490,11 @@ class _MoneyTrackerPageState extends ConsumerState<MoneyTrackerPage> {
                 // ─── Interactive MasterCard Widget ─────────────────────────────
                 GestureDetector(
                   onTap: () => setState(() => _showCardBack = !_showCardBack),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 600),
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
-                    transitionBuilder: (Widget child, Animation<double> animation) {
-                      final rotate = Tween(begin: 3.1415926535, end: 0.0).animate(animation);
-                      return AnimatedBuilder(
-                        animation: rotate,
-                        builder: (BuildContext context, Widget? childWidget) {
-                          final isBack = child.key == const ValueKey(true);
-                          double value = rotate.value;
-                          if (isBack) {
-                            value = 3.1415926535 - value;
-                          }
-                          // Hide face when turned away (> 90 deg / 1.57 rad)
-                          final showFace = value < (3.1415926535 / 2);
-                          return Opacity(
-                            opacity: showFace ? 1.0 : 0.0,
-                            child: Transform(
-                              transform: Matrix4.identity()
-                                ..setEntry(3, 2, 0.001)
-                                ..rotateY(value),
-                              alignment: Alignment.center,
-                              child: childWidget,
-                            ),
-                          );
-                        },
-                        child: child,
-                      );
-                    },
-                    child: _showCardBack
-                        ? _buildMasterCardBack(context, state, cs)
-                        : _buildMasterCardFront(context, state, cs),
+                  child: AnimatedCrossFade(
+                    duration: const Duration(milliseconds: 400),
+                    crossFadeState: _showCardBack ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                    firstChild: _buildMasterCardFront(context, state, cs),
+                    secondChild: _buildMasterCardBack(context, state, cs),
                   ),
                 ),
 

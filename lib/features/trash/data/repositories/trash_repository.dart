@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:isar/isar.dart';
 import '../../../../core/error/app_failure.dart';
 import '../../../../core/logging/app_logger.dart';
@@ -129,23 +130,71 @@ class TrashRepository {
             await _isar.calendarEventModels.put(event);
             break;
           case TrashItemType.post:
-            final post = PostModel()
-              ..id = item.originalId
-              ..userId = item.userId
-              ..title = item.title
-              ..content = item.snippet ?? ''
-              ..createdAt = item.deletedAt
-              ..updatedAt = DateTime.now();
+            PostModel post;
+            try {
+              if (item.payloadJson.isNotEmpty && item.payloadJson != '{}') {
+                final Map<String, dynamic> jsonMap = jsonDecode(item.payloadJson) as Map<String, dynamic>;
+                post = PostModel()
+                  ..id = item.originalId
+                  ..userId = item.userId
+                  ..title = item.title
+                  ..content = jsonMap['content']?.toString() ?? item.snippet ?? ''
+                  ..imagePaths = (jsonMap['imagePaths'] as List?)?.map((e) => e.toString()).toList() ?? []
+                  ..tags = (jsonMap['tags'] as List?)?.map((e) => e.toString()).toList() ?? []
+                  ..createdAt = item.deletedAt
+                  ..updatedAt = DateTime.now();
+              } else {
+                post = PostModel()
+                  ..id = item.originalId
+                  ..userId = item.userId
+                  ..title = item.title
+                  ..content = item.snippet ?? ''
+                  ..createdAt = item.deletedAt
+                  ..updatedAt = DateTime.now();
+              }
+            } catch (e) {
+              post = PostModel()
+                ..id = item.originalId
+                ..userId = item.userId
+                ..title = item.title
+                ..content = item.snippet ?? ''
+                ..createdAt = item.deletedAt
+                ..updatedAt = DateTime.now();
+            }
             await _isar.postModels.put(post);
             break;
           case TrashItemType.instant:
-            final instant = InstantModel()
-              ..id = item.originalId
-              ..userId = item.userId
-              ..imagePath = item.snippet ?? ''
-              ..textOverlay = item.title
-              ..createdAt = item.deletedAt
-              ..expiresAt = DateTime.now().add(const Duration(hours: 24));
+            InstantModel instant;
+            try {
+              if (item.payloadJson.isNotEmpty && item.payloadJson != '{}') {
+                final Map<String, dynamic> jsonMap = jsonDecode(item.payloadJson) as Map<String, dynamic>;
+                instant = InstantModel()
+                  ..id = item.originalId
+                  ..userId = item.userId
+                  ..imagePath = jsonMap['imagePath']?.toString() ?? item.snippet ?? ''
+                  ..textOverlay = jsonMap['textOverlay']?.toString() ?? item.title
+                  ..textX = (jsonMap['textX'] as num?)?.toDouble() ?? 0.5
+                  ..textY = (jsonMap['textY'] as num?)?.toDouble() ?? 0.5
+                  ..createdAt = item.deletedAt
+                  ..expiresAt = DateTime.now().add(const Duration(hours: 24));
+              } else {
+                instant = InstantModel()
+                  ..id = item.originalId
+                  ..userId = item.userId
+                  ..imagePath = item.snippet ?? ''
+                  ..textOverlay = item.title
+                  ..createdAt = item.deletedAt
+                  ..expiresAt = DateTime.now().add(const Duration(hours: 24));
+              }
+            } catch (e) {
+              instant = InstantModel()
+                ..id = item.originalId
+                ..userId = item.userId
+                ..imagePath = item.snippet ?? ''
+                ..textOverlay = item.title
+                ..createdAt = item.deletedAt
+                ..expiresAt = DateTime.now().add(const Duration(hours: 24));
+            }
             await _isar.instantModels.put(instant);
             break;
           case TrashItemType.expense:

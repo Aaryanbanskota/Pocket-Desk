@@ -888,16 +888,46 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                 itemCount: post.imagePaths.length,
                                 itemBuilder: (context, i) {
                                   final path = post.imagePaths[i];
+                                  final fileExists = path.isNotEmpty && File(path).existsSync();
                                   return GestureDetector(
-                                    onTap: () => _openFullImageViewer(
-                                        post.imagePaths, i),
+                                    onTap: () {
+                                      if (fileExists) {
+                                        _openFullImageViewer(post.imagePaths, i);
+                                      }
+                                    },
                                     child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(12),
-                                        child: Image.file(File(path),
-                                            fit: BoxFit.cover),
+                                        child: fileExists
+                                            ? Image.file(
+                                                File(path),
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) => Container(
+                                                  color: cs.surfaceContainerHighest,
+                                                  alignment: Alignment.center,
+                                                  child: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Icon(Icons.broken_image_rounded, color: cs.onSurfaceVariant, size: 48),
+                                                      const SizedBox(height: 8),
+                                                      Text('Image unavailable', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12)),
+                                                    ],
+                                                  ),
+                                                ),
+                                              )
+                                            : Container(
+                                                color: cs.surfaceContainerHighest,
+                                                alignment: Alignment.center,
+                                                child: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.image_not_supported_rounded, color: cs.onSurfaceVariant, size: 48),
+                                                    const SizedBox(height: 8),
+                                                    Text('Media file moved or deleted', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12)),
+                                                  ],
+                                                ),
+                                              ),
                                       ),
                                     ),
                                   );

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketdesk/core/database/isar_provider.dart';
 import 'package:pocketdesk/features/auth/presentation/providers/auth_notifier.dart';
@@ -63,6 +64,12 @@ class InstantsNotifier extends AutoDisposeAsyncNotifier<List<InstantModel>> {
               originalId: match.id,
               title: match.textOverlay ?? 'Instant Story',
               snippet: match.imagePath,
+              payloadJson: jsonEncode({
+                'imagePath': match.imagePath,
+                'textOverlay': match.textOverlay,
+                'textX': match.textX,
+                'textY': match.textY,
+              }),
             );
       }
     }
@@ -222,6 +229,11 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
             originalId: post.id,
             title: post.title ?? 'Post',
             snippet: post.content.length > 100 ? '${post.content.substring(0, 100)}...' : post.content,
+            payloadJson: jsonEncode({
+              'content': post.content,
+              'imagePaths': post.imagePaths,
+              'tags': post.tags,
+            }),
           );
     }
     await repo.deletePost(postId);

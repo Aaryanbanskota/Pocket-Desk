@@ -27,7 +27,7 @@ class _SwipeableWeatherWidgetState extends State<SwipeableWeatherWidget> {
     return Column(
       children: [
         SizedBox(
-          height: 135,
+          height: 148,
           child: PageView(
             controller: _pageController,
             onPageChanged: (idx) {

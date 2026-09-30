@@ -37,7 +37,7 @@ class ProgressStorageWidget extends ConsumerWidget {
           color: colorScheme.outlineVariant.withAlpha(80),
         ),
       ),
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -49,9 +49,9 @@ class ProgressStorageWidget extends ConsumerWidget {
                     ? Icons.cloud_queue_rounded
                     : Icons.sd_card_alert_rounded,
                 color: colorScheme.primary,
-                size: 22,
+                size: 20,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   isCloud
@@ -59,11 +59,12 @@ class ProgressStorageWidget extends ConsumerWidget {
                       : 'Local Device Storage',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
+                    fontSize: 13,
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: (planState.isBlacklisted
                           ? Colors.red
@@ -71,13 +72,13 @@ class ProgressStorageWidget extends ConsumerWidget {
                               ? Colors.amber
                               : Colors.green)
                       .withAlpha(30),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   planState.isBlacklisted
                       ? 'Blacklisted'
                       : planState.isProApprovalPending
-                          ? 'Pro Pending Approval'
+                          ? 'Pro Pending'
                           : 'Active',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: planState.isBlacklisted
@@ -86,12 +87,13 @@ class ProgressStorageWidget extends ConsumerWidget {
                             ? Colors.amber.shade900
                             : Colors.green,
                     fontWeight: FontWeight.bold,
+                    fontSize: 10,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
 
           // 1. Task Progress Bar
           Row(
@@ -101,6 +103,7 @@ class ProgressStorageWidget extends ConsumerWidget {
                 'Today\'s Tasks Progress',
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
+                  fontSize: 11,
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
@@ -108,23 +111,24 @@ class ProgressStorageWidget extends ConsumerWidget {
                 '$completedTasks / $totalTasks done (${(taskProgress * 100).toInt()}%)',
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.bold,
+                  fontSize: 11,
                   color: colorScheme.primary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: taskProgress,
-              minHeight: 6,
+              minHeight: 5,
               backgroundColor: colorScheme.surfaceContainerHighest,
               valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
             ),
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
 
           // 2. Storage Remaining Progress Bar
           Row(
@@ -134,6 +138,7 @@ class ProgressStorageWidget extends ConsumerWidget {
                 'Remaining Storage Space',
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
+                  fontSize: 11,
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
@@ -141,17 +146,18 @@ class ProgressStorageWidget extends ConsumerWidget {
                 '$storageUsedMB MB / $storageLimitMB MB',
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.bold,
+                  fontSize: 11,
                   color: colorScheme.onSurface,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: planState.storageProgress,
-              minHeight: 6,
+              minHeight: 5,
               backgroundColor: colorScheme.surfaceContainerHighest,
               valueColor: AlwaysStoppedAnimation<Color>(
                 planState.storageProgress > 0.9 ? Colors.red : Colors.teal,

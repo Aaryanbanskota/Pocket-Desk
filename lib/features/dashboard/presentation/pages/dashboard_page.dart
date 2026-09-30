@@ -13,7 +13,7 @@ import '../widgets/quick_actions.dart';
 import '../widgets/statistics_widget.dart';
 import '../widgets/tasks_widget.dart';
 import '../widgets/today_schedule_widget.dart';
-import '../widgets/weather_widget.dart';
+import '../widgets/swipeable_weather_widget.dart';
 import '../widgets/app_hamburger_drawer.dart';
 
 import '../../../../core/services/app_update_service.dart';
@@ -83,7 +83,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             children: [
               _buildWelcomeHeader(theme, user?.displayName ?? user?.username ?? 'User'),
               const SizedBox(height: AppSpacing.md),
-              const WeatherWidget(),
+              const SwipeableWeatherWidget(),
               const SizedBox(height: AppSpacing.lg),
               const QuickActions(),
               const SizedBox(height: AppSpacing.xl),

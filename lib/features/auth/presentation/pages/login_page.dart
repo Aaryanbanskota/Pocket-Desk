@@ -552,6 +552,11 @@ class _LoginPageState extends ConsumerState<LoginPage>
                   ),
                 ),
                 IconButton(
+                  tooltip: 'Switch Account Type (Cloud/Local)',
+                  onPressed: () => context.push(AppRoutes.accountSelector),
+                  icon: const Icon(Icons.cloud_sync_rounded),
+                ),
+                IconButton(
                   tooltip: 'Sign in with QR',
                   onPressed: () => context.push(AppRoutes.qrLogin),
                   icon: const Icon(Icons.qr_code_scanner_rounded),
@@ -684,19 +689,28 @@ class _LoginPageState extends ConsumerState<LoginPage>
   }
 
   Widget _buildRegisterLink(ThemeData theme, ColorScheme colorScheme) {
-    return Wrap(
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
+    return Column(
       children: [
-        Text(
-          "Don't have an account?",
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              "Don't have an account?",
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            TextButton(
+              onPressed: () => context.go(AppRoutes.register),
+              child: const Text('Create one'),
+            ),
+          ],
         ),
-        TextButton(
-          onPressed: () => context.go(AppRoutes.register),
-          child: const Text('Create one'),
+        TextButton.icon(
+          onPressed: () => context.push(AppRoutes.accountSelector),
+          icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+          label: const Text('Change Account Mode (Cloud / Local)'),
         ),
       ],
     );

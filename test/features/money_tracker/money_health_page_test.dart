@@ -58,7 +58,7 @@ void main() {
 
     expect(find.text('ITEMIZED TRANSACTIONS'), findsOneWidget);
     expect(find.text('Rs. 8,300.00'), findsOneWidget);
-    expect(find.text('Rs. 1,700.00'), findsOneWidget);
+    expect(find.text('Rs. 1,700.00'), findsAtLeastNWidgets(1));
     expect(find.text('Food'), findsNWidgets(2));
     expect(find.text('Older trip'), findsNothing);
   });

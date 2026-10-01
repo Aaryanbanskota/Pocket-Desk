@@ -88,11 +88,13 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     final nameCtrl = TextEditingController(
         text: auth.user.displayName ?? auth.user.username);
     String? currentAvatar = auth.user.avatarBase64;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF12141C),
+      backgroundColor: theme.scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => StatefulBuilder(
@@ -102,9 +104,9 @@ class _PostsPageState extends ConsumerState<PostsPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Edit Profile',
+              Text('Edit Profile',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: colorScheme.onSurface,
                       fontSize: 18,
                       fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
@@ -124,13 +126,13 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                   children: [
                     CircleAvatar(
                       radius: 40,
-                      backgroundColor: const Color(0xFF1E2230),
+                      backgroundColor: colorScheme.surfaceContainerHighest,
                       backgroundImage: currentAvatar != null
                           ? MemoryImage(base64Decode(currentAvatar!))
                           : null,
                       child: currentAvatar == null
-                          ? const Icon(Icons.person_rounded,
-                              size: 40, color: Colors.white70)
+                          ? Icon(Icons.person_rounded,
+                              size: 40, color: colorScheme.onSurfaceVariant)
                           : null,
                     ),
                     Container(
@@ -146,13 +148,13 @@ class _PostsPageState extends ConsumerState<PostsPage> {
               const SizedBox(height: 16),
               TextField(
                 controller: nameCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
+                style: TextStyle(color: colorScheme.onSurface),
+                decoration: InputDecoration(
                   labelText: 'Display Name',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  border: OutlineInputBorder(),
+                  labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                  border: const OutlineInputBorder(),
                   enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white24)),
+                      borderSide: BorderSide(color: colorScheme.outline)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -167,7 +169,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                 style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFF6C5CE7),
                     minimumSize: const Size.fromHeight(48)),
-                child: const Text('Save Profile'),
+                child: const Text('Save Profile', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -429,13 +431,13 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                       children: [
                         CircleAvatar(
                           radius: 22,
-                          backgroundColor: const Color(0xFF202436),
+                          backgroundColor: colorScheme.surfaceContainerHighest,
                           backgroundImage: avatarB64 != null
                               ? MemoryImage(base64Decode(avatarB64))
                               : null,
                           child: avatarB64 == null
-                              ? const Icon(Icons.person_rounded,
-                                  color: Colors.white70)
+                              ? Icon(Icons.person_rounded,
+                                  color: colorScheme.onSurfaceVariant)
                               : null,
                         ),
                         const SizedBox(width: 12),
@@ -445,13 +447,15 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                             children: [
                               TextField(
                                 controller: _titleCtrl,
-                                style: const TextStyle(
-                                    color: Colors.white,
+                                style: TextStyle(
+                                    color: colorScheme.onSurface,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16),
-                                decoration: const InputDecoration(
+                                decoration: InputDecoration(
                                   hintText: 'Title (optional)',
-                                  hintStyle: TextStyle(color: Colors.white38),
+                                  hintStyle: TextStyle(
+                                      color: colorScheme.onSurfaceVariant
+                                          .withValues(alpha: 0.5)),
                                   border: InputBorder.none,
                                   isDense: true,
                                 ),
@@ -459,12 +463,12 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                               TextField(
                                 controller: _contentCtrl,
                                 maxLines: null,
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 18),
-                                decoration: const InputDecoration(
+                                style: TextStyle(
+                                    color: colorScheme.onSurface, fontSize: 18),
+                                decoration: InputDecoration(
                                   hintText: 'What\'s Happening ?',
                                   hintStyle: TextStyle(
-                                    color: Colors.white54,
+                                    color: colorScheme.onSurfaceVariant,
                                     fontSize: 18,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -473,11 +477,14 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                               ),
                               TextField(
                                 controller: _tagsCtrl,
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 14),
-                                decoration: const InputDecoration(
+                                style: TextStyle(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontSize: 14),
+                                decoration: InputDecoration(
                                   hintText: 'Tags (e.g. daily, note, fun)',
-                                  hintStyle: TextStyle(color: Colors.white24),
+                                  hintStyle: TextStyle(
+                                      color: colorScheme.onSurfaceVariant
+                                          .withValues(alpha: 0.5)),
                                   border: InputBorder.none,
                                   isDense: true,
                                 ),
@@ -506,10 +513,12 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                                       Container(
                                                 width: 120,
                                                 height: 120,
-                                                color: Colors.white10,
-                                                child: const Icon(
+                                                color: colorScheme
+                                                    .surfaceContainerHighest,
+                                                child: Icon(
                                                     Icons.broken_image_rounded,
-                                                    color: Colors.white54),
+                                                    color: colorScheme
+                                                        .onSurfaceVariant),
                                               ),
                                             ),
                                           ),
@@ -554,7 +563,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                 // Footer Bar (Privacy Badge + Attachment Toolbar)
                 Column(
                   children: [
-                    const Divider(color: Colors.white12, height: 1),
+                    Divider(color: colorScheme.outline.withValues(alpha: 0.2), height: 1),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
                       child: Row(
@@ -647,6 +656,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     final hasImage = post.imagePaths.isNotEmpty && File(post.imagePaths.first).existsSync();
 
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     showModalBottomSheet<void>(
       context: context,
@@ -668,8 +678,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.close_rounded,
-                          color: Colors.white, size: 28),
+                      icon: Icon(Icons.close_rounded,
+                          color: colorScheme.onSurface, size: 28),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                     ElevatedButton(
@@ -716,16 +726,16 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                             children: [
                               Column(
                                 children: [
-                                  const CircleAvatar(
+                                  CircleAvatar(
                                     radius: 18,
-                                    backgroundColor: Color(0xFF202436),
+                                    backgroundColor: colorScheme.surfaceContainerHighest,
                                     child: Icon(Icons.person_rounded,
-                                        color: Colors.white70, size: 20),
+                                        color: colorScheme.onSurfaceVariant, size: 20),
                                   ),
                                   Expanded(
                                     child: Container(
                                       width: 2,
-                                      color: Colors.white24,
+                                      color: colorScheme.outline.withValues(alpha: 0.3),
                                       margin: const EdgeInsets.symmetric(vertical: 4),
                                     ),
                                   ),
@@ -738,24 +748,26 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                   children: [
                                     Text(
                                       authorName,
-                                      style: const TextStyle(
-                                          color: Colors.white,
+                                      style: TextStyle(
+                                          color: colorScheme.onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14),
                                     ),
                                     if (post.title != null && post.title!.isNotEmpty)
                                       Text(
                                         post.title!,
-                                        style: const TextStyle(
-                                            color: Colors.white70,
+                                        style: TextStyle(
+                                            color: colorScheme.onSurfaceVariant,
                                             fontWeight: FontWeight.w600,
                                             fontSize: 13),
                                       ),
                                     if (post.content.isNotEmpty)
                                       Text(
                                         post.content,
-                                        style: const TextStyle(
-                                            color: Colors.white54, fontSize: 12),
+                                        style: TextStyle(
+                                            color: colorScheme.onSurfaceVariant
+                                                .withValues(alpha: 0.8),
+                                            fontSize: 12),
                                         maxLines: 3,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -783,13 +795,13 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                           children: [
                             CircleAvatar(
                               radius: 20,
-                              backgroundColor: const Color(0xFF202436),
+                              backgroundColor: colorScheme.surfaceContainerHighest,
                               backgroundImage: avatarB64 != null
                                   ? MemoryImage(base64Decode(avatarB64))
                                   : null,
                               child: avatarB64 == null
-                                  ? const Icon(Icons.person_rounded,
-                                      color: Colors.white70)
+                                  ? Icon(Icons.person_rounded,
+                                      color: colorScheme.onSurfaceVariant)
                                   : null,
                             ),
                             const SizedBox(width: 12),
@@ -797,12 +809,14 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                               child: TextField(
                                 controller: _commentCtrl,
                                 maxLines: null,
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 16),
-                                decoration: const InputDecoration(
+                                style: TextStyle(
+                                    color: colorScheme.onSurface, fontSize: 16),
+                                decoration: InputDecoration(
                                   hintText: 'Comment something |',
                                   hintStyle: TextStyle(
-                                      color: Colors.white38, fontSize: 16),
+                                      color: colorScheme.onSurfaceVariant
+                                          .withValues(alpha: 0.5),
+                                      fontSize: 16),
                                   border: InputBorder.none,
                                 ),
                               ),
@@ -817,7 +831,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                 // Bottom Footer Bar with Audio, GIF & List icons
                 Column(
                   children: [
-                    const Divider(color: Colors.white12, height: 1),
+                    Divider(color: colorScheme.outline.withValues(alpha: 0.2), height: 1),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
                       child: Row(
@@ -879,6 +893,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     final authorName = currentUser?.displayName ?? currentUser?.username ?? 'User';
 
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     showModalBottomSheet<void>(
       context: context,
@@ -905,14 +920,14 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.close_rounded,
-                          color: Colors.white, size: 28),
+                      icon: Icon(Icons.close_rounded,
+                          color: colorScheme.onSurface, size: 28),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                     const SizedBox(width: 8),
-                    const Text('Post Detail',
+                    Text('Post Detail',
                         style: TextStyle(
-                            color: Colors.white,
+                            color: colorScheme.onSurface,
                             fontSize: 18,
                             fontWeight: FontWeight.bold)),
                   ],
@@ -925,18 +940,18 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                       // Author Row
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFF202436),
+                        leading: CircleAvatar(
+                          backgroundColor: colorScheme.surfaceContainerHighest,
                           child: Icon(Icons.person_rounded,
-                              color: Colors.white70),
+                              color: colorScheme.onSurfaceVariant),
                         ),
                         title: Text(authorName,
-                            style: const TextStyle(
-                                color: Colors.white,
+                            style: TextStyle(
+                                color: colorScheme.onSurface,
                                 fontWeight: FontWeight.bold)),
                         trailing: PopupMenuButton<String>(
-                          icon: const Icon(Icons.more_vert_rounded,
-                              color: Colors.white70),
+                          icon: Icon(Icons.more_vert_rounded,
+                              color: colorScheme.onSurfaceVariant),
                           onSelected: (val) {
                             final notifier =
                                 ref.read(postsNotifierProvider.notifier);
@@ -967,8 +982,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                           padding: const EdgeInsets.only(bottom: 6),
                           child: Text(
                             currentPost.title!,
-                            style: const TextStyle(
-                                color: Colors.white,
+                            style: TextStyle(
+                                color: colorScheme.onSurface,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold),
                           ),
@@ -976,7 +991,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                       if (currentPost.content.isNotEmpty)
                         Text(
                           currentPost.content,
-                          style: const TextStyle(color: Colors.white70, fontSize: 14),
+                          style: TextStyle(
+                              color: colorScheme.onSurfaceVariant, fontSize: 14),
                         ),
                       const SizedBox(height: 12),
 
@@ -996,9 +1012,12 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                       // Date & Total Comment Timestamp Bar
                       Text(
                         '${currentPost.createdAt.hour}:${currentPost.createdAt.minute.toString().padLeft(2, '0')} • ${currentPost.comments.length} comments',
-                        style: const TextStyle(color: Colors.white38, fontSize: 12),
+                        style: TextStyle(
+                            color: colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.6),
+                            fontSize: 12),
                       ),
-                      const Divider(color: Colors.white12, height: 20),
+                      Divider(color: colorScheme.outline.withValues(alpha: 0.2), height: 20),
 
                       // Action Bar (Like, Comment, Bookmark)
                       Row(
@@ -1010,15 +1029,15 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                   : Icons.favorite_border_rounded,
                               color: currentPost.isLiked
                                   ? Colors.red
-                                  : Colors.white70,
+                                  : colorScheme.onSurfaceVariant,
                             ),
                             onPressed: () => ref
                                 .read(postsNotifierProvider.notifier)
                                 .toggleLike(currentPost),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.chat_bubble_outline_rounded,
-                                color: Colors.white70),
+                            icon: Icon(Icons.chat_bubble_outline_rounded,
+                                color: colorScheme.onSurfaceVariant),
                             onPressed: () => _showCommentComposerSheet(currentPost),
                           ),
                           const Spacer(),
@@ -1029,7 +1048,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                   : Icons.bookmark_border_rounded,
                               color: currentPost.isSaved
                                   ? const Color(0xFF8B95F6)
-                                  : Colors.white70,
+                                  : colorScheme.onSurfaceVariant,
                             ),
                             onPressed: () => ref
                                 .read(postsNotifierProvider.notifier)
@@ -1037,12 +1056,12 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                           ),
                         ],
                       ),
-                      const Divider(color: Colors.white12, height: 20),
+                      Divider(color: colorScheme.outline.withValues(alpha: 0.2), height: 20),
 
-                      const Text(
+                      Text(
                         'Comments',
                         style: TextStyle(
-                            color: Colors.white,
+                            color: colorScheme.onSurface,
                             fontSize: 14,
                             fontWeight: FontWeight.bold),
                       ),
@@ -1050,12 +1069,14 @@ class _PostsPageState extends ConsumerState<PostsPage> {
 
                       // List of Comments
                       if (currentPost.comments.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 24),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
                           child: Center(
                             child: Text(
                               'No comments yet.',
-                              style: TextStyle(color: Colors.white38),
+                              style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.6)),
                             ),
                           ),
                         )
@@ -1068,11 +1089,11 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const CircleAvatar(
+                                CircleAvatar(
                                   radius: 16,
-                                  backgroundColor: Color(0xFF202436),
+                                  backgroundColor: colorScheme.surfaceContainerHighest,
                                   child: Icon(Icons.person_rounded,
-                                      size: 16, color: Colors.white70),
+                                      size: 16, color: colorScheme.onSurfaceVariant),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -1080,14 +1101,14 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(author,
-                                          style: const TextStyle(
-                                              color: Colors.white,
+                                          style: TextStyle(
+                                              color: colorScheme.onSurface,
                                               fontWeight: FontWeight.bold,
                                               fontSize: 13)),
                                       const SizedBox(height: 2),
                                       Text(comment,
-                                          style: const TextStyle(
-                                              color: Colors.white70,
+                                          style: TextStyle(
+                                              color: colorScheme.onSurfaceVariant,
                                               fontSize: 13)),
                                     ],
                                   ),
@@ -1182,17 +1203,17 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                               shape: BoxShape.circle,
                               border: Border.all(
                                   color: const Color(0xFF8B95F6), width: 2),
-                              color: const Color(0xFF1E2230),
+                              color: colorScheme.surfaceContainerHighest,
                             ),
                             child: const Icon(Icons.add_a_photo_rounded,
                                 color: Color(0xFF8B95F6), size: 24),
                           ),
                           const SizedBox(height: 4),
-                          const Text('Insta story',
+                          Text('Insta story',
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white70)),
+                                  color: colorScheme.onSurfaceVariant)),
                         ],
                       ),
                     ),
@@ -1214,7 +1235,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                       color: Colors.pinkAccent, width: 2.5),
-                                  color: const Color(0xFF1E2230),
+                                  color: colorScheme.surfaceContainerHighest,
                                   image: hasRingFile
                                       ? DecorationImage(
                                           image: FileImage(File(firstPath)),
@@ -1227,11 +1248,11 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                         color: Colors.pinkAccent),
                               ),
                               const SizedBox(height: 4),
-                              const Text('Your Instants',
+                              Text('Your Instants',
                                   style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white)),
+                                      color: colorScheme.onSurface)),
                             ],
                           ),
                         );
@@ -1244,7 +1265,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
             ),
           ),
 
-          const SliverToBoxAdapter(child: Divider(color: Colors.white12, height: 1)),
+          SliverToBoxAdapter(child: Divider(color: colorScheme.outline.withValues(alpha: 0.2), height: 1)),
 
           // Feed Posts List
           postsAsync.when(
@@ -1254,7 +1275,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
             error: (e, _) => SliverFillRemaining(
                 child: Center(
                     child: Text('Error: $e',
-                        style: const TextStyle(color: Colors.white70)))),
+                        style: TextStyle(color: colorScheme.onSurfaceVariant)))),
             data: (posts) {
               if (posts.isEmpty) {
                 return SliverFillRemaining(
@@ -1262,11 +1283,11 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.dynamic_feed_rounded,
-                            size: 64, color: Colors.white24),
+                        Icon(Icons.dynamic_feed_rounded,
+                            size: 64, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4)),
                         const SizedBox(height: 16),
-                        const Text('Your feed is empty.',
-                            style: TextStyle(color: Colors.white70, fontSize: 16)),
+                        Text('Your feed is empty.',
+                            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 16)),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
@@ -1313,22 +1334,22 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                               contentPadding:
                                   const EdgeInsets.symmetric(horizontal: 8),
                               leading: CircleAvatar(
-                                backgroundColor: const Color(0xFF202436),
+                                backgroundColor: colorScheme.surfaceContainerHighest,
                                 backgroundImage: avatarB64 != null
                                     ? MemoryImage(base64Decode(avatarB64))
                                     : null,
                                 child: avatarB64 == null
-                                    ? const Icon(Icons.person_rounded,
-                                        color: Colors.white70)
+                                    ? Icon(Icons.person_rounded,
+                                        color: colorScheme.onSurfaceVariant)
                                     : null,
                               ),
                               title: Text(authorName,
-                                  style: const TextStyle(
-                                      color: Colors.white,
+                                  style: TextStyle(
+                                      color: colorScheme.onSurface,
                                       fontWeight: FontWeight.bold)),
                               trailing: PopupMenuButton<String>(
-                                icon: const Icon(Icons.more_vert_rounded,
-                                    color: Colors.white70),
+                                icon: Icon(Icons.more_vert_rounded,
+                                    color: colorScheme.onSurfaceVariant),
                                 onSelected: (val) {
                                   final notifier =
                                       ref.read(postsNotifierProvider.notifier);
@@ -1359,8 +1380,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                   if (post.title != null && post.title!.isNotEmpty)
                                     Text(
                                       post.title!,
-                                      style: const TextStyle(
-                                          color: Colors.white,
+                                      style: TextStyle(
+                                          color: colorScheme.onSurface,
                                           fontSize: 15,
                                           fontWeight: FontWeight.bold),
                                     ),
@@ -1368,8 +1389,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                     const SizedBox(height: 4),
                                     Text(
                                       post.content,
-                                      style: const TextStyle(
-                                          color: Colors.white70, fontSize: 13),
+                                      style: TextStyle(
+                                          color: colorScheme.onSurfaceVariant, fontSize: 13),
                                     ),
                                   ],
                                 ],
@@ -1406,16 +1427,16 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                           : Icons.favorite_border_rounded,
                                       color: post.isLiked
                                           ? Colors.red
-                                          : Colors.white70,
+                                          : colorScheme.onSurfaceVariant,
                                     ),
                                     onPressed: () => ref
                                         .read(postsNotifierProvider.notifier)
                                         .toggleLike(post),
                                   ),
                                   IconButton(
-                                    icon: const Icon(
+                                    icon: Icon(
                                         Icons.mode_comment_outlined,
-                                        color: Colors.white70),
+                                        color: colorScheme.onSurfaceVariant),
                                     onPressed: () =>
                                         _showCommentComposerSheet(post),
                                   ),
@@ -1427,7 +1448,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                           : Icons.bookmark_border_rounded,
                                       color: post.isSaved
                                           ? const Color(0xFF8B95F6)
-                                          : Colors.white70,
+                                          : colorScheme.onSurfaceVariant,
                                     ),
                                     onPressed: () => ref
                                         .read(postsNotifierProvider.notifier)

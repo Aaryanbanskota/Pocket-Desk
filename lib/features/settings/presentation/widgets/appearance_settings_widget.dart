@@ -163,6 +163,20 @@ class AppearanceSettingsWidget extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.sm),
+            _buildSwitchTile(
+              theme,
+              colorScheme,
+              'Rearrange Widgets & Menu',
+              'Enable reordering controls on Dashboard and Hamburger menu',
+              ref.watch(enableRearrangeProvider).valueOrNull ?? true,
+              (value) {
+                ref
+                    .read(enableRearrangeProvider.notifier)
+                    .setEnableRearrange(value);
+              },
+            ),
+            const SizedBox(height: AppSpacing.sm),
             _buildSwitchTile(
               theme,
               colorScheme,

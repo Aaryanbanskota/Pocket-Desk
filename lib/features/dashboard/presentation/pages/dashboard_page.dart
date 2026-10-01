@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/services/app_update_service.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_mode_notifier.dart';
 import '../../../../core/utils/date_time_utils.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../providers/dashboard_layout_provider.dart';
@@ -90,6 +91,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final layoutState = ref.watch(dashboardLayoutProvider);
     final layoutNotifier = ref.read(dashboardLayoutProvider.notifier);
 
+    final isRearrangeEnabled =
+        ref.watch(enableRearrangeProvider).valueOrNull ?? true;
+    final isEditing = isRearrangeEnabled && layoutState.isEditing;
+
     return Scaffold(
       drawer: const AppHamburgerDrawer(),
       appBar: AppBar(
@@ -112,14 +117,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: Icon(
-              layoutState.isEditing ? Icons.check_circle_rounded : Icons.grid_view_rounded,
-              color: layoutState.isEditing ? colorScheme.primary : colorScheme.onSurfaceVariant,
+          if (isRearrangeEnabled)
+            IconButton(
+              icon: Icon(
+                isEditing ? Icons.check_circle_rounded : Icons.grid_view_rounded,
+                color: isEditing ? colorScheme.primary : colorScheme.onSurfaceVariant,
+              ),
+              tooltip: isEditing ? 'Done Reordering' : 'Rearrange Dashboard Widgets',
+              onPressed: () => layoutNotifier.toggleEditMode(),
             ),
-            tooltip: layoutState.isEditing ? 'Done Reordering' : 'Rearrange Dashboard Widgets',
-            onPressed: () => layoutNotifier.toggleEditMode(),
-          ),
           IconButton(
             icon: const Icon(Icons.settings_rounded),
             tooltip: 'Settings',
@@ -139,7 +145,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   Expanded(
                     child: _buildWelcomeHeader(theme, user?.displayName ?? user?.username ?? 'User'),
                   ),
-                  if (layoutState.isEditing)
+                  if (isEditing)
                     TextButton.icon(
                       onPressed: () => layoutNotifier.resetLayout(),
                       icon: const Icon(Icons.restart_alt_rounded, size: 18),
@@ -152,7 +158,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               ),
               const SizedBox(height: AppSpacing.md),
 
-              if (layoutState.isEditing)
+              if (isEditing)
                 Container(
                   margin: const EdgeInsets.only(bottom: AppSpacing.lg),
                   padding: const EdgeInsets.all(12),
@@ -178,7 +184,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   ),
                 ),
 
-              if (layoutState.isEditing)
+              if (isEditing)
                 ReorderableListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),

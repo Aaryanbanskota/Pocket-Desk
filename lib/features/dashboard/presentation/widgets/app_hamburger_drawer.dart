@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/services/connectivity_provider.dart';
+import '../../../../core/theme/theme_mode_notifier.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../providers/drawer_customization_provider.dart';
 
@@ -125,11 +126,12 @@ class AppHamburgerDrawer extends ConsumerWidget {
                       ),
                       Row(
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.tune_rounded, size: 22),
-                            tooltip: 'Customize Menu Items',
-                            onPressed: () => _openDrawerCustomizerModal(context),
-                          ),
+                          if (ref.watch(enableRearrangeProvider).valueOrNull ?? true)
+                            IconButton(
+                              icon: const Icon(Icons.tune_rounded, size: 22),
+                              tooltip: 'Customize Menu Items',
+                              onPressed: () => _openDrawerCustomizerModal(context),
+                            ),
                           IconButton(
                             icon: Icon(Icons.close_rounded, color: cs.onSurfaceVariant, size: 24),
                             onPressed: () => Navigator.of(context).pop(),

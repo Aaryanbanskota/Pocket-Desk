@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketdesk/features/auth/presentation/providers/auth_notifier.dart';
 import 'package:pocketdesk/features/dashboard/presentation/widgets/app_hamburger_drawer.dart';
@@ -24,9 +25,33 @@ class _PostsPageState extends ConsumerState<PostsPage> {
   final _tagsCtrl = TextEditingController();
   final _commentCtrl = TextEditingController();
   final List<String> _selectedImagePaths = [];
+  final ScrollController _scrollController = ScrollController();
+  bool _isFabVisible = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.reverse) {
+      if (_isFabVisible) {
+        setState(() => _isFabVisible = false);
+      }
+    } else if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.forward) {
+      if (!_isFabVisible) {
+        setState(() => _isFabVisible = true);
+      }
+    }
+  }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _contentCtrl.dispose();
     _titleCtrl.dispose();
     _tagsCtrl.dispose();
@@ -313,10 +338,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
   }
 
   // ---------------------------------------------------------------------------
-  // NEW POST SHEET (Refinement matching Image 3 & 5 wireframe)
-  // Header: Close icon (left), POST pill button (right)
-  // Body: User avatar + "What's Happening ?" field
-  // Footer: Privacy indicator ("AI can view this post") + bottom toolbar items
+  // NEW POST SHEET
   // ---------------------------------------------------------------------------
 
   void _showCreatePostModal() {
@@ -570,9 +592,9 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                           },
                         ),
                         IconButton(
-                          icon: const Icon(Icons.equalizer_rounded,
+                          icon: const Icon(Icons.mic_none_rounded,
                               color: Color(0xFF8B95F6), size: 24),
-                          tooltip: 'Add Audio / Voice',
+                          tooltip: 'Record Voice Audio',
                           onPressed: () {},
                         ),
                         IconButton(
@@ -587,7 +609,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                         IconButton(
                           icon: const Icon(Icons.format_list_bulleted_rounded,
                               color: Color(0xFF8B95F6), size: 24),
-                          tooltip: 'Add List',
+                          tooltip: 'Add List / To-Do',
                           onPressed: () {},
                         ),
                         IconButton(
@@ -609,11 +631,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
   }
 
   // ---------------------------------------------------------------------------
-  // COMMENT COMPOSITION & REPLY SHEET (Matching Image 2 wireframe)
-  // Top: Close icon, POST button
-  // Upper Body: Parent Post Author, title, summary, thumbnail image with connecting thread line
-  // Lower Body: User Avatar + "Comment something |" textfield
-  // Bottom: Privacy badge + attachment bar
+  // COMMENT COMPOSITION & REPLY SHEET
   // ---------------------------------------------------------------------------
 
   void _showCommentComposerSheet(PostModel post) {
@@ -621,6 +639,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     final auth = ref.read(authNotifierProvider).valueOrNull;
     final currentUser = auth is AuthAuthenticated ? auth.user : null;
     final avatarB64 = currentUser?.avatarBase64;
+    final authorName = currentUser?.displayName ?? currentUser?.username ?? 'User';
 
     final hasImage = post.imagePaths.isNotEmpty && File(post.imagePaths.first).existsSync();
 
@@ -712,9 +731,9 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      '{username}',
-                                      style: TextStyle(
+                                    Text(
+                                      authorName,
+                                      style: const TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14),
@@ -727,15 +746,14 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                             fontWeight: FontWeight.w600,
                                             fontSize: 13),
                                       ),
-                                    Text(
-                                      post.content.isNotEmpty
-                                          ? post.content
-                                          : 'user summary text all here including gif',
-                                      style: const TextStyle(
-                                          color: Colors.white54, fontSize: 12),
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                                    if (post.content.isNotEmpty)
+                                      Text(
+                                        post.content,
+                                        style: const TextStyle(
+                                            color: Colors.white54, fontSize: 12),
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                   ],
                                 ),
                               ),
@@ -791,11 +809,11 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                   ),
                 ),
 
-                // Bottom Footer Bar
-                const Column(
+                // Bottom Footer Bar with Audio, GIF & List icons
+                Column(
                   children: [
-                    Divider(color: Colors.white12, height: 1),
-                    Padding(
+                    const Divider(color: Colors.white12, height: 1),
+                    const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
                       child: Row(
                         children: [
@@ -816,16 +834,24 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        Icon(Icons.image_outlined,
-                            color: Color(0xFF8B95F6), size: 24),
-                        Icon(Icons.camera_alt_outlined,
-                            color: Color(0xFF8B95F6), size: 24),
-                        Icon(Icons.equalizer_rounded,
-                            color: Color(0xFF8B95F6), size: 24),
-                        Icon(Icons.gif_box_outlined,
-                            color: Color(0xFF8B95F6), size: 24),
-                        Icon(Icons.format_list_bulleted_rounded,
-                            color: Color(0xFF8B95F6), size: 24),
+                        IconButton(
+                          icon: const Icon(Icons.mic_none_rounded,
+                              color: Color(0xFF8B95F6), size: 24),
+                          tooltip: 'Record Voice Audio',
+                          onPressed: () {},
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.gif_box_outlined,
+                              color: Color(0xFF8B95F6), size: 24),
+                          tooltip: 'Add GIF',
+                          onPressed: () {},
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.format_list_bulleted_rounded,
+                              color: Color(0xFF8B95F6), size: 24),
+                          tooltip: 'Add To-Do / List',
+                          onPressed: () {},
+                        ),
                       ],
                     ),
                   ],
@@ -839,10 +865,14 @@ class _PostsPageState extends ConsumerState<PostsPage> {
   }
 
   // ---------------------------------------------------------------------------
-  // SINGLE POST DETAILED VIEW (Matching Image 4 wireframe)
+  // SINGLE POST DETAILED VIEW
   // ---------------------------------------------------------------------------
 
   void _openPostDetailView(PostModel post) {
+    final auth = ref.read(authNotifierProvider).valueOrNull;
+    final currentUser = auth is AuthAuthenticated ? auth.user : null;
+    final authorName = currentUser?.displayName ?? currentUser?.username ?? 'User';
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -855,6 +885,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
           final postsState = ref.watch(postsNotifierProvider).valueOrNull ?? [];
           final currentPost =
               postsState.firstWhere((p) => p.id == post.id, orElse: () => post);
+          final hasImage = currentPost.imagePaths.isNotEmpty &&
+              File(currentPost.imagePaths.first).existsSync();
 
           return Container(
             height: MediaQuery.of(context).size.height * 0.92,
@@ -891,8 +923,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                           child: Icon(Icons.person_rounded,
                               color: Colors.white70),
                         ),
-                        title: const Text('{username}',
-                            style: TextStyle(
+                        title: Text(authorName,
+                            style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold)),
                         trailing: PopupMenuButton<String>(
@@ -934,17 +966,15 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                 fontWeight: FontWeight.bold),
                           ),
                         ),
-                      Text(
-                        currentPost.content.isNotEmpty
-                            ? currentPost.content
-                            : 'user summary text all here including gif',
-                        style: const TextStyle(color: Colors.white70, fontSize: 14),
-                      ),
+                      if (currentPost.content.isNotEmpty)
+                        Text(
+                          currentPost.content,
+                          style: const TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
                       const SizedBox(height: 12),
 
                       // Attached Media Container
-                      if (currentPost.imagePaths.isNotEmpty &&
-                          File(currentPost.imagePaths.first).existsSync())
+                      if (hasImage)
                         ClipRRect(
                           borderRadius: BorderRadius.circular(20),
                           child: Image.file(
@@ -953,34 +983,12 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                             width: double.infinity,
                             fit: BoxFit.cover,
                           ),
-                        )
-                      else
-                        Container(
-                          height: 200,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1B1F2D),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.photo_library_rounded,
-                                    size: 48, color: Colors.white38),
-                                SizedBox(height: 8),
-                                Text('Image here if there is image than',
-                                    style: TextStyle(
-                                        color: Colors.white54,
-                                        fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                          ),
                         ),
                       const SizedBox(height: 12),
 
                       // Date & Total Comment Timestamp Bar
                       Text(
-                        '5:00 pm date  ${currentPost.comments.length} comments',
+                        '${currentPost.createdAt.hour}:${currentPost.createdAt.minute.toString().padLeft(2, '0')} • ${currentPost.comments.length} comments',
                         style: const TextStyle(color: Colors.white38, fontSize: 12),
                       ),
                       const Divider(color: Colors.white12, height: 20),
@@ -1025,7 +1033,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                       const Divider(color: Colors.white12, height: 20),
 
                       const Text(
-                        'comment',
+                        'Comments',
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -1077,22 +1085,6 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                     ],
                                   ),
                                 ),
-                                Container(
-                                  width: 80,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1E2230),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Center(
-                                    child: Text(
-                                      'gif only here if there is',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          color: Colors.white38, fontSize: 9),
-                                    ),
-                                  ),
-                                ),
                               ],
                             ),
                           );
@@ -1109,13 +1101,14 @@ class _PostsPageState extends ConsumerState<PostsPage> {
   }
 
   // ---------------------------------------------------------------------------
-  // MAIN FEED BUILDER (Matching Image 1 Wireframe Layout)
+  // MAIN FEED BUILDER
   // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authNotifierProvider).valueOrNull;
     final currentUser = auth is AuthAuthenticated ? auth.user : null;
+    final authorName = currentUser?.displayName ?? currentUser?.username ?? 'User';
 
     final postsAsync = ref.watch(postsNotifierProvider);
     final instantsAsync = ref.watch(instantsProvider);
@@ -1156,6 +1149,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
         ],
       ),
       body: CustomScrollView(
+        controller: _scrollController,
         slivers: [
           // Instants Header Row
           SliverToBoxAdapter(
@@ -1184,7 +1178,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                 color: Color(0xFF8B95F6), size: 24),
                           ),
                           const SizedBox(height: 4),
-                          const Text('Instant',
+                          const Text('Insta story',
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -1313,8 +1307,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                       color: Colors.white70)
                                   : null,
                             ),
-                            title: const Text('{username}',
-                                style: TextStyle(
+                            title: Text(authorName,
+                                style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold)),
                             trailing: PopupMenuButton<String>(
@@ -1355,59 +1349,37 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold),
                                   ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  post.content.isNotEmpty
-                                      ? post.content
-                                      : 'user summary text all here including gif',
-                                  style: const TextStyle(
-                                      color: Colors.white70, fontSize: 13),
-                                ),
+                                if (post.content.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    post.content,
+                                    style: const TextStyle(
+                                        color: Colors.white70, fontSize: 13),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
                           const SizedBox(height: 12),
 
                           // Media Box Container (Tap to open full post view)
-                          GestureDetector(
-                            onTap: () => _openPostDetailView(post),
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(24),
-                                child: hasImage
-                                    ? Image.file(
-                                        File(post.imagePaths.first),
-                                        height: 240,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Container(
-                                        height: 220,
-                                        width: double.infinity,
-                                        color: const Color(0xFF1E2230),
-                                        child: const Center(
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(Icons.photo_library_rounded,
-                                                  size: 56,
-                                                  color: Color(0xFF8B95F6)),
-                                              SizedBox(height: 8),
-                                              Text(
-                                                'Image here if there is image than',
-                                                style: TextStyle(
-                                                    color: Colors.white54,
-                                                    fontWeight: FontWeight.bold),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
+                          if (hasImage)
+                            GestureDetector(
+                              onTap: () => _openPostDetailView(post),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(24),
+                                  child: Image.file(
+                                    File(post.imagePaths.first),
+                                    height: 240,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
 
                           // Bottom Interaction Icons (Heart, Comment bubble, Bookmark)
                           Padding(
@@ -1463,10 +1435,16 @@ class _PostsPageState extends ConsumerState<PostsPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF8B95F6),
-        onPressed: _showCreatePostModal,
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+      floatingActionButton: AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: _isFabVisible ? 1.0 : 0.0,
+        child: _isFabVisible
+            ? FloatingActionButton(
+                backgroundColor: const Color(0xFF8B95F6),
+                onPressed: _showCreatePostModal,
+                child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+              )
+            : null,
       ),
     );
   }

@@ -1113,33 +1113,39 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     final postsAsync = ref.watch(postsNotifierProvider);
     final instantsAsync = ref.watch(instantsProvider);
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
       drawer: const AppHamburgerDrawer(),
-      backgroundColor: const Color(0xFF0B0D14),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B0D14),
         elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 26),
+            icon: Icon(Icons.menu_rounded,
+                color: colorScheme.onSurface, size: 26),
             onPressed: () => Scaffold.of(context).openDrawer(),
             tooltip: 'Open Menu',
           ),
         ),
-        title: const Text(
+        title: Text(
           'Personal Feed',
           style: TextStyle(
-              fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18),
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+              fontSize: 18),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_a_photo_outlined, color: Colors.white, size: 22),
+            icon: Icon(Icons.add_a_photo_outlined,
+                color: colorScheme.onSurface, size: 22),
             onPressed: () => _openCreateInstantCamera(),
             tooltip: 'Camera / Instant',
           ),
           IconButton(
-            icon: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+            icon: Icon(Icons.add_rounded,
+                color: colorScheme.onSurface, size: 28),
             onPressed: _showCreatePostModal,
             tooltip: 'Create New Post',
           ),
@@ -1284,10 +1290,12 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                       child: Container(
                         margin: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 6),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF0F1118),
-                          border: Border(
-                            bottom: BorderSide(color: Colors.white12, width: 0.5),
+                        decoration: BoxDecoration(
+                          color: theme.cardColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: colorScheme.outline.withValues(alpha: 0.2),
+                            width: 0.5,
                           ),
                         ),
                         child: Column(

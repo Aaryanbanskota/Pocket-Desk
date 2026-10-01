@@ -394,7 +394,7 @@ class _AboutAppTileState extends ConsumerState<_AboutAppTile> {
                     }
                   },
                   child: Text(
-                    isUnlocked ? 'Version 1.0.0 (Share Unlocked)' : 'Version 1.0.0',
+                    isUnlocked ? 'Version v1.2.0 (Share Unlocked)' : 'Version v1.2.0',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: isUnlocked ? colorScheme.primary : colorScheme.onSurfaceVariant,
                       fontWeight: isUnlocked ? FontWeight.bold : FontWeight.normal,

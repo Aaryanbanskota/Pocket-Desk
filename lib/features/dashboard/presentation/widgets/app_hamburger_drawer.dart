@@ -126,7 +126,7 @@ class AppHamburgerDrawer extends ConsumerWidget {
                       ),
                       Row(
                         children: [
-                          if (ref.watch(enableRearrangeProvider).valueOrNull ?? true)
+                          if (ref.watch(enableRearrangeProvider).valueOrNull ?? false)
                             IconButton(
                               icon: const Icon(Icons.tune_rounded, size: 22),
                               tooltip: 'Customize Menu Items',

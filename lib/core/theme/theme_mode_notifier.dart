@@ -101,9 +101,9 @@ class EnableRearrangeNotifier extends AsyncNotifier<bool> {
       if (stored != null) {
         return stored == 'true';
       }
-      return true; // Enabled by default
+      return false; // Disabled by default
     } catch (e) {
-      return true;
+      return false;
     }
   }
 

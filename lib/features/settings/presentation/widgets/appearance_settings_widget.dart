@@ -169,7 +169,7 @@ class AppearanceSettingsWidget extends ConsumerWidget {
               colorScheme,
               'Rearrange Widgets & Menu',
               'Enable reordering controls on Dashboard and Hamburger menu',
-              ref.watch(enableRearrangeProvider).valueOrNull ?? true,
+              ref.watch(enableRearrangeProvider).valueOrNull ?? false,
               (value) {
                 ref
                     .read(enableRearrangeProvider.notifier)

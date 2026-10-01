@@ -39,6 +39,7 @@ class _QrLoginHostWidgetState extends ConsumerState<QrLoginHostWidget> {
         await service.dispose();
         return;
       }
+      setState(() => _starting = false);
       await showDialog<void>(
         context: context,
         barrierDismissible: false,

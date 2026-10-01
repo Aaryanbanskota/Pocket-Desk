@@ -351,10 +351,13 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     final currentUser = auth is AuthAuthenticated ? auth.user : null;
     final avatarB64 = currentUser?.avatarBase64;
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF0F1118),
+      backgroundColor: theme.scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -371,8 +374,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.close_rounded,
-                          color: Colors.white, size: 28),
+                      icon: Icon(Icons.close_rounded,
+                          color: colorScheme.onSurface, size: 28),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                     ElevatedButton(
@@ -643,10 +646,12 @@ class _PostsPageState extends ConsumerState<PostsPage> {
 
     final hasImage = post.imagePaths.isNotEmpty && File(post.imagePaths.first).existsSync();
 
+    final theme = Theme.of(context);
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF0F1118),
+      backgroundColor: theme.scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -873,10 +878,12 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     final currentUser = auth is AuthAuthenticated ? auth.user : null;
     final authorName = currentUser?.displayName ?? currentUser?.username ?? 'User';
 
+    final theme = Theme.of(context);
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF0F1118),
+      backgroundColor: theme.scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -97,10 +98,15 @@ class AppHamburgerDrawer extends ConsumerWidget {
                           CircleAvatar(
                             radius: 24,
                             backgroundColor: cs.primary,
-                            child: Text(
-                              username.isNotEmpty ? username[0].toUpperCase() : 'U',
-                              style: TextStyle(color: cs.onPrimary, fontSize: 20, fontWeight: FontWeight.bold),
-                            ),
+                            backgroundImage: user?.avatarBase64 != null
+                                ? MemoryImage(base64Decode(user!.avatarBase64!))
+                                : null,
+                            child: user?.avatarBase64 == null
+                                ? Text(
+                                    username.isNotEmpty ? username[0].toUpperCase() : 'U',
+                                    style: TextStyle(color: cs.onPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+                                  )
+                                : null,
                           ),
                           Positioned(
                             right: 0,

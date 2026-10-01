@@ -34,6 +34,9 @@ class _QrLoginHostWidgetState extends ConsumerState<QrLoginHostWidget> {
         isar: isar,
         user: auth.user,
         deviceName: P2PSyncService().deviceName ?? 'This device',
+      ).timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => throw const QrLoginException('Host initialization timed out. Please check your network connection.'),
       );
       if (!mounted) {
         await service.dispose();

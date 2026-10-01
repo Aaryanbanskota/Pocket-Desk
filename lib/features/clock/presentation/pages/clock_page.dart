@@ -80,14 +80,64 @@ class _ClockPageState extends ConsumerState<ClockPage>
   bool _alarmsLoading = true;
   String? _alarmStorageError;
 
+  // Pomodoro state
+  Timer? _pomodoroTimer;
+  int _pomodoroSeconds = 25 * 60;
+  final int _pomodoroWorkDuration = 25 * 60;
+  final int _pomodoroBreakDuration = 5 * 60;
+  bool _isPomodoroRunning = false;
+  bool _isPomodoroBreak = false;
+  int _pomodoroCompletedSessions = 0;
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _now = DateTime.now());
     });
     unawaited(_loadAlarms());
+  }
+
+  void _togglePomodoro() {
+    if (_isPomodoroRunning) {
+      _pomodoroTimer?.cancel();
+      setState(() => _isPomodoroRunning = false);
+    } else {
+      setState(() => _isPomodoroRunning = true);
+      _pomodoroTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        if (_pomodoroSeconds > 0) {
+          setState(() => _pomodoroSeconds--);
+        } else {
+          _finishPomodoroPhase();
+        }
+      });
+    }
+  }
+
+  void _finishPomodoroPhase() {
+    _pomodoroTimer?.cancel();
+    if (_isPomodoroBreak) {
+      _isPomodoroBreak = false;
+      _pomodoroSeconds = _pomodoroWorkDuration;
+      _showClockMessage('Break over! Time to focus on your next session.');
+    } else {
+      _isPomodoroBreak = true;
+      _pomodoroCompletedSessions++;
+      _pomodoroSeconds = _pomodoroBreakDuration;
+      _showClockMessage('Focus session complete! Take a 5-minute break.');
+    }
+    setState(() => _isPomodoroRunning = false);
+  }
+
+  void _resetPomodoro() {
+    _pomodoroTimer?.cancel();
+    setState(() {
+      _isPomodoroRunning = false;
+      _isPomodoroBreak = false;
+      _pomodoroSeconds = _pomodoroWorkDuration;
+    });
   }
 
   @override
@@ -96,6 +146,7 @@ class _ClockPageState extends ConsumerState<ClockPage>
     _clockTimer?.cancel();
     _stopwatchTimer?.cancel();
     _countDownTimer?.cancel();
+    _pomodoroTimer?.cancel();
     super.dispose();
   }
 
@@ -621,6 +672,7 @@ class _ClockPageState extends ConsumerState<ClockPage>
             Tab(icon: Icon(Icons.alarm_rounded), text: 'Alarm'),
             Tab(icon: Icon(Icons.timer_rounded), text: 'Timer'),
             Tab(icon: Icon(Icons.timer_outlined), text: 'Stopwatch'),
+            Tab(icon: Icon(Icons.psychology_rounded), text: 'Pomodoro'),
           ],
         ),
       ),
@@ -985,6 +1037,100 @@ class _ClockPageState extends ConsumerState<ClockPage>
                   ],
                 ),
               ],
+            ),
+          ),
+
+          // 5. Pomodoro Tab
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: (_isPomodoroBreak ? Colors.green : colorScheme.primary)
+                          .withAlpha(30),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _isPomodoroBreak ? '🌿 Short Break (5m)' : '🔥 Focus Session (25m)',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: _isPomodoroBreak ? Colors.green : colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 220,
+                        height: 220,
+                        child: CircularProgressIndicator(
+                          value: _pomodoroSeconds /
+                              (_isPomodoroBreak
+                                  ? _pomodoroBreakDuration
+                                  : _pomodoroWorkDuration),
+                          strokeWidth: 10,
+                          backgroundColor: colorScheme.surfaceContainerHighest,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _isPomodoroBreak ? Colors.green : colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${(_pomodoroSeconds ~/ 60).toString().padLeft(2, '0')}:${(_pomodoroSeconds % 60).toString().padLeft(2, '0')}',
+                            style: theme.textTheme.displayMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Sessions: $_pomodoroCompletedSessions completed',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FilledButton.icon(
+                        onPressed: _togglePomodoro,
+                        icon: Icon(
+                            _isPomodoroRunning ? Icons.pause : Icons.play_arrow),
+                        label: Text(_isPomodoroRunning ? 'Pause' : 'Start Focus'),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 14),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      OutlinedButton.icon(
+                        onPressed: _resetPomodoro,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Reset'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 14),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],

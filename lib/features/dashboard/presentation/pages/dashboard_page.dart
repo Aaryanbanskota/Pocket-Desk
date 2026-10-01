@@ -3,20 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/services/app_update_service.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_mode_notifier.dart';
 import '../../../../core/utils/date_time_utils.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
+import '../providers/dashboard_layout_provider.dart';
+import '../widgets/app_hamburger_drawer.dart';
 import '../widgets/calendar_mini_widget.dart';
 import '../widgets/notes_widget.dart';
 import '../widgets/pinned_widgets.dart';
 import '../widgets/quick_actions.dart';
 import '../widgets/statistics_widget.dart';
+import '../widgets/swipeable_weather_widget.dart';
 import '../widgets/tasks_widget.dart';
 import '../widgets/today_schedule_widget.dart';
-import '../widgets/weather_widget.dart';
-import '../widgets/app_hamburger_drawer.dart';
-
-import '../../../../core/services/app_update_service.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -34,6 +35,52 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     });
   }
 
+  Widget _buildWidgetByKey(String key) {
+    switch (key) {
+      case 'weather':
+        return const SwipeableWeatherWidget();
+      case 'quick_actions':
+        return const QuickActions();
+      case 'schedule':
+        return const TodayScheduleWidget();
+      case 'calendar':
+        return const CalendarMiniWidget();
+      case 'tasks':
+        return const TasksWidget();
+      case 'notes':
+        return const NotesWidget();
+      case 'statistics':
+        return const StatisticsWidget();
+      case 'pinned':
+        return const PinnedWidgets();
+      default:
+        return const SizedBox();
+    }
+  }
+
+  String _getWidgetTitle(String key) {
+    switch (key) {
+      case 'weather':
+        return 'Weather & Storage Widget';
+      case 'quick_actions':
+        return 'Quick Actions Bar';
+      case 'schedule':
+        return 'Today Schedule';
+      case 'calendar':
+        return 'Mini Calendar';
+      case 'tasks':
+        return 'Tasks Card';
+      case 'notes':
+        return 'Notes Card';
+      case 'statistics':
+        return 'Statistics Card';
+      case 'pinned':
+        return 'Pinned Shortcuts';
+      default:
+        return key;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -41,9 +88,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final authState = ref.watch(authNotifierProvider).valueOrNull;
     final user = authState is AuthAuthenticated ? authState.user : null;
 
-    final width = MediaQuery.sizeOf(context).width;
-    final isDesktop = width > 1000;
-    final isTablet = width > 600 && width <= 1000;
+    final layoutState = ref.watch(dashboardLayoutProvider);
+    final layoutNotifier = ref.read(dashboardLayoutProvider.notifier);
+
+    final isRearrangeEnabled =
+        ref.watch(enableRearrangeProvider).valueOrNull ?? true;
+    final isEditing = isRearrangeEnabled && layoutState.isEditing;
 
     return Scaffold(
       drawer: const AppHamburgerDrawer(),
@@ -67,6 +117,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           ],
         ),
         actions: [
+          if (isRearrangeEnabled)
+            IconButton(
+              icon: Icon(
+                isEditing ? Icons.check_circle_rounded : Icons.grid_view_rounded,
+                color: isEditing ? colorScheme.primary : colorScheme.onSurfaceVariant,
+              ),
+              tooltip: isEditing ? 'Done Reordering' : 'Rearrange Dashboard Widgets',
+              onPressed: () => layoutNotifier.toggleEditMode(),
+            ),
           IconButton(
             icon: const Icon(Icons.settings_rounded),
             tooltip: 'Settings',
@@ -81,18 +140,110 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildWelcomeHeader(theme, user?.displayName ?? user?.username ?? 'User'),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildWelcomeHeader(theme, user?.displayName ?? user?.username ?? 'User'),
+                  ),
+                  if (isEditing)
+                    TextButton.icon(
+                      onPressed: () => layoutNotifier.resetLayout(),
+                      icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                      label: const Text('Reset'),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(height: AppSpacing.md),
-              const WeatherWidget(),
-              const SizedBox(height: AppSpacing.lg),
-              const QuickActions(),
-              const SizedBox(height: AppSpacing.xl),
-              if (isDesktop)
-                _buildDesktopLayout()
-              else if (isTablet)
-                _buildTabletLayout()
+
+              if (isEditing)
+                Container(
+                  margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.touch_app_rounded, color: colorScheme.primary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Drag handles to reorder any widget anywhere. Tap switch to show or hide widgets.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              if (isEditing)
+                ReorderableListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: layoutState.widgetOrder.length,
+                  onReorder: (oldIndex, newIndex) => layoutNotifier.reorderWidgets(oldIndex, newIndex),
+                  itemBuilder: (context, index) {
+                    final key = layoutState.widgetOrder[index];
+                    final isHidden = layoutState.hiddenWidgets.contains(key);
+
+                    return Card(
+                      key: ValueKey(key),
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      elevation: 0,
+                      color: isHidden
+                          ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+                          : colorScheme.surfaceContainerLow,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
+                          children: [
+                            ReorderableDragStartListener(
+                              index: index,
+                              child: Icon(Icons.drag_indicator_rounded, color: colorScheme.primary),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                _getWidgetTitle(key),
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: isHidden ? Colors.grey : colorScheme.onSurface,
+                                  decoration: isHidden ? TextDecoration.lineThrough : null,
+                                ),
+                              ),
+                            ),
+                            Switch(
+                              value: !isHidden,
+                              onChanged: (_) => layoutNotifier.toggleWidgetVisibility(key),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                )
               else
-                _buildMobileLayout(),
+                Column(
+                  children: layoutState.widgetOrder
+                      .where((key) => !layoutState.hiddenWidgets.contains(key))
+                      .map((key) => Padding(
+                            padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                            child: _buildWidgetByKey(key),
+                          ))
+                      .toList(),
+                ),
             ],
           ),
         ),
@@ -116,90 +267,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildDesktopLayout() {
-    return const Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 2,
-          child: Column(
-            children: [
-              TodayScheduleWidget(),
-              SizedBox(height: AppSpacing.lg),
-              TasksWidget(),
-              SizedBox(height: AppSpacing.lg),
-              NotesWidget(),
-            ],
-          ),
-        ),
-        SizedBox(width: AppSpacing.lg),
-        Expanded(
-          flex: 1,
-          child: Column(
-            children: [
-              CalendarMiniWidget(),
-              SizedBox(height: AppSpacing.lg),
-              StatisticsWidget(),
-              SizedBox(height: AppSpacing.lg),
-              PinnedWidgets(),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTabletLayout() {
-    return const Column(
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: TodayScheduleWidget()),
-            SizedBox(width: AppSpacing.lg),
-            Expanded(child: CalendarMiniWidget()),
-          ],
-        ),
-        SizedBox(height: AppSpacing.lg),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: TasksWidget()),
-            SizedBox(width: AppSpacing.lg),
-            Expanded(child: NotesWidget()),
-          ],
-        ),
-        SizedBox(height: AppSpacing.lg),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: StatisticsWidget()),
-            SizedBox(width: AppSpacing.lg),
-            Expanded(child: PinnedWidgets()),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMobileLayout() {
-    return const Column(
-      children: [
-        TodayScheduleWidget(),
-        SizedBox(height: AppSpacing.lg),
-        CalendarMiniWidget(),
-        SizedBox(height: AppSpacing.lg),
-        TasksWidget(),
-        SizedBox(height: AppSpacing.lg),
-        NotesWidget(),
-        SizedBox(height: AppSpacing.lg),
-        StatisticsWidget(),
-        SizedBox(height: AppSpacing.lg),
-        PinnedWidgets(),
       ],
     );
   }

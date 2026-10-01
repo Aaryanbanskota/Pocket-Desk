@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../features/auth/presentation/pages/account_selector_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/qr_login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/setup_onboarding_page.dart';
+import '../../features/auth/presentation/pages/subscription_plan_page.dart';
 import '../../features/auth/presentation/pages/profile_page.dart';
 import '../../features/auth/presentation/providers/auth_notifier.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
@@ -88,6 +90,14 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.splash,
         builder: (context, state) => const _SplashPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.accountSelector,
+        builder: (context, state) => const AccountSelectorPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.subscriptionPlan,
+        builder: (context, state) => const SubscriptionPlanPage(),
       ),
       GoRoute(
         path: AppRoutes.login,
@@ -184,7 +194,9 @@ GoRouter appRouter(Ref ref) {
 
       final onAuthPage = location == AppRoutes.login ||
           location == AppRoutes.qrLogin ||
-          location == AppRoutes.register;
+          location == AppRoutes.register ||
+          location == AppRoutes.accountSelector ||
+          location == AppRoutes.subscriptionPlan;
 
       // 1. Unauthenticated users must be on login or register
       if (!isAuthenticated) {

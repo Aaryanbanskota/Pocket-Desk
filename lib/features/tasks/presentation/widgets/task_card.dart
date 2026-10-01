@@ -77,6 +77,8 @@ class TaskCard extends ConsumerWidget {
                         style: tt.bodyMedium?.copyWith(
                           decoration:
                               isDone ? TextDecoration.lineThrough : null,
+                          decorationThickness: 2.0,
+                          decorationColor: cs.primary,
                           color: isDone ? cs.onSurfaceVariant : cs.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
@@ -89,8 +91,11 @@ class TaskCard extends ConsumerWidget {
                             task.description!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: tt.bodySmall
-                                ?.copyWith(color: cs.onSurfaceVariant),
+                            style: tt.bodySmall?.copyWith(
+                              color: cs.onSurfaceVariant,
+                              decoration:
+                                  isDone ? TextDecoration.lineThrough : null,
+                            ),
                           ),
                         ),
                       const SizedBox(height: 6),
@@ -98,6 +103,12 @@ class TaskCard extends ConsumerWidget {
                         spacing: 6,
                         runSpacing: 4,
                         children: [
+                          if (isDone)
+                            _InfoChip(
+                              icon: Icons.check_circle_rounded,
+                              label: 'Completed',
+                              color: cs.tertiary,
+                            ),
                           if (task.priority != TaskPriority.none)
                             _PriorityBadge(task.priority),
                           if (task.dueDate != null)

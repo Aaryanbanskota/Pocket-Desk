@@ -1,7 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/router/app_routes.dart';
+import '../../../../core/services/account_plan_service.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/validators.dart';
 import '../providers/auth_notifier.dart';
@@ -44,6 +49,18 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     _newPassCtrl.dispose();
     _confirmPassCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickAvatar() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result != null && result.files.single.path != null) {
+      final bytes = await File(result.files.single.path!).readAsBytes();
+      final b64 = base64Encode(bytes);
+      await ref.read(authNotifierProvider.notifier).updateProfile(
+            avatarBase64: b64,
+          );
+      _showSnack('Profile picture updated successfully!');
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -131,12 +148,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final authState = ref.watch(authNotifierProvider).valueOrNull;
-    final user =
-        authState is AuthAuthenticated ? authState.user : null;
+    final user = authState is AuthAuthenticated ? authState.user : null;
+    final planState = ref.watch(accountPlanProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: const Text('Master Profile'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
@@ -154,8 +171,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           : ListView(
               padding: const EdgeInsets.all(AppSpacing.lg),
               children: [
-                _AvatarSection(user: user),
+                _AvatarSection(user: user, onPickAvatar: _pickAvatar),
                 const SizedBox(height: AppSpacing.xl),
+
+                // Cloud Pro Plan Upgrade Card for Local / Free Tier Users
+                if (planState.accountType == AccountType.local ||
+                    planState.cloudPlan == CloudPlan.free)
+                  _buildCloudProBanner(context, planState),
+
+                const SizedBox(height: AppSpacing.lg),
                 _SectionCard(
                   title: 'Display Name',
                   icon: Icons.person_outline_rounded,
@@ -271,13 +295,24 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 _SectionCard(
-                  title: 'Account Info',
+                  title: 'Account & Plan Info',
                   icon: Icons.info_outline_rounded,
                   colorScheme: colorScheme,
                   child: Column(
                     children: [
+                      _InfoRow(label: 'Username', value: user.username),
                       _InfoRow(
-                          label: 'Username', value: user.username),
+                        label: 'Account Mode',
+                        value: planState.accountType == AccountType.cloud
+                            ? 'Cloud Sync (Supabase)'
+                            : 'Local Device Only',
+                      ),
+                      _InfoRow(
+                        label: 'Storage Tier',
+                        value: planState.cloudPlan == CloudPlan.pro
+                            ? 'Pro (10 GB Text+Video)'
+                            : 'Free (500 MB Text)',
+                      ),
                       _InfoRow(
                           label: 'Member since',
                           value: _formatDate(user.createdAt)),
@@ -293,37 +328,108 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
+  Widget _buildCloudProBanner(BuildContext context, AccountPlanState planState) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.indigo.shade800, Colors.purple.shade900],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.workspace_premium_rounded,
+                  color: Colors.amber, size: 28),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Upgrade to Cloud Pro (\$5/mo)',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Unlock 10GB cloud storage, video attachments, and multi-device Supabase automatic syncing.',
+            style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.3),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: () => context.push(AppRoutes.subscriptionPlan),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              foregroundColor: Colors.black,
+            ),
+            icon: const Icon(Icons.star_rounded, size: 18),
+            label: const Text('View Cloud Pro Features',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _formatDate(DateTime dt) {
     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
   }
 }
 
-// ---------------------------------------------------------------------------
-// Sub-widgets
-// ---------------------------------------------------------------------------
-
-
-
 class _AvatarSection extends StatelessWidget {
-  const _AvatarSection({required this.user});
+  const _AvatarSection({required this.user, required this.onPickAvatar});
   final UserModel user;
+  final VoidCallback onPickAvatar;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final avatarB64 = user.avatarBase64;
+
     return Center(
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 48,
-            backgroundColor:
-                theme.colorScheme.primaryContainer,
-            child: Text(
-              _initials(user.displayName ?? user.username),
-              style: theme.textTheme.headlineMedium?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer,
-                fontWeight: FontWeight.w700,
-              ),
+          GestureDetector(
+            onTap: onPickAvatar,
+            child: Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                CircleAvatar(
+                  radius: 48,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  backgroundImage: avatarB64 != null
+                      ? MemoryImage(base64Decode(avatarB64))
+                      : null,
+                  child: avatarB64 == null
+                      ? Text(
+                          _initials(user.displayName ?? user.username),
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            color: theme.colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        )
+                      : null,
+                ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.camera_alt_rounded,
+                      size: 16, color: Colors.white),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: AppSpacing.md),

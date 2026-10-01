@@ -292,11 +292,13 @@ class _DeviceSettingsWidgetState extends ConsumerState<DeviceSettingsWidget> {
                           );
                           if (response.statusCode == 200 && context.mounted) {
                             final decoded = jsonDecode(response.body);
-                            final info = AppUpdateInfo.fromJson(decoded);
-                            AppUpdateService.showWhatIsNewWalkthrough(
-                              context,
-                              info,
-                            );
+                            if (decoded is Map<String, dynamic>) {
+                              final info = AppUpdateInfo.fromJson(decoded);
+                              AppUpdateService.showWhatIsNewWalkthrough(
+                                context,
+                                info,
+                              );
+                            }
                           }
                         },
                         icon: const Icon(Icons.auto_awesome_rounded, size: 16),

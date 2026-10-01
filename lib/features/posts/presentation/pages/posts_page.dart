@@ -1278,92 +1278,93 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                     final hasImage = post.imagePaths.isNotEmpty &&
                         File(post.imagePaths.first).existsSync();
 
-                    return Container(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 6),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF0F1118),
-                        border: Border(
-                          bottom: BorderSide(color: Colors.white12, width: 0.5),
+                    return InkWell(
+                      onTap: () => _openPostDetailView(post),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 6),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF0F1118),
+                          border: Border(
+                            bottom: BorderSide(color: Colors.white12, width: 0.5),
+                          ),
                         ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header User Row
-                          ListTile(
-                            contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 8),
-                            leading: CircleAvatar(
-                              backgroundColor: const Color(0xFF202436),
-                              backgroundImage: avatarB64 != null
-                                  ? MemoryImage(base64Decode(avatarB64))
-                                  : null,
-                              child: avatarB64 == null
-                                  ? const Icon(Icons.person_rounded,
-                                      color: Colors.white70)
-                                  : null,
-                            ),
-                            title: Text(authorName,
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold)),
-                            trailing: PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert_rounded,
-                                  color: Colors.white70),
-                              onSelected: (val) {
-                                final notifier =
-                                    ref.read(postsNotifierProvider.notifier);
-                                if (val == 'pin') {
-                                  notifier.togglePin(post);
-                                }
-                                if (val == 'delete') {
-                                  notifier.deletePost(post.id);
-                                }
-                              },
-                              itemBuilder: (ctx) => [
-                                PopupMenuItem(
-                                    value: 'pin',
-                                    child:
-                                        Text(post.isPinned ? 'Unpin' : 'Pin')),
-                                const PopupMenuItem(
-                                    value: 'delete', child: Text('Delete')),
-                              ],
-                            ),
-                          ),
-
-                          // Post Title & Content
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (post.title != null && post.title!.isNotEmpty)
-                                  Text(
-                                    post.title!,
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                if (post.content.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    post.content,
-                                    style: const TextStyle(
-                                        color: Colors.white70, fontSize: 13),
-                                  ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Header User Row
+                            ListTile(
+                              contentPadding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              leading: CircleAvatar(
+                                backgroundColor: const Color(0xFF202436),
+                                backgroundImage: avatarB64 != null
+                                    ? MemoryImage(base64Decode(avatarB64))
+                                    : null,
+                                child: avatarB64 == null
+                                    ? const Icon(Icons.person_rounded,
+                                        color: Colors.white70)
+                                    : null,
+                              ),
+                              title: Text(authorName,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold)),
+                              trailing: PopupMenuButton<String>(
+                                icon: const Icon(Icons.more_vert_rounded,
+                                    color: Colors.white70),
+                                onSelected: (val) {
+                                  final notifier =
+                                      ref.read(postsNotifierProvider.notifier);
+                                  if (val == 'pin') {
+                                    notifier.togglePin(post);
+                                  }
+                                  if (val == 'delete') {
+                                    notifier.deletePost(post.id);
+                                  }
+                                },
+                                itemBuilder: (ctx) => [
+                                  PopupMenuItem(
+                                      value: 'pin',
+                                      child:
+                                          Text(post.isPinned ? 'Unpin' : 'Pin')),
+                                  const PopupMenuItem(
+                                      value: 'delete', child: Text('Delete')),
                                 ],
-                              ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
 
-                          // Media Box Container (Tap to open full post view)
-                          if (hasImage)
-                            GestureDetector(
-                              onTap: () => _openPostDetailView(post),
-                              child: Padding(
+                            // Post Title & Content
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (post.title != null && post.title!.isNotEmpty)
+                                    Text(
+                                      post.title!,
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  if (post.content.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      post.content,
+                                      style: const TextStyle(
+                                          color: Colors.white70, fontSize: 13),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Media Box Container (Tap image explicitly opens post detail)
+                            if (hasImage)
+                              Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 16),
                                 child: ClipRRect(
@@ -1376,52 +1377,52 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                   ),
                                 ),
                               ),
-                            ),
 
-                          // Bottom Interaction Icons (Heart, Comment bubble, Bookmark)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            child: Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(
-                                    post.isLiked
-                                        ? Icons.favorite_rounded
-                                        : Icons.favorite_border_rounded,
-                                    color: post.isLiked
-                                        ? Colors.red
-                                        : Colors.white70,
+                            // Bottom Interaction Icons (Heart, Comment bubble, Bookmark)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      post.isLiked
+                                          ? Icons.favorite_rounded
+                                          : Icons.favorite_border_rounded,
+                                      color: post.isLiked
+                                          ? Colors.red
+                                          : Colors.white70,
+                                    ),
+                                    onPressed: () => ref
+                                        .read(postsNotifierProvider.notifier)
+                                        .toggleLike(post),
                                   ),
-                                  onPressed: () => ref
-                                      .read(postsNotifierProvider.notifier)
-                                      .toggleLike(post),
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                      Icons.chat_bubble_outline_rounded,
-                                      color: Colors.white70),
-                                  onPressed: () =>
-                                      _showCommentComposerSheet(post),
-                                ),
-                                const Spacer(),
-                                IconButton(
-                                  icon: Icon(
-                                    post.isSaved
-                                        ? Icons.bookmark_rounded
-                                        : Icons.bookmark_border_rounded,
-                                    color: post.isSaved
-                                        ? const Color(0xFF8B95F6)
-                                        : Colors.white70,
+                                  IconButton(
+                                    icon: const Icon(
+                                        Icons.mode_comment_outlined,
+                                        color: Colors.white70),
+                                    onPressed: () =>
+                                        _showCommentComposerSheet(post),
                                   ),
-                                  onPressed: () => ref
-                                      .read(postsNotifierProvider.notifier)
-                                      .toggleSave(post),
-                                ),
-                              ],
+                                  const Spacer(),
+                                  IconButton(
+                                    icon: Icon(
+                                      post.isSaved
+                                          ? Icons.bookmark_rounded
+                                          : Icons.bookmark_border_rounded,
+                                      color: post.isSaved
+                                          ? const Color(0xFF8B95F6)
+                                          : Colors.white70,
+                                    ),
+                                    onPressed: () => ref
+                                        .read(postsNotifierProvider.notifier)
+                                        .toggleSave(post),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   },

@@ -711,7 +711,7 @@ class QrLoginService {
       final interfaces = await NetworkInterface.list(
         type: InternetAddressType.IPv4,
         includeLinkLocal: false,
-      );
+      ).timeout(const Duration(seconds: 3));
       final candidates = interfaces.where((interface) {
         final name = interface.name.toLowerCase();
         return !name.contains('docker') &&

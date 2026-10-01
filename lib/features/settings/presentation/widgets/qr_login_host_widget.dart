@@ -46,7 +46,10 @@ class _QrLoginHostWidgetState extends ConsumerState<QrLoginHostWidget> {
         builder: (_) => _QrLoginHostDialog(service: service, qr: qr),
       );
     } catch (e) {
-      if (mounted) _showMessage(e.toString());
+      if (mounted) {
+        setState(() => _starting = false);
+        _showMessage(e.toString());
+      }
     } finally {
       await service.dispose();
       if (mounted) setState(() => _starting = false);

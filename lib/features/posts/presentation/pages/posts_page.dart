@@ -1121,17 +1121,9 @@ class _PostsPageState extends ConsumerState<PostsPage> {
         elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white38, width: 1.5),
-              ),
-              child: const Icon(Icons.add_a_photo_outlined,
-                  size: 20, color: Colors.white),
-            ),
-            onPressed: () => _openCreateInstantCamera(),
-            tooltip: 'Camera / Instant',
+            icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 26),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+            tooltip: 'Open Menu',
           ),
         ),
         title: const Text(
@@ -1142,7 +1134,12 @@ class _PostsPageState extends ConsumerState<PostsPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
+            icon: const Icon(Icons.add_a_photo_outlined, color: Colors.white, size: 22),
+            onPressed: () => _openCreateInstantCamera(),
+            tooltip: 'Camera / Instant',
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
             onPressed: _showCreatePostModal,
             tooltip: 'Create New Post',
           ),

@@ -121,3 +121,33 @@ class EnableRearrangeNotifier extends AsyncNotifier<bool> {
 
 final enableRearrangeProvider =
     AsyncNotifierProvider<EnableRearrangeNotifier, bool>(EnableRearrangeNotifier.new);
+
+const String _shareTabUnlockedKey = 'pocketdesk_share_tab_unlocked';
+
+class ShareTabUnlockedNotifier extends AsyncNotifier<bool> {
+  late final FlutterSecureStorage _storage;
+
+  @override
+  Future<bool> build() async {
+    _storage = const FlutterSecureStorage();
+    try {
+      final Future<String?> readFuture = _storage.read(key: _shareTabUnlockedKey);
+      final stored = await (_isTest ? readFuture : readFuture.timeout(const Duration(seconds: 1)));
+      return stored == 'true';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> unlockShareTab() async {
+    state = const AsyncData(true);
+    try {
+      final Future<void> writeFuture =
+          _storage.write(key: _shareTabUnlockedKey, value: 'true');
+      await (_isTest ? writeFuture : writeFuture.timeout(const Duration(seconds: 1)));
+    } catch (_) {}
+  }
+}
+
+final shareTabUnlockedProvider =
+    AsyncNotifierProvider<ShareTabUnlockedNotifier, bool>(ShareTabUnlockedNotifier.new);

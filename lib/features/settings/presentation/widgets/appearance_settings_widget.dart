@@ -195,14 +195,17 @@ class AppearanceSettingsWidget extends ConsumerWidget {
               (value) {},
             ),
             const SizedBox(height: AppSpacing.sm),
-            _buildSwitchTile(
-              theme,
-              colorScheme,
-              'Show daily quotes',
-              'Display inspirational quotes on dashboard',
-              true,
-              (value) {},
+            const SizedBox(height: AppSpacing.xl),
+
+            // About App Section
+            Text(
+              'About PocketDesk',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
+            const SizedBox(height: AppSpacing.md),
+            const _AboutAppTile(),
           ],
         ),
       ),
@@ -325,6 +328,84 @@ class AppearanceSettingsWidget extends ConsumerWidget {
             value: value,
             onChanged: onChanged,
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AboutAppTile extends ConsumerStatefulWidget {
+  const _AboutAppTile();
+
+  @override
+  ConsumerState<_AboutAppTile> createState() => _AboutAppTileState();
+}
+
+class _AboutAppTileState extends ConsumerState<_AboutAppTile> {
+  int _clickCount = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isUnlocked = ref.watch(shareTabUnlockedProvider).valueOrNull ?? false;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded, color: colorScheme.primary),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'PocketDesk App',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    if (isUnlocked) return;
+                    setState(() => _clickCount++);
+                    if (_clickCount >= 10) {
+                      ref.read(shareTabUnlockedProvider.notifier).unlockShareTab();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('🎉 Share & Transfer Settings Unlocked!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } else if (_clickCount >= 5) {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Tap ${10 - _clickCount} more times to unlock Share features.'),
+                          duration: const Duration(milliseconds: 1000),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text(
+                    isUnlocked ? 'Version 1.0.0 (Share Unlocked)' : 'Version 1.0.0',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: isUnlocked ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                      fontWeight: isUnlocked ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isUnlocked)
+            Icon(Icons.lock_open_rounded, color: colorScheme.primary, size: 20),
         ],
       ),
     );

@@ -92,10 +92,14 @@ GoRouter appRouter(Ref ref) {
         builder: (context, state, child) {
           return Consumer(
             builder: (context, ref, _) {
-              return SelectionArea(
-                contextMenuBuilder: (context, selectableRegionState) =>
-                    buildPocketAiSelectionToolbar(context, selectableRegionState, ref),
-                child: child,
+              return GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onDoubleTap: () => showPocketAiMascotDialog(context, ref),
+                child: SelectionArea(
+                  contextMenuBuilder: (context, selectableRegionState) =>
+                      buildPocketAiSelectionToolbar(context, selectableRegionState, ref),
+                  child: child,
+                ),
               );
             },
           );

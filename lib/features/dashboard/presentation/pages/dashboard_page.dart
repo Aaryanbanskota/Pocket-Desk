@@ -92,7 +92,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final layoutNotifier = ref.read(dashboardLayoutProvider.notifier);
 
     final isRearrangeEnabled =
-        ref.watch(enableRearrangeProvider).valueOrNull ?? true;
+        ref.watch(enableRearrangeProvider).valueOrNull ?? false;
     final isEditing = isRearrangeEnabled && layoutState.isEditing;
 
     return Scaffold(

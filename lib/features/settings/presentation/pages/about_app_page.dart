@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
@@ -7,18 +8,20 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_mode_notifier.dart';
 import '../../../dashboard/presentation/widgets/app_hamburger_drawer.dart';
 
-class AboutAppPage extends StatefulWidget {
+class AboutAppPage extends ConsumerStatefulWidget {
   const AboutAppPage({super.key});
 
   @override
-  State<AboutAppPage> createState() => _AboutAppPageState();
+  ConsumerState<AboutAppPage> createState() => _AboutAppPageState();
 }
 
-class _AboutAppPageState extends State<AboutAppPage> {
+class _AboutAppPageState extends ConsumerState<AboutAppPage> {
   bool _isOnline = false;
   bool _checkingOnline = true;
+  int _versionClickCount = 0;
 
   static const String _logsUrl =
       'https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/refs/heads/main/website/logs.html?token=GHSAT0AAAAAAEIYBMYEOAP22DFD5JVV4HIE2VYUQBA';
@@ -71,6 +74,7 @@ class _AboutAppPageState extends State<AboutAppPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isUnlocked = ref.watch(shareTabUnlockedProvider).valueOrNull ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -142,17 +146,42 @@ class _AboutAppPageState extends State<AboutAppPage> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withAlpha(25),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'v1.2.0 • Offline-First Ecosystem',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
+                  GestureDetector(
+                    onTap: () {
+                      if (isUnlocked) return;
+                      setState(() => _versionClickCount++);
+                      if (_versionClickCount >= 10) {
+                        ref.read(shareTabUnlockedProvider.notifier).unlockShareTab();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('🎉 Share & Transfer Settings Unlocked!'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } else if (_versionClickCount >= 5) {
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Tap ${10 - _versionClickCount} more times to unlock Share features.'),
+                            duration: const Duration(milliseconds: 1000),
+                          ),
+                        );
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withAlpha(25),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        isUnlocked
+                            ? 'v1.2.0 • Offline-First Ecosystem (Share Unlocked)'
+                            : 'v1.2.0 • Offline-First Ecosystem',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

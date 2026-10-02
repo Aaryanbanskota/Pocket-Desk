@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -96,19 +97,25 @@ class AppHamburgerDrawer extends ConsumerWidget {
                     children: [
                       Stack(
                         children: [
-                          CircleAvatar(
-                            radius: 24,
-                            backgroundColor: cs.primary,
-                            backgroundImage: user?.avatarBase64 != null
-                                ? MemoryImage(base64Decode(user!.avatarBase64!))
-                                : null,
-                            child: user?.avatarBase64 == null
-                                ? Text(
-                                    username.isNotEmpty ? username[0].toUpperCase() : 'U',
-                                    style: TextStyle(color: cs.onPrimary, fontSize: 20, fontWeight: FontWeight.bold),
-                                  )
-                                : null,
-                          ),
+                          Builder(builder: (context) {
+                            Uint8List? bytes;
+                            if (user?.avatarBase64 != null && user!.avatarBase64!.isNotEmpty) {
+                              try {
+                                bytes = base64Decode(user.avatarBase64!);
+                              } catch (_) {}
+                            }
+                            return CircleAvatar(
+                              radius: 24,
+                              backgroundColor: cs.primary,
+                              backgroundImage: bytes != null ? MemoryImage(bytes) : null,
+                              child: bytes == null
+                                  ? Text(
+                                      username.isNotEmpty ? username[0].toUpperCase() : 'U',
+                                      style: TextStyle(color: cs.onPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+                                    )
+                                  : null,
+                            );
+                          }),
                           Positioned(
                             right: 0,
                             bottom: 0,
@@ -126,7 +133,7 @@ class AppHamburgerDrawer extends ConsumerWidget {
                       ),
                       Row(
                         children: [
-                          if (ref.watch(enableRearrangeProvider).valueOrNull ?? true)
+                          if (ref.watch(enableRearrangeProvider).valueOrNull ?? false)
                             IconButton(
                               icon: const Icon(Icons.tune_rounded, size: 22),
                               tooltip: 'Customize Menu Items',

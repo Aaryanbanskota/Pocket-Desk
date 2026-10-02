@@ -34,6 +34,9 @@ class _QrLoginHostWidgetState extends ConsumerState<QrLoginHostWidget> {
         isar: isar,
         user: auth.user,
         deviceName: P2PSyncService().deviceName ?? 'This device',
+      ).timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => throw const QrLoginException('Host initialization timed out. Please check your network connection.'),
       );
       if (!mounted) {
         await service.dispose();
@@ -81,15 +84,41 @@ class _QrLoginHostWidgetState extends ConsumerState<QrLoginHostWidget> {
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              child: FilledButton.icon(
+              height: 48,
+              child: FilledButton(
                 onPressed: _starting ? null : _startLogin,
-                icon: _starting
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: _starting
+                    ? const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox.square(
+                            dimension: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Text(
+                            'Initializing Secure QR Host…',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                        ],
                       )
-                    : const Icon(Icons.qr_code_2_rounded),
-                label: Text(_starting ? 'Starting…' : 'Generate Login QR'),
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.qr_code_2_rounded, size: 22),
+                          SizedBox(width: 8),
+                          Text(
+                            'Generate Login QR',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                        ],
+                      ),
               ),
             ),
           ],

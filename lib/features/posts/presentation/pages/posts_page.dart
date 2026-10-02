@@ -632,7 +632,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
   }
 
   Future<void> _showAudioRecorderModal(TextEditingController controller) async {
-    final recorder = AudioRecorder();
+    AudioRecorder? recorder;
     Process? processRecorder;
     bool isRecording = false;
     int secondsRecorded = 0;
@@ -641,6 +641,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     String? errorMessage;
 
     try {
+      recorder = AudioRecorder();
       final hasPerm = await recorder.hasPermission();
       if (!hasPerm) {
         if (mounted) {
@@ -652,6 +653,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
       }
     } catch (e) {
       AppLogger.w('Permission check exception: $e');
+      recorder = null;
     }
 
     await showDialog<void>(
@@ -682,7 +684,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                         processRecorder!.kill(ProcessSignal.sigint);
                         processRecorder = null;
                       } else {
-                        recordedFilePath = await recorder.stop();
+                        recordedFilePath = await recorder?.stop();
                       }
                     } catch (e) {
                       AppLogger.w('Error stopping recorder: $e');
@@ -696,7 +698,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                     // Try package:record first
                     try {
                       final path = '${dir.path}/voice_note_$timeStamp.m4a';
-                      await recorder.start(
+                      await recorder?.start(
                         const RecordConfig(encoder: AudioEncoder.aacLc),
                         path: path,
                       );
@@ -793,10 +795,10 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                 if (isRecording) {
                   try {
                     processRecorder?.kill(ProcessSignal.sigint);
-                    await recorder.stop();
+                    await recorder?.stop();
                   } catch (_) {}
                 }
-                await recorder.dispose();
+                await recorder?.dispose();
                 if (context.mounted) Navigator.pop(ctx);
               },
               child: const Text('Cancel'),
@@ -807,10 +809,10 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                 if (isRecording) {
                   try {
                     processRecorder?.kill(ProcessSignal.sigint);
-                    recordedFilePath ??= await recorder.stop();
+                    recordedFilePath ??= await recorder?.stop();
                   } catch (_) {}
                 }
-                await recorder.dispose();
+                await recorder?.dispose();
 
                 if (recordedFilePath != null &&
                     recordedFilePath!.isNotEmpty &&
@@ -2448,29 +2450,36 @@ class VoiceNotePlayerWidget extends StatefulWidget {
 }
 
 class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
-  late AudioPlayer _player;
+  AudioPlayer? _player;
   bool _isPlaying = false;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
   StreamSubscription<Duration>? _durationSub;
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<PlayerState>? _playerStateSub;
+  Process? _sysPlayProcess;
 
   @override
   void initState() {
     super.initState();
-    _player = AudioPlayer();
-    _durationSub = _player.onDurationChanged.listen((d) {
-      if (mounted) setState(() => _duration = d);
-    });
-    _positionSub = _player.onPositionChanged.listen((p) {
-      if (mounted) setState(() => _position = p);
-    });
-    _playerStateSub = _player.onPlayerStateChanged.listen((state) {
-      if (mounted) {
-        setState(() => _isPlaying = state == PlayerState.playing);
-      }
-    });
+    try {
+      final player = AudioPlayer();
+      _player = player;
+      _durationSub = player.onDurationChanged.listen((d) {
+        if (mounted) setState(() => _duration = d);
+      });
+      _positionSub = player.onPositionChanged.listen((p) {
+        if (mounted) setState(() => _position = p);
+      });
+      _playerStateSub = player.onPlayerStateChanged.listen((state) {
+        if (mounted) {
+          setState(() => _isPlaying = state == PlayerState.playing);
+        }
+      });
+    } catch (e) {
+      AppLogger.w('AudioPlayer plugin not available on this platform: $e');
+      _player = null;
+    }
   }
 
   @override
@@ -2478,40 +2487,54 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
     _durationSub?.cancel();
     _positionSub?.cancel();
     _playerStateSub?.cancel();
-    _player.dispose();
+    try {
+      _player?.dispose();
+    } catch (_) {}
+    _sysPlayProcess?.kill();
     super.dispose();
   }
 
-  Process? _sysPlayProcess;
-
   Future<void> _togglePlay() async {
     if (_isPlaying) {
-      try {
-        await _player.pause();
-      } catch (_) {}
+      if (_player != null) {
+        try {
+          await _player!.pause();
+        } catch (_) {}
+      }
       _sysPlayProcess?.kill();
       _sysPlayProcess = null;
       if (mounted) setState(() => _isPlaying = false);
     } else {
-      if (File(widget.audioPath).existsSync()) {
+      if (!File(widget.audioPath).existsSync()) return;
+
+      bool started = false;
+      if (_player != null) {
         try {
-          await _player.play(DeviceFileSource(widget.audioPath));
+          await _player!.play(DeviceFileSource(widget.audioPath));
+          started = true;
           if (mounted) setState(() => _isPlaying = true);
         } catch (e) {
-          AppLogger.w('AudioPlayer error, attempting ffplay/aplay: $e');
-          try {
-            if (widget.audioPath.endsWith('.wav')) {
-              _sysPlayProcess = await Process.start('aplay', [widget.audioPath]);
-            } else {
+          AppLogger.w('AudioPlayer.play error, falling back to desktop system player: $e');
+        }
+      }
+
+      if (!started) {
+        try {
+          if (widget.audioPath.endsWith('.wav')) {
+            _sysPlayProcess = await Process.start('aplay', [widget.audioPath]);
+          } else {
+            try {
+              _sysPlayProcess = await Process.start('paplay', [widget.audioPath]);
+            } catch (_) {
               _sysPlayProcess = await Process.start('ffplay', ['-nodisp', '-autoexit', widget.audioPath]);
             }
-            if (mounted) setState(() => _isPlaying = true);
-            _sysPlayProcess?.exitCode.then((_) {
-              if (mounted) setState(() => _isPlaying = false);
-            });
-          } catch (err) {
-            AppLogger.e('System player error: $err');
           }
+          if (mounted) setState(() => _isPlaying = true);
+          _sysPlayProcess?.exitCode.then((_) {
+            if (mounted) setState(() => _isPlaying = false);
+          });
+        } catch (err) {
+          AppLogger.e('System player error: $err');
         }
       }
     }
@@ -2584,7 +2607,7 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
                         : 0.0,
                     onChanged: (val) {
                       final newPos = Duration(milliseconds: (val * _duration.inMilliseconds).toInt());
-                      _player.seek(newPos);
+                      _player?.seek(newPos);
                     },
                   ),
                 ),

@@ -47,43 +47,48 @@ const AISettingsModelSchema = CollectionSchema(
       name: r'isEnabled',
       type: IsarType.bool,
     ),
-    r'masterControlEnabled': PropertySchema(
+    r'mascotDesignStyle': PropertySchema(
       id: 6,
+      name: r'mascotDesignStyle',
+      type: IsarType.string,
+    ),
+    r'masterControlEnabled': PropertySchema(
+      id: 7,
       name: r'masterControlEnabled',
       type: IsarType.bool,
     ),
     r'moneyAnalysisEnabled': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'moneyAnalysisEnabled',
       type: IsarType.bool,
     ),
     r'noteAssistanceEnabled': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'noteAssistanceEnabled',
       type: IsarType.bool,
     ),
     r'postReactionsEnabled': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'postReactionsEnabled',
       type: IsarType.bool,
     ),
     r'provider': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'provider',
       type: IsarType.string,
     ),
     r'selectedModel': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'selectedModel',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'userId': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'userId',
       type: IsarType.long,
     )
@@ -123,6 +128,7 @@ int _aISettingsModelEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.apiKey.length * 3;
+  bytesCount += 3 + object.mascotDesignStyle.length * 3;
   bytesCount += 3 + object.provider.length * 3;
   bytesCount += 3 + object.selectedModel.length * 3;
   return bytesCount;
@@ -140,14 +146,15 @@ void _aISettingsModelSerialize(
   writer.writeBool(offsets[3], object.allowPostsAccess);
   writer.writeString(offsets[4], object.apiKey);
   writer.writeBool(offsets[5], object.isEnabled);
-  writer.writeBool(offsets[6], object.masterControlEnabled);
-  writer.writeBool(offsets[7], object.moneyAnalysisEnabled);
-  writer.writeBool(offsets[8], object.noteAssistanceEnabled);
-  writer.writeBool(offsets[9], object.postReactionsEnabled);
-  writer.writeString(offsets[10], object.provider);
-  writer.writeString(offsets[11], object.selectedModel);
-  writer.writeDateTime(offsets[12], object.updatedAt);
-  writer.writeLong(offsets[13], object.userId);
+  writer.writeString(offsets[6], object.mascotDesignStyle);
+  writer.writeBool(offsets[7], object.masterControlEnabled);
+  writer.writeBool(offsets[8], object.moneyAnalysisEnabled);
+  writer.writeBool(offsets[9], object.noteAssistanceEnabled);
+  writer.writeBool(offsets[10], object.postReactionsEnabled);
+  writer.writeString(offsets[11], object.provider);
+  writer.writeString(offsets[12], object.selectedModel);
+  writer.writeDateTime(offsets[13], object.updatedAt);
+  writer.writeLong(offsets[14], object.userId);
 }
 
 AISettingsModel _aISettingsModelDeserialize(
@@ -164,14 +171,15 @@ AISettingsModel _aISettingsModelDeserialize(
   object.apiKey = reader.readString(offsets[4]);
   object.id = id;
   object.isEnabled = reader.readBool(offsets[5]);
-  object.masterControlEnabled = reader.readBool(offsets[6]);
-  object.moneyAnalysisEnabled = reader.readBool(offsets[7]);
-  object.noteAssistanceEnabled = reader.readBool(offsets[8]);
-  object.postReactionsEnabled = reader.readBool(offsets[9]);
-  object.provider = reader.readString(offsets[10]);
-  object.selectedModel = reader.readString(offsets[11]);
-  object.updatedAt = reader.readDateTime(offsets[12]);
-  object.userId = reader.readLong(offsets[13]);
+  object.mascotDesignStyle = reader.readString(offsets[6]);
+  object.masterControlEnabled = reader.readBool(offsets[7]);
+  object.moneyAnalysisEnabled = reader.readBool(offsets[8]);
+  object.noteAssistanceEnabled = reader.readBool(offsets[9]);
+  object.postReactionsEnabled = reader.readBool(offsets[10]);
+  object.provider = reader.readString(offsets[11]);
+  object.selectedModel = reader.readString(offsets[12]);
+  object.updatedAt = reader.readDateTime(offsets[13]);
+  object.userId = reader.readLong(offsets[14]);
   return object;
 }
 
@@ -195,7 +203,7 @@ P _aISettingsModelDeserializeProp<P>(
     case 5:
       return (reader.readBool(offset)) as P;
     case 6:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 7:
       return (reader.readBool(offset)) as P;
     case 8:
@@ -203,12 +211,14 @@ P _aISettingsModelDeserializeProp<P>(
     case 9:
       return (reader.readBool(offset)) as P;
     case 10:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 11:
       return (reader.readString(offset)) as P;
     case 12:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 13:
+      return (reader.readDateTime(offset)) as P;
+    case 14:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -649,6 +659,142 @@ extension AISettingsModelQueryFilter
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isEnabled',
         value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterFilterCondition>
+      mascotDesignStyleEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mascotDesignStyle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterFilterCondition>
+      mascotDesignStyleGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'mascotDesignStyle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterFilterCondition>
+      mascotDesignStyleLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'mascotDesignStyle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterFilterCondition>
+      mascotDesignStyleBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'mascotDesignStyle',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterFilterCondition>
+      mascotDesignStyleStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'mascotDesignStyle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterFilterCondition>
+      mascotDesignStyleEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'mascotDesignStyle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterFilterCondition>
+      mascotDesignStyleContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'mascotDesignStyle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterFilterCondition>
+      mascotDesignStyleMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'mascotDesignStyle',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterFilterCondition>
+      mascotDesignStyleIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'mascotDesignStyle',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterFilterCondition>
+      mascotDesignStyleIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'mascotDesignStyle',
+        value: '',
       ));
     });
   }
@@ -1170,6 +1316,20 @@ extension AISettingsModelQuerySortBy
   }
 
   QueryBuilder<AISettingsModel, AISettingsModel, QAfterSortBy>
+      sortByMascotDesignStyle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mascotDesignStyle', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterSortBy>
+      sortByMascotDesignStyleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mascotDesignStyle', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterSortBy>
       sortByMasterControlEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'masterControlEnabled', Sort.asc);
@@ -1379,6 +1539,20 @@ extension AISettingsModelQuerySortThenBy
   }
 
   QueryBuilder<AISettingsModel, AISettingsModel, QAfterSortBy>
+      thenByMascotDesignStyle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mascotDesignStyle', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterSortBy>
+      thenByMascotDesignStyleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'mascotDesignStyle', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QAfterSortBy>
       thenByMasterControlEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'masterControlEnabled', Sort.asc);
@@ -1535,6 +1709,14 @@ extension AISettingsModelQueryWhereDistinct
   }
 
   QueryBuilder<AISettingsModel, AISettingsModel, QDistinct>
+      distinctByMascotDesignStyle({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'mascotDesignStyle',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AISettingsModel, AISettingsModel, QDistinct>
       distinctByMasterControlEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'masterControlEnabled');
@@ -1636,6 +1818,13 @@ extension AISettingsModelQueryProperty
   QueryBuilder<AISettingsModel, bool, QQueryOperations> isEnabledProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isEnabled');
+    });
+  }
+
+  QueryBuilder<AISettingsModel, String, QQueryOperations>
+      mascotDesignStyleProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'mascotDesignStyle');
     });
   }
 

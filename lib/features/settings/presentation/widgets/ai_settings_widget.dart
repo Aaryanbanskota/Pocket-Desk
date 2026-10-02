@@ -483,6 +483,53 @@ class _AISettingsWidgetState extends ConsumerState<AISettingsWidget> {
 
             const SizedBox(height: 20),
 
+            // ─── Mascot Assistant Design ──────────────────────────────────────
+            _buildSectionHeader(
+              context,
+              'Mascot Assistant Design',
+              'Choose your preferred layout for the Pocket AI Mascot dialog',
+              Icons.face_rounded,
+            ),
+            const SizedBox(height: 12),
+
+            Card(
+              elevation: 0,
+              color: cs.surfaceContainerLow,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
+              ),
+              child: Column(
+                children: [
+                  RadioListTile<String>(
+                    title: const Text('Boxed Card Style', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: const Text('Speech text inside a rounded box card container with top mascot avatar'),
+                    value: 'boxed',
+                    groupValue: settings.mascotDesignStyle,
+                    onChanged: (val) async {
+                      if (val == null) return;
+                      settings.mascotDesignStyle = val;
+                      await ref.read(aiSettingsProvider.notifier).updateSettings(settings);
+                    },
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  RadioListTile<String>(
+                    title: const Text('Minimalist Floating Style', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: const Text('Plain floating speech text beside mascot avatar with "Type here" box'),
+                    value: 'minimalist',
+                    groupValue: settings.mascotDesignStyle,
+                    onChanged: (val) async {
+                      if (val == null) return;
+                      settings.mascotDesignStyle = val;
+                      await ref.read(aiSettingsProvider.notifier).updateSettings(settings);
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
             // ─── Data Access Permissions Card ─────────────────────────────────
             _buildSectionHeader(
               context,

@@ -203,6 +203,7 @@ const _TrashItemModelitemTypeEnumValueMap = {
   'task': 2,
   'event': 3,
   'expense': 4,
+  'instant': 5,
 };
 const _TrashItemModelitemTypeValueEnumMap = {
   0: TrashItemType.post,
@@ -210,6 +211,7 @@ const _TrashItemModelitemTypeValueEnumMap = {
   2: TrashItemType.task,
   3: TrashItemType.event,
   4: TrashItemType.expense,
+  5: TrashItemType.instant,
 };
 
 Id _trashItemModelGetId(TrashItemModel object) {

@@ -311,6 +311,8 @@ class _PocketAiMascotDialogState extends ConsumerState<PocketAiMascotDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final aiSettings = ref.watch(aiSettingsProvider).valueOrNull;
+    final isMinimalist = aiSettings?.mascotDesignStyle == 'minimalist';
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -318,7 +320,7 @@ class _PocketAiMascotDialogState extends ConsumerState<PocketAiMascotDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: SelectionArea(
         child: Container(
-          width: math.min(MediaQuery.of(context).size.width * 0.9, 400),
+          width: math.min(MediaQuery.of(context).size.width * 0.9, 420),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: colorScheme.surface,
@@ -331,103 +333,197 @@ class _PocketAiMascotDialogState extends ConsumerState<PocketAiMascotDialog> {
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: Stack(
             children: [
-              // Close button top right
-              Align(
-                alignment: Alignment.topRight,
+              Positioned(
+                top: 0,
+                right: 0,
                 child: IconButton(
                   icon: const Icon(Icons.close_rounded),
                   onPressed: () => Navigator.pop(context),
                   visualDensity: VisualDensity.compact,
                 ),
               ),
-              // Mascot Avatar (Profile Picture standing cleanly)
-              const AiChefMascotWidget(size: 76, animate: true),
-              const SizedBox(height: 16),
-              // Speech Box containing Mascot speech or "Pocket Assistant is thinking..."
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: colorScheme.primary.withValues(alpha: 0.2),
-                    width: 1.5,
-                  ),
-                ),
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: isMinimalist
+                    ? _buildMinimalistLayout(context, colorScheme)
+                    : _buildBoxedLayout(context, colorScheme),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMinimalistLayout(BuildContext context, ColorScheme colorScheme) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 4, right: 12),
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
                   child: _isThinking
-                      ? Row(
+                      ? Text(
+                          'Pocket Assistant is thinking...',
                           key: const ValueKey('thinking'),
-                          children: [
-                            const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Pocket Assistant is thinking...',
-                                style: TextStyle(
-                                  color: colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ],
+                          style: TextStyle(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            height: 1.35,
+                          ),
                         )
                       : Text(
                           _speechText,
                           key: ValueKey(_speechText),
                           style: TextStyle(
                             color: colorScheme.onSurface,
-                            fontSize: 14,
-                            height: 1.4,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            height: 1.35,
                           ),
                         ),
                 ),
               ),
-              const SizedBox(height: 16),
-              // Input Field (click and type, clears after submitting)
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _promptCtrl,
-                      decoration: InputDecoration(
-                        hintText: 'Type your message...',
-                        isDense: true,
-                        filled: true,
-                        fillColor: colorScheme.surfaceContainerLow,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 12,
-                        ),
-                      ),
-                      onSubmitted: (_) => _sendMessage(),
+            ),
+            const AiChefMascotWidget(size: 64, animate: true),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _promptCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Type here |',
+                  isDense: true,
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: colorScheme.outline.withValues(alpha: 0.4),
+                      width: 1.5,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  IconButton.filled(
-                    onPressed: _sendMessage,
-                    icon: const Icon(Icons.send_rounded, size: 18),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: colorScheme.outline.withValues(alpha: 0.4),
+                      width: 1.5,
+                    ),
                   ),
-                ],
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
+                onSubmitted: (_) => _sendMessage(),
               ),
-            ],
+            ),
+            const SizedBox(width: 8),
+            IconButton.filled(
+              onPressed: _sendMessage,
+              icon: const Icon(Icons.send_rounded, size: 18),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBoxedLayout(BuildContext context, ColorScheme colorScheme) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const AiChefMascotWidget(size: 76, animate: true),
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: colorScheme.primary.withValues(alpha: 0.2),
+              width: 1.5,
+            ),
+          ),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: _isThinking
+                ? Row(
+                    key: const ValueKey('thinking'),
+                    children: [
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Pocket Assistant is thinking...',
+                          style: TextStyle(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    _speechText,
+                    key: ValueKey(_speechText),
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
           ),
         ),
-      ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _promptCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Type your message...',
+                  isDense: true,
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerLow,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 12,
+                  ),
+                ),
+                onSubmitted: (_) => _sendMessage(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton.filled(
+              onPressed: _sendMessage,
+              icon: const Icon(Icons.send_rounded, size: 18),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

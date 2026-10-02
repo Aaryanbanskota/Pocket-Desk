@@ -1576,10 +1576,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return SelectionArea(
-      contextMenuBuilder: (context, selectableRegionState) =>
-          buildPocketAiSelectionToolbar(context, selectableRegionState, ref),
-      child: Scaffold(
+    return Scaffold(
         drawer: const AppHamburgerDrawer(),
         appBar: AppBar(
           elevation: 0,
@@ -1600,11 +1597,6 @@ class _PostsPageState extends ConsumerState<PostsPage> {
           ),
           centerTitle: true,
           actions: [
-            IconButton(
-              icon: const AiChefMascotWidget(size: 26, animate: true),
-              onPressed: () => showPocketAiMascotDialog(context, ref),
-              tooltip: 'Call Pocket AI Mascot',
-            ),
             IconButton(
               icon: Icon(Icons.add_a_photo_outlined,
                   color: colorScheme.onSurface, size: 22),
@@ -1965,9 +1957,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
               )
             : null,
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _InstantCameraModal extends StatefulWidget {

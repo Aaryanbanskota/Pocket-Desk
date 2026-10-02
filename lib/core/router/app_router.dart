@@ -24,6 +24,7 @@ import '../../features/clock/presentation/pages/clock_page.dart';
 import '../../features/settings/presentation/pages/about_app_page.dart';
 import '../../features/settings/presentation/pages/legal_document_page.dart';
 import '../../features/trash/presentation/pages/trash_page.dart';
+import '../../features/chat/presentation/widgets/ai_chef_mascot_widget.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -87,101 +88,116 @@ GoRouter appRouter(Ref ref) {
     debugLogDiagnostics: false,
     errorBuilder: (context, state) => const _NotFoundPage(),
     routes: [
-      GoRoute(
-        path: AppRoutes.splash,
-        builder: (context, state) => const _SplashPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.accountSelector,
-        builder: (context, state) => const AccountSelectorPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.subscriptionPlan,
-        builder: (context, state) => const SubscriptionPlanPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.login,
-        builder: (context, state) => const LoginPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.qrLogin,
-        builder: (context, state) => const QrLoginPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.register,
-        builder: (context, state) => const RegisterPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.setupOnboarding,
-        builder: (context, state) => const SetupOnboardingPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.dashboard,
-        builder: (context, state) => const DashboardPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.calendar,
-        builder: (context, state) => const CalendarDashboardView(),
-      ),
-      GoRoute(
-        path: AppRoutes.tasks,
-        builder: (context, state) => const TasksDashboardView(),
-      ),
-      GoRoute(
-        path: AppRoutes.notes,
-        builder: (context, state) => const NotesDashboardView(),
-      ),
-      GoRoute(
-        path: AppRoutes.settingsProfile,
-        builder: (context, state) => const ProfilePage(),
-      ),
-      GoRoute(
-        path: AppRoutes.settings,
-        builder: (context, state) => const SettingsPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.fileShare,
-        builder: (context, state) => const FileSharePage(),
-      ),
-      GoRoute(
-        path: AppRoutes.posts,
-        builder: (context, state) => const PostsPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.chat,
-        builder: (context, state) => const ChatPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.moneyTracker,
-        builder: (context, state) => const MoneyTrackerPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.clock,
-        builder: (context, state) => const ClockPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.aboutApp,
-        builder: (context, state) => const AboutAppPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.termsAndConditions,
-        builder: (context, state) => const TermsAndConditionsPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.privacyPolicy,
-        builder: (context, state) => const PrivacyPolicyPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.licenses,
-        builder: (context, state) => const PocketDeskLicensesPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.trash,
-        builder: (context, state) => const TrashPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.notFound,
-        builder: (context, state) => const _NotFoundPage(),
+      ShellRoute(
+        builder: (context, state, child) {
+          return Consumer(
+            builder: (context, ref, _) {
+              return SelectionArea(
+                contextMenuBuilder: (context, selectableRegionState) =>
+                    buildPocketAiSelectionToolbar(context, selectableRegionState, ref),
+                child: child,
+              );
+            },
+          );
+        },
+        routes: [
+          GoRoute(
+            path: AppRoutes.splash,
+            builder: (context, state) => const _SplashPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.accountSelector,
+            builder: (context, state) => const AccountSelectorPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.subscriptionPlan,
+            builder: (context, state) => const SubscriptionPlanPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.login,
+            builder: (context, state) => const LoginPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.qrLogin,
+            builder: (context, state) => const QrLoginPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.register,
+            builder: (context, state) => const RegisterPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.setupOnboarding,
+            builder: (context, state) => const SetupOnboardingPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.dashboard,
+            builder: (context, state) => const DashboardPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.calendar,
+            builder: (context, state) => const CalendarDashboardView(),
+          ),
+          GoRoute(
+            path: AppRoutes.tasks,
+            builder: (context, state) => const TasksDashboardView(),
+          ),
+          GoRoute(
+            path: AppRoutes.notes,
+            builder: (context, state) => const NotesDashboardView(),
+          ),
+          GoRoute(
+            path: AppRoutes.settingsProfile,
+            builder: (context, state) => const ProfilePage(),
+          ),
+          GoRoute(
+            path: AppRoutes.settings,
+            builder: (context, state) => const SettingsPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.fileShare,
+            builder: (context, state) => const FileSharePage(),
+          ),
+          GoRoute(
+            path: AppRoutes.posts,
+            builder: (context, state) => const PostsPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.chat,
+            builder: (context, state) => const ChatPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.moneyTracker,
+            builder: (context, state) => const MoneyTrackerPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.clock,
+            builder: (context, state) => const ClockPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.aboutApp,
+            builder: (context, state) => const AboutAppPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.termsAndConditions,
+            builder: (context, state) => const TermsAndConditionsPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.privacyPolicy,
+            builder: (context, state) => const PrivacyPolicyPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.licenses,
+            builder: (context, state) => const PocketDeskLicensesPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.trash,
+            builder: (context, state) => const TrashPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.notFound,
+            builder: (context, state) => const _NotFoundPage(),
+          ),
+        ],
       ),
     ],
     redirect: (context, state) {

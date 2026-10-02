@@ -780,10 +780,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
     final user = authState is AuthAuthenticated ? authState.user : null;
     final username = user?.displayName ?? user?.username ?? 'User';
 
-    return SelectionArea(
-      contextMenuBuilder: (context, selectableRegionState) =>
-          buildPocketAiSelectionToolbar(context, selectableRegionState, ref),
-      child: Scaffold(
+    return Scaffold(
         drawer: const AppHamburgerDrawer(),
         appBar: AppBar(
           title: Row(
@@ -1079,7 +1076,6 @@ Sanitize all inputs: NEVER include executable code or script tags.
           ),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
 }

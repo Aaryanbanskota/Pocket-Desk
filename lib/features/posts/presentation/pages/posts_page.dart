@@ -2076,26 +2076,34 @@ class _InstantCameraModalState extends State<_InstantCameraModal> {
     if (_isCapturing) return;
 
     String finalPath = _imagePath;
-
     final size = MediaQuery.of(context).size;
 
-    if (finalPath.isEmpty &&
-        _cameraController != null &&
-        _cameraController!.value.isInitialized) {
-      setState(() => _isCapturing = true);
-      try {
-        final XFile photo = await _cameraController!.takePicture();
-        finalPath = photo.path;
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to capture photo: $e')),
-          );
+    if (finalPath.isEmpty) {
+      if (_cameraController != null && _cameraController!.value.isInitialized) {
+        setState(() => _isCapturing = true);
+        try {
+          final XFile photo = await _cameraController!.takePicture();
+          finalPath = photo.path;
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to capture photo: $e')),
+            );
+          }
+          setState(() => _isCapturing = false);
+          return;
         }
         setState(() => _isCapturing = false);
-        return;
+      } else {
+        // Desktop / Laptop fallback: open file picker directly if no active camera stream
+        final pickerResult =
+            await FilePicker.platform.pickFiles(type: FileType.image);
+        if (pickerResult != null && pickerResult.files.single.path != null) {
+          finalPath = pickerResult.files.single.path!;
+        } else {
+          return;
+        }
       }
-      setState(() => _isCapturing = false);
     }
 
     final normX = (_textOffset.dx / size.width).clamp(0.0, 1.0);

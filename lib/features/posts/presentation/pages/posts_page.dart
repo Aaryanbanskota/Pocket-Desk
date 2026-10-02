@@ -429,133 +429,10 @@ class _PostsPageState extends ConsumerState<PostsPage> {
       backgroundColor: Colors.black,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => FractionallySizedBox(
-        heightFactor: 0.9,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  const Text('My Instants',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold)),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.add_a_photo_rounded,
-                        color: Colors.white),
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _openCreateInstantCamera();
-                    },
-                  ),
-                  IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Navigator.pop(ctx)),
-                ],
-              ),
-            ),
-            Expanded(
-              child: instants.isEmpty
-                  ? const Center(
-                      child: Text('No Instants yet. Tap camera to create!',
-                          style: TextStyle(color: Colors.white70)))
-                  : PageView.builder(
-                      itemCount: instants.length,
-                      itemBuilder: (context, i) {
-                        final inst = instants[i];
-                        final hasFile = inst.imagePath.isNotEmpty &&
-                            File(inst.imagePath).existsSync();
-                        return Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: hasFile
-                                  ? Image.file(File(inst.imagePath),
-                                      fit: BoxFit.cover)
-                                  : Container(
-                                      color: const Color(0xFF1E293B),
-                                      child: const Center(
-                                        child: Icon(Icons.broken_image_rounded,
-                                            color: Colors.white54, size: 48),
-                                      ),
-                                    ),
-                            ),
-                            if (inst.textOverlay != null &&
-                                inst.textOverlay!.isNotEmpty)
-                              Positioned(
-                                left: inst.textX *
-                                    MediaQuery.of(context).size.width *
-                                    0.8,
-                                top: inst.textY *
-                                    MediaQuery.of(context).size.height *
-                                    0.6,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 14, vertical: 8),
-                                  decoration: BoxDecoration(
-                                      color: Colors.black54,
-                                      borderRadius: BorderRadius.circular(12)),
-                                  child: Text(inst.textOverlay!,
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold)),
-                                ),
-                              ),
-                            Positioned(
-                              top: 16,
-                              right: 16,
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                    color: Colors.black54,
-                                    shape: BoxShape.circle),
-                                child: IconButton(
-                                  icon: const Icon(Icons.delete_forever_rounded,
-                                      color: Colors.redAccent),
-                                  tooltip: 'Delete Instant',
-                                  onPressed: () async {
-                                    final confirm = await showDialog<bool>(
-                                      context: context,
-                                      builder: (dialogCtx) => AlertDialog(
-                                        title: const Text('Delete Instant?'),
-                                        content: const Text(
-                                            'Are you sure you want to permanently delete this Instant?'),
-                                        actions: [
-                                          TextButton(
-                                              onPressed: () => Navigator.pop(
-                                                  dialogCtx, false),
-                                              child: const Text('Cancel')),
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(dialogCtx, true),
-                                            child: const Text('Delete',
-                                                style: TextStyle(
-                                                    color: Colors.redAccent)),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                    if (confirm == true) {
-                                      await ref
-                                          .read(instantsProvider.notifier)
-                                          .deleteInstant(inst.id);
-                                      if (ctx.mounted) Navigator.pop(ctx);
-                                    }
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
+      builder: (ctx) => _InstantsDashboardModal(
+        instants: instants,
+        onAddClick: () => _openCreateInstantCamera(),
+        onDeleteClick: (id) => ref.read(instantsProvider.notifier).deleteInstant(id),
       ),
     );
   }
@@ -3203,4 +3080,297 @@ class _VoicePlayingIconPainter extends CustomPainter {
   bool shouldRepaint(covariant _VoicePlayingIconPainter oldDelegate) =>
       oldDelegate.color != color;
 }
+
+// -----------------------------------------------------------------------------
+// Instants Dashboard Story Viewer Modal
+// -----------------------------------------------------------------------------
+
+class _InstantsDashboardModal extends StatefulWidget {
+  final List<InstantModel> instants;
+  final VoidCallback onAddClick;
+  final ValueChanged<int> onDeleteClick;
+
+  const _InstantsDashboardModal({
+    required this.instants,
+    required this.onAddClick,
+    required this.onDeleteClick,
+  });
+
+  @override
+  State<_InstantsDashboardModal> createState() =>
+      _InstantsDashboardModalState();
+}
+
+class _InstantsDashboardModalState extends State<_InstantsDashboardModal> {
+  late final PageController _pageController;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final instants = widget.instants;
+
+    return FractionallySizedBox(
+      heightFactor: 0.9,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Column(
+              children: [
+                if (instants.isNotEmpty) ...[
+                  Row(
+                    children: List.generate(
+                      instants.length,
+                      (idx) => Expanded(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          height: 3,
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          decoration: BoxDecoration(
+                            color: idx <= _currentIndex
+                                ? const Color(0xFF8B95F6)
+                                : Colors.white.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                Row(
+                  children: [
+                    Text(
+                      instants.isNotEmpty
+                          ? 'My Instants (${_currentIndex + 1}/${instants.length})'
+                          : 'My Instants',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.add_a_photo_rounded,
+                          color: Colors.white),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        widget.onAddClick();
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: instants.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No Instants yet. Tap camera to create!',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  )
+                : PageView.builder(
+                    controller: _pageController,
+                    itemCount: instants.length,
+                    onPageChanged: (idx) {
+                      setState(() => _currentIndex = idx);
+                    },
+                    itemBuilder: (context, i) {
+                      final inst = instants[i];
+                      final hasFile = inst.imagePath.isNotEmpty &&
+                          File(inst.imagePath).existsSync();
+
+                      return GestureDetector(
+                        onTapUp: (details) {
+                          final screenWidth = MediaQuery.of(context).size.width;
+                          final tapX = details.globalPosition.dx;
+
+                          if (tapX < screenWidth * 0.35) {
+                            // Tap left 35% -> previous instant
+                            if (_currentIndex > 0) {
+                              _pageController.previousPage(
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeInOut,
+                              );
+                            }
+                          } else {
+                            // Tap right/center -> next instant or close if on last
+                            if (_currentIndex < instants.length - 1) {
+                              _pageController.nextPage(
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeInOut,
+                              );
+                            } else {
+                              Navigator.pop(context);
+                            }
+                          }
+                        },
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: hasFile
+                                  ? Image.file(
+                                      File(inst.imagePath),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Container(
+                                      color: const Color(0xFF1E293B),
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.broken_image_rounded,
+                                          color: Colors.white54,
+                                          size: 48,
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                            if (inst.textOverlay != null &&
+                                inst.textOverlay!.isNotEmpty)
+                              Positioned(
+                                left: inst.textX *
+                                    MediaQuery.of(context).size.width *
+                                    0.8,
+                                top: inst.textY *
+                                    MediaQuery.of(context).size.height *
+                                    0.6,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 8),
+                                  decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius: BorderRadius.circular(12)),
+                                  child: Text(
+                                    inst.textOverlay!,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (_currentIndex > 0)
+                              Positioned(
+                                left: 12,
+                                top: 0,
+                                bottom: 0,
+                                child: Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black45,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.chevron_left_rounded,
+                                      color: Colors.white,
+                                      size: 28,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (_currentIndex < instants.length - 1)
+                              Positioned(
+                                right: 12,
+                                top: 0,
+                                bottom: 0,
+                                child: Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black45,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: Colors.white,
+                                      size: 28,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            Positioned(
+                              top: 16,
+                              right: 16,
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.delete_forever_rounded,
+                                    color: Colors.redAccent,
+                                  ),
+                                  tooltip: 'Delete Instant',
+                                  onPressed: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (dialogCtx) => AlertDialog(
+                                        title: const Text('Delete Instant?'),
+                                        content: const Text(
+                                          'Are you sure you want to permanently delete this Instant?',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(dialogCtx, false),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(dialogCtx, true),
+                                            child: const Text(
+                                              'Delete',
+                                              style: TextStyle(
+                                                color: Colors.redAccent,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm == true) {
+                                      widget.onDeleteClick(inst.id);
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                      }
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 

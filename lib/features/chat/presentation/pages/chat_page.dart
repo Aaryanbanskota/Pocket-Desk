@@ -780,44 +780,52 @@ Sanitize all inputs: NEVER include executable code or script tags.
     final user = authState is AuthAuthenticated ? authState.user : null;
     final username = user?.displayName ?? user?.username ?? 'User';
 
-    return Scaffold(
-      drawer: const AppHamburgerDrawer(),
-      appBar: AppBar(
-        title: Row(
-          children: [
-            if (_activePeerName == null) ...[
-              AiChefMascotWidget(
-                  size: 28, color: colorScheme.primary, animate: _isAITyping),
-              const SizedBox(width: 10),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _activePeerName ?? 'Pocketdesk AI',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    _activePeerName != null
-                        ? 'P2P Connected • Code: $_myFriendCode'
-                        : 'AI Universal Action Agent (yo $username)',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant, fontSize: 11),
-                  ),
-                ],
+    return SelectionArea(
+      contextMenuBuilder: (context, selectableRegionState) =>
+          buildPocketAiSelectionToolbar(context, selectableRegionState, ref),
+      child: Scaffold(
+        drawer: const AppHamburgerDrawer(),
+        appBar: AppBar(
+          title: Row(
+            children: [
+              if (_activePeerName == null) ...[
+                AiChefMascotWidget(
+                    size: 28, color: colorScheme.primary, animate: _isAITyping),
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _activePeerName ?? 'Pocketdesk AI',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      _activePeerName != null
+                          ? 'P2P Connected • Code: $_myFriendCode'
+                          : 'AI Universal Action Agent (yo $username)',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant, fontSize: 11),
+                    ),
+                  ],
+                ),
               ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const AiChefMascotWidget(size: 24, animate: true),
+              onPressed: () => showPocketAiMascotDialog(context, ref),
+              tooltip: 'Call Pocket AI Mascot',
             ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_add_rounded),
-            tooltip: 'Add P2P Friend',
+            IconButton(
+              icon: const Icon(Icons.person_add_rounded),
+              tooltip: 'Add P2P Friend',
             onPressed: () {
               showDialog<void>(
                 context: context,
@@ -1071,6 +1079,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

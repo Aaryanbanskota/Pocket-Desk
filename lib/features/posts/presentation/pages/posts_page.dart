@@ -1576,41 +1576,49 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      drawer: const AppHamburgerDrawer(),
-      appBar: AppBar(
-        elevation: 0,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: Icon(Icons.menu_rounded,
-                color: colorScheme.onSurface, size: 26),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-            tooltip: 'Open Menu',
+    return SelectionArea(
+      contextMenuBuilder: (context, selectableRegionState) =>
+          buildPocketAiSelectionToolbar(context, selectableRegionState, ref),
+      child: Scaffold(
+        drawer: const AppHamburgerDrawer(),
+        appBar: AppBar(
+          elevation: 0,
+          leading: Builder(
+            builder: (context) => IconButton(
+              icon: Icon(Icons.menu_rounded,
+                  color: colorScheme.onSurface, size: 26),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+              tooltip: 'Open Menu',
+            ),
           ),
+          title: Text(
+            'Personal Feed',
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+                fontSize: 18),
+          ),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: const AiChefMascotWidget(size: 26, animate: true),
+              onPressed: () => showPocketAiMascotDialog(context, ref),
+              tooltip: 'Call Pocket AI Mascot',
+            ),
+            IconButton(
+              icon: Icon(Icons.add_a_photo_outlined,
+                  color: colorScheme.onSurface, size: 22),
+              onPressed: () => _openCreateInstantCamera(),
+              tooltip: 'Camera / Instant',
+            ),
+            IconButton(
+              icon: Icon(Icons.add_rounded,
+                  color: colorScheme.onSurface, size: 28),
+              onPressed: _showCreatePostModal,
+              tooltip: 'Create New Post',
+            ),
+          ],
         ),
-        title: Text(
-          'Personal Feed',
-          style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-              fontSize: 18),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add_a_photo_outlined,
-                color: colorScheme.onSurface, size: 22),
-            onPressed: () => _openCreateInstantCamera(),
-            tooltip: 'Camera / Instant',
-          ),
-          IconButton(
-            icon: Icon(Icons.add_rounded,
-                color: colorScheme.onSurface, size: 28),
-            onPressed: _showCreatePostModal,
-            tooltip: 'Create New Post',
-          ),
-        ],
-      ),
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -1957,8 +1965,9 @@ class _PostsPageState extends ConsumerState<PostsPage> {
               )
             : null,
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _InstantCameraModal extends StatefulWidget {

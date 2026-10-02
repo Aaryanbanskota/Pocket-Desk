@@ -296,8 +296,41 @@ class _PostsPageState extends ConsumerState<PostsPage> {
               style:
                   TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
             ),
-          if (audioPath.isNotEmpty && File(audioPath).existsSync())
-            VoiceNotePlayerWidget(audioPath: audioPath),
+          if (audioPath.isNotEmpty && File(audioPath).existsSync()) ...[
+            const SizedBox(height: 6),
+            InkWell(
+              onTap: () => _openVoicePlayingModal(context, audioPath),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B95F6).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFF8B95F6).withValues(alpha: 0.3),
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const VoicePlayingIconWidget(size: 24, color: Color(0xFF8B95F6)),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Voice Note',
+                      style: TextStyle(
+                        color: Color(0xFF8B95F6),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.play_circle_fill_rounded, size: 18, color: Color(0xFF8B95F6)),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       );
     }
@@ -2787,3 +2820,410 @@ class _SwipeablePostImageGalleryState
     );
   }
 }
+
+// -----------------------------------------------------------------------------
+// Voice Playing Modal & Widgets
+// -----------------------------------------------------------------------------
+
+void _openVoicePlayingModal(BuildContext context, String audioPath) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => VoicePlayingModalContent(audioPath: audioPath),
+  );
+}
+
+class VoicePlayingModalContent extends StatefulWidget {
+  final String audioPath;
+
+  const VoicePlayingModalContent({super.key, required this.audioPath});
+
+  @override
+  State<VoicePlayingModalContent> createState() =>
+      _VoicePlayingModalContentState();
+}
+
+class _VoicePlayingModalContentState extends State<VoicePlayingModalContent> {
+  AudioPlayer? _player;
+  bool _isPlaying = false;
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+  StreamSubscription<Duration>? _posSub;
+  StreamSubscription<Duration>? _durSub;
+  StreamSubscription<PlayerState>? _stateSub;
+  Process? _fallbackProcess;
+  Timer? _fallbackTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _initAudioPlayer();
+  }
+
+  Future<void> _initAudioPlayer() async {
+    if (!File(widget.audioPath).existsSync()) return;
+
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      try {
+        final result = await Process.run('ffprobe', [
+          '-v',
+          'error',
+          '-show_entries',
+          'format=duration',
+          '-of',
+          'default=noprint_wrappers=1:nokey=1',
+          widget.audioPath,
+        ]);
+        if (result.exitCode == 0) {
+          final secs = double.tryParse(result.stdout.toString().trim());
+          if (secs != null) {
+            setState(() {
+              _duration = Duration(milliseconds: (secs * 1000).toInt());
+            });
+          }
+        }
+      } catch (_) {}
+
+      try {
+        _fallbackProcess = await Process.start('pw-play', [widget.audioPath]);
+      } catch (_) {
+        try {
+          _fallbackProcess = await Process.start('ffplay', ['-nodisp', '-autoexit', widget.audioPath]);
+        } catch (_) {
+          try {
+            _fallbackProcess = await Process.start('aplay', [widget.audioPath]);
+          } catch (_) {}
+        }
+      }
+
+      if (_fallbackProcess != null) {
+        setState(() => _isPlaying = true);
+        final startTime = DateTime.now();
+        _fallbackTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
+          final elapsed = DateTime.now().difference(startTime);
+          if (_duration > Duration.zero && elapsed >= _duration) {
+            timer.cancel();
+            setState(() {
+              _position = _duration;
+              _isPlaying = false;
+            });
+          } else {
+            setState(() {
+              _position = elapsed;
+            });
+          }
+        });
+        _fallbackProcess!.exitCode.then((_) {
+          _fallbackTimer?.cancel();
+          if (mounted) {
+            setState(() {
+              _isPlaying = false;
+              _position = _duration;
+            });
+          }
+        });
+        return;
+      }
+    }
+
+    try {
+      _player = AudioPlayer();
+      await _player!.setSource(DeviceFileSource(widget.audioPath));
+
+      _durSub = _player!.onDurationChanged.listen((d) {
+        if (mounted) setState(() => _duration = d);
+      });
+
+      _posSub = _player!.onPositionChanged.listen((p) {
+        if (mounted) setState(() => _position = p);
+      });
+
+      _stateSub = _player!.onPlayerStateChanged.listen((state) {
+        if (mounted) {
+          setState(() => _isPlaying = state == PlayerState.playing);
+        }
+      });
+
+      await _player!.resume();
+    } catch (_) {}
+  }
+
+  void _togglePlayPause() async {
+    if (_fallbackProcess != null) {
+      if (_isPlaying) {
+        _fallbackProcess?.kill();
+        _fallbackTimer?.cancel();
+        setState(() => _isPlaying = false);
+      } else {
+        await _initAudioPlayer();
+      }
+      return;
+    }
+
+    if (_player == null) return;
+    if (_isPlaying) {
+      await _player!.pause();
+    } else {
+      await _player!.resume();
+    }
+  }
+
+  @override
+  void dispose() {
+    _fallbackTimer?.cancel();
+    _fallbackProcess?.kill();
+    _posSub?.cancel();
+    _durSub?.cancel();
+    _stateSub?.cancel();
+    _player?.dispose();
+    super.dispose();
+  }
+
+  String _formatDuration(Duration d) {
+    final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(Icons.close, color: theme.colorScheme.onSurface),
+                onPressed: () => Navigator.pop(context),
+              ),
+              Expanded(
+                child: Text(
+                  'Voice Playing',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 48),
+            ],
+          ),
+          const SizedBox(height: 32),
+          const VoicePlayingIconWidget(size: 90, color: Color(0xFF8B95F6)),
+          const SizedBox(height: 28),
+          Text(
+            _formatDuration(_position),
+            style: TextStyle(
+              color: theme.colorScheme.onSurface,
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 24),
+          SliderTheme(
+            data: SliderThemeData(
+              trackHeight: 4,
+              activeTrackColor: const Color(0xFF8B95F6),
+              inactiveTrackColor: const Color(0xFF8B95F6).withValues(alpha: 0.2),
+              thumbColor: const Color(0xFF8B95F6),
+              overlayColor: const Color(0xFF8B95F6).withValues(alpha: 0.1),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+            ),
+            child: Slider(
+              value: _duration.inMilliseconds > 0
+                  ? _position.inMilliseconds
+                      .clamp(0, _duration.inMilliseconds)
+                      .toDouble()
+                  : 0.0,
+              max: _duration.inMilliseconds > 0
+                  ? _duration.inMilliseconds.toDouble()
+                  : 1.0,
+              onChanged: (val) {
+                if (_player != null) {
+                  _player!.seek(Duration(milliseconds: val.toInt()));
+                }
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: _togglePlayPause,
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: const BoxDecoration(
+                color: Color(0xFF8B95F6),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 32,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+}
+
+class VoicePlayingIconWidget extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const VoicePlayingIconWidget({
+    super.key,
+    this.size = 24,
+    this.color = const Color(0xFF8B95F6),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _VoicePlayingIconPainter(color: color),
+    );
+  }
+}
+
+class _VoicePlayingIconPainter extends CustomPainter {
+  final Color color;
+
+  _VoicePlayingIconPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final strokePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final w = size.width;
+    final h = size.height;
+
+    final headW = w * 0.28;
+    final headH = h * 0.45;
+    final headLeft = (w - headW) / 2;
+    final headTop = h * 0.22;
+    final headRRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(headLeft, headTop, headW, headH),
+      Radius.circular(headW / 2),
+    );
+    canvas.drawRRect(headRRect, paint);
+
+    strokePaint.strokeWidth = w * 0.07;
+    final standTop = headTop + headH * 0.35;
+    final standBottom = headTop + headH + h * 0.08;
+    final standRect = Rect.fromLTRB(
+      headLeft - w * 0.08,
+      standTop,
+      headLeft + headW + w * 0.08,
+      standBottom,
+    );
+    canvas.drawArc(standRect, 0, 3.14159, false, strokePaint);
+
+    final stemTop = standBottom;
+    final stemBottom = stemTop + h * 0.10;
+    canvas.drawLine(
+      Offset(w / 2, stemTop),
+      Offset(w / 2, stemBottom),
+      strokePaint,
+    );
+
+    final baseWidth = headW * 1.3;
+    canvas.drawLine(
+      Offset(w / 2 - baseWidth / 2, stemBottom),
+      Offset(w / 2 + baseWidth / 2, stemBottom),
+      strokePaint,
+    );
+
+    final barW = w * 0.055;
+    final innerBarH = h * 0.30;
+    final outerBarH = h * 0.18;
+    final barYCenter = headTop + headH * 0.5;
+
+    final innerLeftX = headLeft - w * 0.14;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(innerLeftX - barW / 2, barYCenter - innerBarH / 2, barW, innerBarH),
+        Radius.circular(barW / 2),
+      ),
+      paint,
+    );
+
+    final outerLeftX = innerLeftX - w * 0.11;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(outerLeftX - barW / 2, barYCenter - outerBarH / 2, barW, outerBarH),
+        Radius.circular(barW / 2),
+      ),
+      paint,
+    );
+
+    final innerRightX = headLeft + headW + w * 0.14;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(innerRightX - barW / 2, barYCenter - innerBarH / 2, barW, innerBarH),
+        Radius.circular(barW / 2),
+      ),
+      paint,
+    );
+
+    final outerRightX = innerRightX + w * 0.11;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(outerRightX - barW / 2, barYCenter - outerBarH / 2, barW, outerBarH),
+        Radius.circular(barW / 2),
+      ),
+      paint,
+    );
+
+    final dot1W = w * 0.07;
+    final dot1H = h * 0.11;
+    final dot1X = headLeft - w * 0.05;
+    final dot1Y = headTop - h * 0.12;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(dot1X - dot1W / 2, dot1Y - dot1H / 2, dot1W, dot1H),
+        Radius.circular(dot1W / 2),
+      ),
+      paint,
+    );
+
+    final dot2Radius = w * 0.04;
+    final dot2X = headLeft + headW + w * 0.06;
+    final dot2Y = headTop - h * 0.10;
+    canvas.drawCircle(Offset(dot2X, dot2Y), dot2Radius, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _VoicePlayingIconPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+

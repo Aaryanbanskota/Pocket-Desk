@@ -439,6 +439,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
 
   void _openCreateInstantCamera({
     String? initialPath,
+    String title = 'New Instant',
     ValueChanged<String>? onPhotoCaptured,
   }) {
     showModalBottomSheet<void>(
@@ -447,16 +448,19 @@ class _PostsPageState extends ConsumerState<PostsPage> {
       backgroundColor: Colors.black,
       builder: (ctx) => _InstantCameraModal(
         initialPath: initialPath,
+        title: title,
         onInstantCreated: (imagePath, textOverlay, textX, textY) async {
-          if (onPhotoCaptured != null) {
-            onPhotoCaptured(imagePath);
-          } else {
-            await ref.read(instantsProvider.notifier).createInstant(
-                  imagePath: imagePath,
-                  textOverlay: textOverlay,
-                  textX: textX,
-                  textY: textY,
-                );
+          if (imagePath.isNotEmpty) {
+            if (onPhotoCaptured != null) {
+              onPhotoCaptured(imagePath);
+            } else {
+              await ref.read(instantsProvider.notifier).createInstant(
+                    imagePath: imagePath,
+                    textOverlay: textOverlay,
+                    textX: textX,
+                    textY: textY,
+                  );
+            }
           }
         },
       ),
@@ -1004,12 +1008,16 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                           tooltip: 'Take Photo',
                           onPressed: () {
                             _openCreateInstantCamera(
+                              title: 'Post Photo',
                               onPhotoCaptured: (path) {
-                                setModalState(() {
-                                  if (!_selectedImagePaths.contains(path)) {
-                                    _selectedImagePaths.add(path);
-                                  }
-                                });
+                                if (path.isNotEmpty) {
+                                  setModalState(() {
+                                    if (!_selectedImagePaths.contains(path)) {
+                                      _selectedImagePaths.add(path);
+                                    }
+                                  });
+                                  if (mounted) setState(() {});
+                                }
                               },
                             );
                           },
@@ -1942,9 +1950,11 @@ class _InstantCameraModal extends StatefulWidget {
   const _InstantCameraModal({
     required this.onInstantCreated,
     this.initialPath,
+    this.title = 'New Instant',
   });
 
   final String? initialPath;
+  final String title;
   final Future<void> Function(
           String imagePath, String? textOverlay, double textX, double textY)
       onInstantCreated;
@@ -2128,9 +2138,9 @@ class _InstantCameraModalState extends State<_InstantCameraModal> {
                       color: Colors.white, size: 26),
                   onPressed: () => Navigator.pop(context),
                 ),
-                const Text(
-                  'New Instant',
-                  style: TextStyle(
+                Text(
+                  widget.title,
+                  style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16),

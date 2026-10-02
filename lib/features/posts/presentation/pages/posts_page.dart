@@ -708,14 +708,18 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                       AppLogger.w('package:record failed, attempting linux system arecord/ffmpeg: $e');
                     }
 
-                    // Fallback to Linux desktop system audio tools (arecord / ffmpeg)
+                    // Fallback to Linux desktop system audio tools (pw-record / ffmpeg / arecord)
                     if (!started) {
                       try {
                         final path = '${dir.path}/voice_note_$timeStamp.wav';
                         try {
-                          processRecorder = await Process.start('arecord', ['-f', 'cd', path]);
+                          processRecorder = await Process.start('pw-record', [path]);
                         } catch (_) {
-                          processRecorder = await Process.start('ffmpeg', ['-y', '-f', 'alsa', '-i', 'default', path]);
+                          try {
+                            processRecorder = await Process.start('ffmpeg', ['-y', '-f', 'pulse', '-i', 'default', path]);
+                          } catch (_) {
+                            processRecorder = await Process.start('arecord', ['-f', 'cd', path]);
+                          }
                         }
                         recordedFilePath = path;
                         started = true;
@@ -2520,13 +2524,13 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
 
       if (!started) {
         try {
-          if (widget.audioPath.endsWith('.wav')) {
-            _sysPlayProcess = await Process.start('aplay', [widget.audioPath]);
-          } else {
+          try {
+            _sysPlayProcess = await Process.start('pw-play', [widget.audioPath]);
+          } catch (_) {
             try {
-              _sysPlayProcess = await Process.start('paplay', [widget.audioPath]);
-            } catch (_) {
               _sysPlayProcess = await Process.start('ffplay', ['-nodisp', '-autoexit', widget.audioPath]);
+            } catch (_) {
+              _sysPlayProcess = await Process.start('aplay', [widget.audioPath]);
             }
           }
           if (mounted) setState(() => _isPlaying = true);

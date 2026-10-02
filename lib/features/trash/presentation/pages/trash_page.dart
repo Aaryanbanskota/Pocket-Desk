@@ -143,7 +143,14 @@ class TrashPage extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final item = items[index];
                     final daysLeft = item.expiresAt.difference(DateTime.now()).inDays.clamp(0, 20);
-                    final typeColor = _getTypeColor(context, item.itemType);
+
+                    final resolvedType = (item.itemType == TrashItemType.post &&
+                            (item.title == 'Instant Story' ||
+                                item.payloadJson.contains('imagePath') ||
+                                item.payloadJson.contains('textOverlay')))
+                        ? TrashItemType.instant
+                        : item.itemType;
+                    final typeColor = _getTypeColor(context, resolvedType);
 
                     return Card(
                       margin: EdgeInsets.zero,
@@ -162,7 +169,7 @@ class TrashPage extends ConsumerWidget {
                                 color: typeColor.withAlpha(30),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Icon(_getTypeIcon(item.itemType), color: typeColor, size: 20),
+                              child: Icon(_getTypeIcon(resolvedType), color: typeColor, size: 20),
                             ),
                             const SizedBox(width: 12),
 
@@ -180,7 +187,7 @@ class TrashPage extends ConsumerWidget {
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Text(
-                                          _getTypeLabel(item.itemType),
+                                          _getTypeLabel(resolvedType),
                                           style: tt.labelSmall?.copyWith(color: typeColor, fontWeight: FontWeight.bold),
                                         ),
                                       ),
@@ -222,7 +229,19 @@ class TrashPage extends ConsumerWidget {
                               color: cs.primary,
                               tooltip: 'Restore',
                               onPressed: () async {
-                                await ref.read(trashNotifierProvider.notifier).restoreItem(item);
+                                final itemToRestore = item.itemType != resolvedType
+                                    ? (TrashItemModel()
+                                      ..id = item.id
+                                      ..userId = item.userId
+                                      ..itemType = resolvedType
+                                      ..originalId = item.originalId
+                                      ..title = item.title
+                                      ..snippet = item.snippet
+                                      ..payloadJson = item.payloadJson
+                                      ..deletedAt = item.deletedAt
+                                      ..expiresAt = item.expiresAt)
+                                    : item;
+                                await ref.read(trashNotifierProvider.notifier).restoreItem(itemToRestore);
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text('Restored "${item.title}"')),

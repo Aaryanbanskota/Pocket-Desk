@@ -29,27 +29,14 @@ class SettingsPage extends ConsumerStatefulWidget {
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends ConsumerState<SettingsPage>
-    with TickerProviderStateMixin {
-  TabController? _tabController;
-  bool? _lastUnlockedState;
+class _SettingsPageState extends ConsumerState<SettingsPage> {
   bool _isSearching = false;
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
 
-  void _updateTabController(bool isUnlocked) {
-    if (_lastUnlockedState != isUnlocked) {
-      _lastUnlockedState = isUnlocked;
-      _tabController?.dispose();
-      final count = isUnlocked ? 6 : 5;
-      _tabController = TabController(length: count, vsync: this);
-    }
-  }
-
   @override
   void dispose() {
     _searchCtrl.dispose();
-    _tabController?.dispose();
     super.dispose();
   }
 
@@ -114,30 +101,28 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
     ];
   }
 
-  void _jumpToTab(String tabName, bool isShareUnlocked) {
-    final Map<String, int> tabIndexes;
-    if (isShareUnlocked) {
-      tabIndexes = {
-        'AI': 0,
-        'Share': 1,
-        'Devices': 2,
-        'Appearance': 3,
-        'Privacy': 4,
-        'Security': 5,
-      };
-    } else {
-      tabIndexes = {
-        'AI': 0,
-        'Devices': 1,
-        'Appearance': 2,
-        'Privacy': 3,
-        'Security': 4,
-      };
-    }
+  void _jumpToTab(BuildContext context, String tabName, bool isShareUnlocked) {
+    final Map<String, int> tabIndexes = isShareUnlocked
+        ? {
+            'AI': 0,
+            'Share': 1,
+            'Devices': 2,
+            'Appearance': 3,
+            'Privacy': 4,
+            'Security': 5,
+          }
+        : {
+            'AI': 0,
+            'Devices': 1,
+            'Appearance': 2,
+            'Privacy': 3,
+            'Security': 4,
+          };
 
     final targetIndex = tabIndexes[tabName];
-    if (targetIndex != null && _tabController != null) {
-      _tabController!.animateTo(targetIndex);
+    final tabController = DefaultTabController.maybeOf(context);
+    if (targetIndex != null && tabController != null) {
+      tabController.animateTo(targetIndex);
       setState(() {
         _isSearching = false;
         _searchQuery = '';
@@ -152,8 +137,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
     final colorScheme = theme.colorScheme;
     final isShareUnlocked =
         ref.watch(shareTabUnlockedProvider).valueOrNull ?? false;
-
-    _updateTabController(isShareUnlocked);
 
     final tabs = [
       const Tab(
@@ -202,112 +185,119 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                 item.tabName.toLowerCase().contains(q);
           }).toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: _isSearching
-            ? TextField(
-                controller: _searchCtrl,
-                autofocus: true,
-                style: TextStyle(color: colorScheme.onSurface),
-                decoration: InputDecoration(
-                  hintText: 'Search settings...',
-                  hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-                  border: InputBorder.none,
-                ),
-                onChanged: (val) => setState(() => _searchQuery = val.trim()),
-              )
-            : Text(
-                'Settings',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search_rounded),
-            tooltip: _isSearching ? 'Close Search' : 'Search Settings',
-            onPressed: () {
-              setState(() {
-                if (_isSearching) {
-                  _isSearching = false;
-                  _searchQuery = '';
-                  _searchCtrl.clear();
-                } else {
-                  _isSearching = true;
-                }
-              });
-            },
-          ),
-        ],
-        bottom: _isSearching
-            ? null
-            : TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                labelColor: colorScheme.primary,
-                unselectedLabelColor: colorScheme.onSurfaceVariant,
-                indicatorColor: colorScheme.primary,
-                indicatorWeight: 3,
-                tabs: tabs,
-              ),
-      ),
-      body: _isSearching
-          ? (filteredItems.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.search_off_rounded,
-                            size: 48, color: colorScheme.onSurfaceVariant),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No settings matching "$_searchQuery"',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filteredItems.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final item = filteredItems[index];
-                    return Card(
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: colorScheme.primaryContainer,
-                          foregroundColor: colorScheme.onPrimaryContainer,
-                          child: Icon(item.icon),
-                        ),
-                        title: Text(item.title,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w600)),
-                        subtitle: Text(item.subtitle),
-                        trailing: Chip(
-                          label: Text(item.tabName),
-                          labelStyle: TextStyle(
-                            color: colorScheme.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        onTap: () => _jumpToTab(item.tabName, isShareUnlocked),
+    return DefaultTabController(
+      key: ValueKey(isShareUnlocked),
+      length: isShareUnlocked ? 6 : 5,
+      child: Builder(
+        builder: (tabContext) {
+          return Scaffold(
+            appBar: AppBar(
+              title: _isSearching
+                  ? TextField(
+                      controller: _searchCtrl,
+                      autofocus: true,
+                      style: TextStyle(color: colorScheme.onSurface),
+                      decoration: InputDecoration(
+                        hintText: 'Search settings...',
+                        hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                        border: InputBorder.none,
                       ),
-                    );
+                      onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                    )
+                  : Text(
+                      'Settings',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+              elevation: 0,
+              actions: [
+                IconButton(
+                  icon: Icon(_isSearching ? Icons.close : Icons.search_rounded),
+                  tooltip: _isSearching ? 'Close Search' : 'Search Settings',
+                  onPressed: () {
+                    setState(() {
+                      if (_isSearching) {
+                        _isSearching = false;
+                        _searchQuery = '';
+                        _searchCtrl.clear();
+                      } else {
+                        _isSearching = true;
+                      }
+                    });
                   },
-                ))
-          : TabBarView(
-              controller: _tabController,
-              children: views,
+                ),
+              ],
+              bottom: _isSearching
+                  ? null
+                  : TabBar(
+                      isScrollable: true,
+                      tabAlignment: TabAlignment.start,
+                      labelColor: colorScheme.primary,
+                      unselectedLabelColor: colorScheme.onSurfaceVariant,
+                      indicatorColor: colorScheme.primary,
+                      indicatorWeight: 3,
+                      tabs: tabs,
+                    ),
             ),
+            body: _isSearching
+                ? (filteredItems.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.search_off_rounded,
+                                  size: 48, color: colorScheme.onSurfaceVariant),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No settings matching "$_searchQuery"',
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: filteredItems.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final item = filteredItems[index];
+                          return Card(
+                            child: ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: colorScheme.primaryContainer,
+                                foregroundColor: colorScheme.onPrimaryContainer,
+                                child: Icon(item.icon),
+                              ),
+                              title: Text(item.title,
+                                  style:
+                                      const TextStyle(fontWeight: FontWeight.w600)),
+                              subtitle: Text(item.subtitle),
+                              trailing: Chip(
+                                label: Text(item.tabName),
+                                labelStyle: TextStyle(
+                                  color: colorScheme.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              onTap: () =>
+                                  _jumpToTab(tabContext, item.tabName, isShareUnlocked),
+                            ),
+                          );
+                        },
+                      ))
+                : TabBarView(
+                    children: views,
+                  ),
+          );
+        },
+      ),
     );
   }
 }

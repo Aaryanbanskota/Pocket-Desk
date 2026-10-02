@@ -66,22 +66,26 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     super.dispose();
   }
 
-  Future<void> _pickMedia() async {
+  Future<List<String>> _pickMedia() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'avi'],
       allowMultiple: true,
     );
 
+    final paths = <String>[];
     if (result != null && result.paths.isNotEmpty) {
-      setState(() {
-        for (final p in result.paths) {
-          if (p != null && !_selectedImagePaths.contains(p)) {
+      for (final p in result.paths) {
+        if (p != null) {
+          paths.add(p);
+          if (!_selectedImagePaths.contains(p)) {
             _selectedImagePaths.add(p);
           }
         }
-      });
+      }
+      setState(() {});
     }
+    return paths;
   }
 
   Future<void> _addAudioAttachment(TextEditingController controller) async {
@@ -629,6 +633,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
 
   Future<void> _showAudioRecorderModal(TextEditingController controller) async {
     final recorder = AudioRecorder();
+    Process? processRecorder;
     bool isRecording = false;
     int secondsRecorded = 0;
     Timer? timer;
@@ -673,20 +678,51 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                   if (isRecording) {
                     timer?.cancel();
                     try {
-                      recordedFilePath = await recorder.stop();
+                      if (processRecorder != null) {
+                        processRecorder!.kill(ProcessSignal.sigint);
+                        processRecorder = null;
+                      } else {
+                        recordedFilePath = await recorder.stop();
+                      }
                     } catch (e) {
                       AppLogger.w('Error stopping recorder: $e');
                     }
                     setDialogState(() => isRecording = false);
                   } else {
                     final dir = await getApplicationDocumentsDirectory();
-                    final path =
-                        '${dir.path}/voice_note_${DateTime.now().millisecondsSinceEpoch}.m4a';
+                    final timeStamp = DateTime.now().millisecondsSinceEpoch;
+                    bool started = false;
+
+                    // Try package:record first
                     try {
+                      final path = '${dir.path}/voice_note_$timeStamp.m4a';
                       await recorder.start(
                         const RecordConfig(encoder: AudioEncoder.aacLc),
                         path: path,
                       );
+                      recordedFilePath = path;
+                      started = true;
+                    } catch (e) {
+                      AppLogger.w('package:record failed, attempting linux system arecord/ffmpeg: $e');
+                    }
+
+                    // Fallback to Linux desktop system audio tools (arecord / ffmpeg)
+                    if (!started) {
+                      try {
+                        final path = '${dir.path}/voice_note_$timeStamp.wav';
+                        try {
+                          processRecorder = await Process.start('arecord', ['-f', 'cd', path]);
+                        } catch (_) {
+                          processRecorder = await Process.start('ffmpeg', ['-y', '-f', 'alsa', '-i', 'default', path]);
+                        }
+                        recordedFilePath = path;
+                        started = true;
+                      } catch (err) {
+                        AppLogger.e('Linux process recording error: $err');
+                      }
+                    }
+
+                    if (started) {
                       setDialogState(() {
                         isRecording = true;
                         secondsRecorded = 0;
@@ -695,11 +731,10 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                       timer = Timer.periodic(const Duration(seconds: 1), (t) {
                         setDialogState(() => secondsRecorded++);
                       });
-                    } catch (e) {
-                      AppLogger.e('Recording error: $e');
+                    } else {
                       setDialogState(() {
                         errorMessage =
-                            'Live recording requires PulseAudio parecord/mic. Pick an audio file instead below!';
+                            'Microphone recording unavailable. Pick an audio file instead below!';
                       });
                     }
                   }
@@ -719,7 +754,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
               Text(
                 isRecording
                     ? 'Recording... Tap to stop'
-                    : (recordedFilePath != null
+                    : (recordedFilePath != null && File(recordedFilePath!).existsSync()
                         ? 'Recorded/Selected! Tap attach to add.'
                         : 'Tap mic to record or pick audio below'),
                 style: TextStyle(
@@ -756,7 +791,10 @@ class _PostsPageState extends ConsumerState<PostsPage> {
               onPressed: () async {
                 timer?.cancel();
                 if (isRecording) {
-                  try { await recorder.stop(); } catch (_) {}
+                  try {
+                    processRecorder?.kill(ProcessSignal.sigint);
+                    await recorder.stop();
+                  } catch (_) {}
                 }
                 await recorder.dispose();
                 if (context.mounted) Navigator.pop(ctx);
@@ -767,7 +805,10 @@ class _PostsPageState extends ConsumerState<PostsPage> {
               onPressed: () async {
                 timer?.cancel();
                 if (isRecording) {
-                  try { recordedFilePath = await recorder.stop(); } catch (_) {}
+                  try {
+                    processRecorder?.kill(ProcessSignal.sigint);
+                    recordedFilePath ??= await recorder.stop();
+                  } catch (_) {}
                 }
                 await recorder.dispose();
 
@@ -2441,12 +2482,37 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
     super.dispose();
   }
 
+  Process? _sysPlayProcess;
+
   Future<void> _togglePlay() async {
     if (_isPlaying) {
-      await _player.pause();
+      try {
+        await _player.pause();
+      } catch (_) {}
+      _sysPlayProcess?.kill();
+      _sysPlayProcess = null;
+      if (mounted) setState(() => _isPlaying = false);
     } else {
       if (File(widget.audioPath).existsSync()) {
-        await _player.play(DeviceFileSource(widget.audioPath));
+        try {
+          await _player.play(DeviceFileSource(widget.audioPath));
+          if (mounted) setState(() => _isPlaying = true);
+        } catch (e) {
+          AppLogger.w('AudioPlayer error, attempting ffplay/aplay: $e');
+          try {
+            if (widget.audioPath.endsWith('.wav')) {
+              _sysPlayProcess = await Process.start('aplay', [widget.audioPath]);
+            } else {
+              _sysPlayProcess = await Process.start('ffplay', ['-nodisp', '-autoexit', widget.audioPath]);
+            }
+            if (mounted) setState(() => _isPlaying = true);
+            _sysPlayProcess?.exitCode.then((_) {
+              if (mounted) setState(() => _isPlaying = false);
+            });
+          } catch (err) {
+            AppLogger.e('System player error: $err');
+          }
+        }
       }
     }
   }

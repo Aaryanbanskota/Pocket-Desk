@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:pocketdesk/core/logging/app_logger.dart';
@@ -573,6 +574,29 @@ class _PostsPageState extends ConsumerState<PostsPage> {
   }
 
   Future<String> _fetchLocationTag() async {
+    // 1. Try IP Geolocation first for real city/region/country (works on laptops & desktops without native GPS hardware)
+    try {
+      final res = await http
+          .get(Uri.parse('http://ip-api.com/json'))
+          .timeout(const Duration(seconds: 4));
+      if (res.statusCode == 200) {
+        final Map<String, dynamic> data =
+            jsonDecode(res.body) as Map<String, dynamic>;
+        if (data['status'] == 'success') {
+          final city = data['city'] ?? '';
+          final region = data['regionName'] ?? '';
+          final country = data['country'] ?? '';
+          final parts = [city, region, country]
+              .where((s) => s.toString().trim().isNotEmpty)
+              .toList();
+          if (parts.isNotEmpty) {
+            return parts.join(', ');
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 2. Fallback to Geolocator (hardware GPS for mobile devices)
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
@@ -593,13 +617,13 @@ class _PostsPageState extends ConsumerState<PostsPage> {
 
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 10),
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 5),
         ),
       );
-      return '${position.latitude.toStringAsFixed(4)}° N, ${position.longitude.toStringAsFixed(4)}° E';
+      return '${position.latitude.toStringAsFixed(2)}°, ${position.longitude.toStringAsFixed(2)}°';
     } catch (e) {
-      return 'GPS Location Unavailable';
+      return 'Location Unavailable';
     }
   }
 
@@ -609,14 +633,20 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     int secondsRecorded = 0;
     Timer? timer;
     String? recordedFilePath;
+    String? errorMessage;
 
-    if (!await recorder.hasPermission()) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Microphone permission denied')),
-        );
+    try {
+      final hasPerm = await recorder.hasPermission();
+      if (!hasPerm) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Microphone permission denied')),
+          );
+        }
+        return;
       }
-      return;
+    } catch (e) {
+      AppLogger.w('Permission check exception: $e');
     }
 
     await showDialog<void>(
@@ -660,16 +690,17 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                       setDialogState(() {
                         isRecording = true;
                         secondsRecorded = 0;
+                        errorMessage = null;
                       });
                       timer = Timer.periodic(const Duration(seconds: 1), (t) {
                         setDialogState(() => secondsRecorded++);
                       });
                     } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Could not start recording: $e')),
-                        );
-                      }
+                      AppLogger.e('Recording error: $e');
+                      setDialogState(() {
+                        errorMessage =
+                            'Live recording requires PulseAudio parecord/mic. Pick an audio file instead below!';
+                      });
                     }
                   }
                 },
@@ -689,12 +720,34 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                 isRecording
                     ? 'Recording... Tap to stop'
                     : (recordedFilePath != null
-                        ? 'Recorded! Tap attach to add.'
-                        : 'Tap mic to start recording'),
+                        ? 'Recorded/Selected! Tap attach to add.'
+                        : 'Tap mic to record or pick audio below'),
                 style: TextStyle(
                   color: isRecording ? Colors.redAccent : Colors.grey,
                   fontWeight: FontWeight.w600,
                 ),
+              ),
+              if (errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.amber, fontSize: 12),
+                ),
+              ],
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final res = await FilePicker.platform.pickFiles(type: FileType.audio);
+                  if (res != null && res.files.single.path != null) {
+                    recordedFilePath = res.files.single.path;
+                    setDialogState(() {
+                      errorMessage = null;
+                    });
+                  }
+                },
+                icon: const Icon(Icons.audio_file_rounded, size: 18),
+                label: const Text('Pick Audio File'),
               ),
             ],
           ),
@@ -702,7 +755,9 @@ class _PostsPageState extends ConsumerState<PostsPage> {
             TextButton(
               onPressed: () async {
                 timer?.cancel();
-                if (isRecording) await recorder.stop();
+                if (isRecording) {
+                  try { await recorder.stop(); } catch (_) {}
+                }
                 await recorder.dispose();
                 if (context.mounted) Navigator.pop(ctx);
               },
@@ -712,7 +767,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
               onPressed: () async {
                 timer?.cancel();
                 if (isRecording) {
-                  recordedFilePath = await recorder.stop();
+                  try { recordedFilePath = await recorder.stop(); } catch (_) {}
                 }
                 await recorder.dispose();
 
@@ -841,16 +896,19 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CircleAvatar(
-                          radius: 22,
-                          backgroundColor: colorScheme.surfaceContainerHighest,
-                          backgroundImage: avatarB64 != null
-                              ? MemoryImage(base64Decode(avatarB64))
-                              : null,
-                          child: avatarB64 == null
-                              ? Icon(Icons.person_rounded,
-                                  color: colorScheme.onSurfaceVariant)
-                              : null,
+                        GestureDetector(
+                          onTap: _showEditProfileModal,
+                          child: CircleAvatar(
+                            radius: 22,
+                            backgroundColor: colorScheme.surfaceContainerHighest,
+                            backgroundImage: avatarB64 != null
+                                ? MemoryImage(base64Decode(avatarB64))
+                                : null,
+                            child: avatarB64 == null
+                                ? Icon(Icons.person_rounded,
+                                    color: colorScheme.onSurfaceVariant)
+                                : null,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(

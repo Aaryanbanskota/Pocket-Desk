@@ -254,23 +254,17 @@ class PocketAiMascotDialog extends ConsumerStatefulWidget {
 
 class _PocketAiMascotDialogState extends ConsumerState<PocketAiMascotDialog> {
   final TextEditingController _promptCtrl = TextEditingController();
-  final List<({String sender, String message})> _conversation = [];
-  bool _isLoading = false;
+  late String _speechText;
+  bool _isThinking = false;
 
   @override
   void initState() {
     super.initState();
     final text = widget.initialText?.trim();
     if (text != null && text.isNotEmpty) {
-      _conversation.add((
-        sender: 'mascot',
-        message: 'Yo! I see you selected:\n"$text"\n\nWhat can I help you explain or do with this?'
-      ));
+      _speechText = 'Yo! I see you selected:\n"$text"\n\nWhat can I help you with?';
     } else {
-      _conversation.add((
-        sender: 'mascot',
-        message: 'Yo! I\'m your Pocket AI mascot! 🤖 What can I help you with today?'
-      ));
+      _speechText = 'Yo! I\'m your Pocket Assistant! 🤖 What can I help you with today?';
     }
   }
 
@@ -281,21 +275,20 @@ class _PocketAiMascotDialogState extends ConsumerState<PocketAiMascotDialog> {
   }
 
   Future<void> _sendMessage() async {
-    final text = _promptCtrl.text.trim();
-    if (text.isEmpty || _isLoading) return;
+    final userText = _promptCtrl.text.trim();
+    if (userText.isEmpty || _isThinking) return;
 
     setState(() {
-      _conversation.add((sender: 'user', message: text));
       _promptCtrl.clear();
-      _isLoading = true;
+      _isThinking = true;
     });
 
     const systemPrompt =
-        'You are Pocketdesk Mascot AI 🤖. You are a friendly, fun, super helpful companion inspired by Duolingo mascot. Keep your responses engaging, clear, concise (2-4 sentences), and friendly!';
+        'You are Pocket Assistant 🤖. You are a friendly, fun, super helpful companion inspired by Duolingo mascot. Keep your responses engaging, clear, concise (2-3 sentences), and friendly!';
 
     final fullPrompt = widget.initialText != null && widget.initialText!.isNotEmpty
-        ? 'Selected text context: "${widget.initialText}"\nUser question: $text'
-        : text;
+        ? 'Selected text context: "${widget.initialText}"\nUser question: $userText'
+        : userText;
 
     final response = await ref
         .read(aiSettingsProvider.notifier)
@@ -304,15 +297,12 @@ class _PocketAiMascotDialogState extends ConsumerState<PocketAiMascotDialog> {
     if (!mounted) return;
 
     setState(() {
-      _isLoading = false;
+      _isThinking = false;
       if (response != null && response.isNotEmpty) {
-        _conversation.add((sender: 'mascot', message: response));
+        _speechText = response;
       } else {
-        _conversation.add((
-          sender: 'mascot',
-          message:
-              'Oops! Pocket AI is disabled or needs an API key in Settings → AI. Turn it on to chat!'
-        ));
+        _speechText =
+            'Pocket AI is currently turned off or needs an API key in Settings → AI. Turn it on to chat!';
       }
     });
   }
@@ -323,110 +313,106 @@ class _PocketAiMascotDialogState extends ConsumerState<PocketAiMascotDialog> {
     final colorScheme = theme.colorScheme;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Container(
-        width: math.min(MediaQuery.of(context).size.width * 0.9, 440),
-        padding: const EdgeInsets.all(20),
-        child: SelectionArea(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: SelectionArea(
+        child: Container(
+          width: math.min(MediaQuery.of(context).size.width * 0.9, 400),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header with animated Mascot
-              Row(
-                children: [
-                  const AiChefMascotWidget(size: 48, animate: true),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pocket AI Mascot 🤖',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.primary,
-                          ),
-                        ),
-                        Text(
-                          'Your instant desktop & mobile assistant',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+              // Close button top right
+              Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => Navigator.pop(context),
+                  visualDensity: VisualDensity.compact,
+                ),
               ),
-              const Divider(height: 24),
-              // Chat conversation box
+              // Mascot Avatar (Profile Picture standing cleanly)
+              const AiChefMascotWidget(size: 76, animate: true),
+              const SizedBox(height: 16),
+              // Speech Box containing Mascot speech or "Pocket Assistant is thinking..."
               Container(
-                constraints: const BoxConstraints(maxHeight: 280),
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      for (final msg in _conversation)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: Align(
-                            alignment: msg.sender == 'user'
-                                ? Alignment.centerRight
-                                : Alignment.centerLeft,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: msg.sender == 'user'
-                                    ? colorScheme.primary
-                                    : colorScheme.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: colorScheme.primary.withValues(alpha: 0.2),
+                    width: 1.5,
+                  ),
+                ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: _isThinking
+                      ? Row(
+                          key: const ValueKey('thinking'),
+                          children: [
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
                               child: Text(
-                                msg.message,
+                                'Pocket Assistant is thinking...',
                                 style: TextStyle(
-                                  color: msg.sender == 'user'
-                                      ? colorScheme.onPrimary
-                                      : colorScheme.onSurface,
-                                  fontSize: 13,
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
                                 ),
                               ),
                             ),
+                          ],
+                        )
+                      : Text(
+                          _speechText,
+                          key: ValueKey(_speechText),
+                          style: TextStyle(
+                            color: colorScheme.onSurface,
+                            fontSize: 14,
+                            height: 1.4,
                           ),
                         ),
-                      if (_isLoading)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8),
-                          child: Row(
-                            children: [
-                              AiChefMascotWidget(size: 20, animate: true),
-                              SizedBox(width: 8),
-                              Text('Mascot is thinking...'),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
                 ),
               ),
-              const SizedBox(height: 12),
-              // Input Field
+              const SizedBox(height: 16),
+              // Input Field (click and type, clears after submitting)
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _promptCtrl,
                       decoration: InputDecoration(
-                        hintText: 'Ask Pocket AI mascot anything...',
+                        hintText: 'Type your message...',
                         isDense: true,
+                        filled: true,
+                        fillColor: colorScheme.surfaceContainerLow,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
                       ),
                       onSubmitted: (_) => _sendMessage(),
                     ),

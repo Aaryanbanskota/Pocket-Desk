@@ -16,7 +16,7 @@ class TrashPage extends ConsumerWidget {
       TrashItemType.task => Icons.check_circle_outline_rounded,
       TrashItemType.event => Icons.calendar_month_outlined,
       TrashItemType.post => Icons.dynamic_feed_rounded,
-      TrashItemType.instant => Icons.auto_stories_rounded,
+      TrashItemType.instant => Icons.camera_alt_rounded,
       TrashItemType.expense => Icons.account_balance_wallet_outlined,
     };
   }
@@ -27,7 +27,7 @@ class TrashPage extends ConsumerWidget {
       TrashItemType.task => 'Task',
       TrashItemType.event => 'Event',
       TrashItemType.post => 'Post',
-      TrashItemType.instant => 'Instance Story',
+      TrashItemType.instant => 'Insta Story',
       TrashItemType.expense => 'Expense',
     };
   }

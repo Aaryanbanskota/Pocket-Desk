@@ -77,6 +77,238 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     }
   }
 
+  Future<void> _addAudioAttachment(TextEditingController controller) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'],
+    );
+    if (result != null && result.files.single.path != null) {
+      final path = result.files.single.path!;
+      final filename = path.split(Platform.pathSeparator).last;
+      final text = controller.text;
+      final newText = text.isEmpty
+          ? '🎙️ [Audio Note: $filename]'
+          : '$text\n🎙️ [Audio Note: $filename]';
+      controller.text = newText;
+    } else {
+      if (!mounted) return;
+      final ctrl = TextEditingController();
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.mic_rounded, color: Color(0xFF8B95F6)),
+              SizedBox(width: 8),
+              Text('Voice Note / Audio'),
+            ],
+          ),
+          content: TextField(
+            controller: ctrl,
+            decoration: const InputDecoration(
+              hintText: 'Enter audio description or voice note text...',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final note = ctrl.text.trim();
+                if (note.isNotEmpty) {
+                  final text = controller.text;
+                  controller.text = text.isEmpty
+                      ? '🎙️ [Voice Note: $note]'
+                      : '$text\n🎙️ [Voice Note: $note]';
+                }
+                Navigator.pop(ctx);
+              },
+              child: const Text('Add Note'),
+            ),
+          ],
+        ),
+      );
+      ctrl.dispose();
+    }
+  }
+
+  Future<void> _addGifAttachment(TextEditingController controller) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['gif'],
+    );
+    if (result != null && result.files.single.path != null) {
+      final path = result.files.single.path!;
+      if (!_selectedImagePaths.contains(path)) {
+        setState(() => _selectedImagePaths.add(path));
+      }
+      final text = controller.text;
+      final filename = path.split(Platform.pathSeparator).last;
+      controller.text =
+          text.isEmpty ? '[GIF: $filename]' : '$text\n[GIF: $filename]';
+    } else {
+      if (!mounted) return;
+      final ctrl = TextEditingController(
+          text: 'https://media.giphy.com/media/express/giphy.gif');
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.gif_box_rounded, color: Color(0xFF8B95F6)),
+              SizedBox(width: 8),
+              Text('Add GIF Link'),
+            ],
+          ),
+          content: TextField(
+            controller: ctrl,
+            decoration: const InputDecoration(
+              hintText: 'Enter GIF URL...',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final url = ctrl.text.trim();
+                if (url.isNotEmpty) {
+                  final text = controller.text;
+                  controller.text =
+                      text.isEmpty ? 'GIF: $url' : '$text\nGIF: $url';
+                }
+                Navigator.pop(ctx);
+              },
+              child: const Text('Add GIF'),
+            ),
+          ],
+        ),
+      );
+      ctrl.dispose();
+    }
+  }
+
+  Future<void> _addTodoList(TextEditingController controller) async {
+    final item1Ctrl = TextEditingController();
+    final item2Ctrl = TextEditingController();
+    final item3Ctrl = TextEditingController();
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.checklist_rounded, color: Color(0xFF8B95F6)),
+            SizedBox(width: 8),
+            Text('Create To-Do List'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: item1Ctrl,
+              decoration: const InputDecoration(
+                hintText: 'Task 1',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: item2Ctrl,
+              decoration: const InputDecoration(
+                hintText: 'Task 2 (optional)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: item3Ctrl,
+              decoration: const InputDecoration(
+                hintText: 'Task 3 (optional)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final items = [
+                item1Ctrl.text.trim(),
+                item2Ctrl.text.trim(),
+                item3Ctrl.text.trim(),
+              ].where((s) => s.isNotEmpty).toList();
+              if (items.isNotEmpty) {
+                final listStr = items.map((i) => '- [ ] $i').join('\n');
+                final text = controller.text;
+                controller.text = text.isEmpty ? listStr : '$text\n\n$listStr';
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Add List'),
+          ),
+        ],
+      ),
+    );
+    item1Ctrl.dispose();
+    item2Ctrl.dispose();
+    item3Ctrl.dispose();
+  }
+
+  Future<void> _addLocationTag(TextEditingController controller) async {
+    final ctrl = TextEditingController();
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.location_on_rounded, color: Color(0xFF8B95F6)),
+            SizedBox(width: 8),
+            Text('Add Location Tag'),
+          ],
+        ),
+        content: TextField(
+          controller: ctrl,
+          decoration: const InputDecoration(
+            hintText: 'e.g. Kathmandu, Nepal or Office',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final loc = ctrl.text.trim();
+              if (loc.isNotEmpty) {
+                final text = controller.text;
+                controller.text = text.isEmpty
+                    ? '📍 Location: $loc'
+                    : '$text\n📍 Location: $loc';
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Add Tag'),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+  }
+
   // ---------------------------------------------------------------------------
   // Profile Editor Modal
   // ---------------------------------------------------------------------------
@@ -607,14 +839,17 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                           icon: const Icon(Icons.mic_none_rounded,
                               color: Color(0xFF8B95F6), size: 24),
                           tooltip: 'Record Voice Audio',
-                          onPressed: () {},
+                          onPressed: () async {
+                            await _addAudioAttachment(_contentCtrl);
+                            setModalState(() {});
+                          },
                         ),
                         IconButton(
                           icon: const Icon(Icons.gif_box_outlined,
                               color: Color(0xFF8B95F6), size: 24),
                           tooltip: 'Add GIF',
                           onPressed: () async {
-                            await _pickMedia();
+                            await _addGifAttachment(_contentCtrl);
                             setModalState(() {});
                           },
                         ),
@@ -622,13 +857,19 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                           icon: const Icon(Icons.format_list_bulleted_rounded,
                               color: Color(0xFF8B95F6), size: 24),
                           tooltip: 'Add List / To-Do',
-                          onPressed: () {},
+                          onPressed: () async {
+                            await _addTodoList(_contentCtrl);
+                            setModalState(() {});
+                          },
                         ),
                         IconButton(
                           icon: const Icon(Icons.location_on_outlined,
                               color: Color(0xFF8B95F6), size: 24),
                           tooltip: 'Add Location Tag',
-                          onPressed: () {},
+                          onPressed: () async {
+                            await _addLocationTag(_contentCtrl);
+                            setModalState(() {});
+                          },
                         ),
                       ],
                     ),
@@ -857,19 +1098,19 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                           icon: const Icon(Icons.mic_none_rounded,
                               color: Color(0xFF8B95F6), size: 24),
                           tooltip: 'Record Voice Audio',
-                          onPressed: () {},
+                          onPressed: () => _addAudioAttachment(_commentCtrl),
                         ),
                         IconButton(
                           icon: const Icon(Icons.gif_box_outlined,
                               color: Color(0xFF8B95F6), size: 24),
                           tooltip: 'Add GIF',
-                          onPressed: () {},
+                          onPressed: () => _addGifAttachment(_commentCtrl),
                         ),
                         IconButton(
                           icon: const Icon(Icons.format_list_bulleted_rounded,
                               color: Color(0xFF8B95F6), size: 24),
                           tooltip: 'Add To-Do / List',
-                          onPressed: () {},
+                          onPressed: () => _addTodoList(_commentCtrl),
                         ),
                       ],
                     ),

@@ -1540,14 +1540,9 @@ class _PostsPageState extends ConsumerState<PostsPage> {
 
                       // Attached Media Container
                       if (hasImage)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Image.file(
-                            File(currentPost.imagePaths.first),
-                            height: 240,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
+                        SwipeablePostImageGallery(
+                          imagePaths: currentPost.imagePaths,
+                          height: 260,
                         ),
                       const SizedBox(height: 12),
 
@@ -1981,14 +1976,9 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                               Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 16),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(24),
-                                  child: Image.file(
-                                    File(post.imagePaths.first),
-                                    height: 240,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                  ),
+                                child: SwipeablePostImageGallery(
+                                  imagePaths: post.imagePaths,
+                                  height: 240,
                                 ),
                               ),
 
@@ -2462,6 +2452,7 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<PlayerState>? _playerStateSub;
   Process? _sysPlayProcess;
+  Timer? _playTimer;
 
   @override
   void initState() {
@@ -2492,6 +2483,7 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
 
   @override
   void dispose() {
+    _playTimer?.cancel();
     _durationSub?.cancel();
     _positionSub?.cancel();
     _playerStateSub?.cancel();
@@ -2504,6 +2496,7 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
 
   Future<void> _togglePlay() async {
     if (_isPlaying) {
+      _playTimer?.cancel();
       if (_player != null) {
         try {
           await _player!.pause();
@@ -2520,7 +2513,6 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
         try {
           await _player!.play(DeviceFileSource(widget.audioPath));
           started = true;
-          if (mounted) setState(() => _isPlaying = true);
         } catch (e) {
           AppLogger.w('AudioPlayer.play error, falling back to desktop system player: $e');
         }
@@ -2537,13 +2529,33 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
               _sysPlayProcess = await Process.start('aplay', [widget.audioPath]);
             }
           }
-          if (mounted) setState(() => _isPlaying = true);
+          started = true;
           _sysPlayProcess?.exitCode.then((_) {
-            if (mounted) setState(() => _isPlaying = false);
+            _playTimer?.cancel();
+            if (mounted) {
+              setState(() {
+                _isPlaying = false;
+                _position = Duration.zero;
+              });
+            }
           });
         } catch (err) {
           AppLogger.e('System player error: $err');
         }
+      }
+
+      if (started) {
+        _playTimer?.cancel();
+        setState(() {
+          _isPlaying = true;
+          _position = Duration.zero;
+        });
+        _playTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+          if (!mounted) return;
+          setState(() {
+            _position += const Duration(seconds: 1);
+          });
+        });
       }
     }
   }
@@ -2557,6 +2569,10 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final durationText = _duration > Duration.zero
+        ? '${_formatDuration(_position)} / ${_formatDuration(_duration)}'
+        : _formatDuration(_position);
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -2595,8 +2611,12 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
                     ),
                     const Spacer(),
                     Text(
-                      '${_formatDuration(_position)} / ${_formatDuration(_duration)}',
-                      style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                      durationText,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -2612,14 +2632,134 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
                   child: Slider(
                     value: _duration.inMilliseconds > 0
                         ? (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0)
-                        : 0.0,
+                        : (_isPlaying ? 0.5 : 0.0),
                     onChanged: (val) {
-                      final newPos = Duration(milliseconds: (val * _duration.inMilliseconds).toInt());
-                      _player?.seek(newPos);
+                      if (_duration.inMilliseconds > 0) {
+                        final newPos = Duration(milliseconds: (val * _duration.inMilliseconds).toInt());
+                        _player?.seek(newPos);
+                      }
                     },
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SwipeablePostImageGallery extends StatefulWidget {
+  const SwipeablePostImageGallery({
+    super.key,
+    required this.imagePaths,
+    this.height = 240,
+    this.borderRadius = 16,
+  });
+
+  final List<String> imagePaths;
+  final double height;
+  final double borderRadius;
+
+  @override
+  State<SwipeablePostImageGallery> createState() =>
+      _SwipeablePostImageGalleryState();
+}
+
+class _SwipeablePostImageGalleryState
+    extends State<SwipeablePostImageGallery> {
+  int _currentPage = 0;
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final validPaths = widget.imagePaths
+        .where((p) => p.isNotEmpty && File(p).existsSync())
+        .toList();
+
+    if (validPaths.isEmpty) return const SizedBox.shrink();
+
+    if (validPaths.length == 1) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(widget.borderRadius),
+        child: Image.file(
+          File(validPaths.first),
+          height: widget.height,
+          width: double.infinity,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: widget.height,
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: validPaths.length,
+              onPageChanged: (idx) {
+                setState(() => _currentPage = idx);
+              },
+              itemBuilder: (ctx, idx) {
+                return Image.file(
+                  File(validPaths[idx]),
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                );
+              },
+            ),
+          ),
+          Positioned(
+            bottom: 10,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ...List.generate(
+                    validPaths.length,
+                    (i) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: _currentPage == i ? 8 : 6,
+                      height: _currentPage == i ? 8 : 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _currentPage == i ? Colors.white : Colors.white54,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${_currentPage + 1}/${validPaths.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

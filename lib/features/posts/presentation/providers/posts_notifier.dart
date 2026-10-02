@@ -96,6 +96,8 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
     String? title,
     List<String> imagePaths = const [],
     List<String> tags = const [],
+    bool isAiExcluded = false,
+    String? locationTag,
   }) async {
     final auth = ref.read(authNotifierProvider).valueOrNull;
     if (auth is! AuthAuthenticated) return;
@@ -106,16 +108,21 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
       ..title = title
       ..content = content
       ..imagePaths = imagePaths
-      ..tags = tags;
+      ..tags = tags
+      ..isAiExcluded = isAiExcluded
+      ..locationTag = locationTag;
 
     final saved = await repo.savePost(post);
     ref.invalidateSelf();
 
     // Trigger AI Reaction and like asynchronously if enabled
-    _triggerAIReaction(saved);
+    if (!isAiExcluded) {
+      _triggerAIReaction(saved);
+    }
   }
 
   Future<void> _triggerAIReaction(PostModel post) async {
+    if (post.isAiExcluded) return;
     final aiSettings = await ref.read(aiSettingsRepositoryProvider.future).then((r) => r.getOrCreateSettings(post.userId));
     if (!aiSettings.isEnabled || !aiSettings.allowPostsAccess || !aiSettings.postReactionsEnabled || aiSettings.apiKey.trim().isEmpty) {
       return;

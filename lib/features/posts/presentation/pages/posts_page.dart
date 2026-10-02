@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:camera/camera.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:pocketdesk/features/auth/presentation/providers/auth_notifier.dart';
 import 'package:pocketdesk/features/dashboard/presentation/widgets/app_hamburger_drawer.dart';
 import 'package:pocketdesk/features/posts/data/models/instant_model.dart';
@@ -266,49 +268,6 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     item3Ctrl.dispose();
   }
 
-  Future<void> _addLocationTag(TextEditingController controller) async {
-    final ctrl = TextEditingController();
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.location_on_rounded, color: Color(0xFF8B95F6)),
-            SizedBox(width: 8),
-            Text('Add Location Tag'),
-          ],
-        ),
-        content: TextField(
-          controller: ctrl,
-          decoration: const InputDecoration(
-            hintText: 'e.g. Kathmandu, Nepal or Office',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final loc = ctrl.text.trim();
-              if (loc.isNotEmpty) {
-                final text = controller.text;
-                controller.text = text.isEmpty
-                    ? '📍 Location: $loc'
-                    : '$text\n📍 Location: $loc';
-              }
-              Navigator.pop(ctx);
-            },
-            child: const Text('Add Tag'),
-          ),
-        ],
-      ),
-    );
-    ctrl.dispose();
-  }
-
   // ---------------------------------------------------------------------------
   // Profile Editor Modal
   // ---------------------------------------------------------------------------
@@ -552,7 +511,10 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     );
   }
 
-  void _openCreateInstantCamera({String? initialPath}) {
+  void _openCreateInstantCamera({
+    String? initialPath,
+    ValueChanged<String>? onPhotoCaptured,
+  }) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -560,13 +522,132 @@ class _PostsPageState extends ConsumerState<PostsPage> {
       builder: (ctx) => _InstantCameraModal(
         initialPath: initialPath,
         onInstantCreated: (imagePath, textOverlay, textX, textY) async {
-          await ref.read(instantsProvider.notifier).createInstant(
-                imagePath: imagePath,
-                textOverlay: textOverlay,
-                textX: textX,
-                textY: textY,
-              );
+          if (onPhotoCaptured != null) {
+            onPhotoCaptured(imagePath);
+          } else {
+            await ref.read(instantsProvider.notifier).createInstant(
+                  imagePath: imagePath,
+                  textOverlay: textOverlay,
+                  textX: textX,
+                  textY: textY,
+                );
+          }
         },
+      ),
+    );
+  }
+
+  Future<String> _fetchLocationTag() async {
+    try {
+      if (!kIsWeb && Platform.isLinux) {
+        return 'Kathmandu, Nepal';
+      }
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return 'Kathmandu, Nepal';
+      }
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        return 'Kathmandu, Nepal';
+      }
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
+      return '${position.latitude.toStringAsFixed(4)}° N, ${position.longitude.toStringAsFixed(4)}° E';
+    } catch (_) {
+      return 'Kathmandu, Nepal';
+    }
+  }
+
+  Future<void> _showAudioRecorderModal(TextEditingController controller) async {
+    int secondsRecorded = 0;
+    bool isRecording = false;
+    Timer? timer;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.mic_rounded, color: Color(0xFF8B95F6)),
+              SizedBox(width: 8),
+              Text('Voice Recorder'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '00:${secondsRecorded.toString().padLeft(2, '0')}',
+                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () {
+                  if (isRecording) {
+                    timer?.cancel();
+                    setDialogState(() => isRecording = false);
+                  } else {
+                    setDialogState(() {
+                      isRecording = true;
+                      secondsRecorded = 0;
+                    });
+                    timer = Timer.periodic(const Duration(seconds: 1), (t) {
+                      setDialogState(() => secondsRecorded++);
+                    });
+                  }
+                },
+                child: CircleAvatar(
+                  radius: 36,
+                  backgroundColor: isRecording ? Colors.redAccent : const Color(0xFF8B95F6),
+                  child: Icon(
+                    isRecording ? Icons.stop_rounded : Icons.mic_rounded,
+                    size: 36,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                isRecording ? 'Recording... Tap to stop' : 'Tap mic to start recording',
+                style: TextStyle(
+                  color: isRecording ? Colors.redAccent : Colors.grey,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                timer?.cancel();
+                Navigator.pop(ctx);
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                timer?.cancel();
+                if (secondsRecorded > 0 || isRecording) {
+                  final dur = secondsRecorded == 0 ? 1 : secondsRecorded;
+                  final text = controller.text;
+                  controller.text = text.isEmpty
+                      ? '🎙️ Voice Note (0:${dur.toString().padLeft(2, '0')})'
+                      : '$text\n🎙️ Voice Note (0:${dur.toString().padLeft(2, '0')})';
+                }
+                Navigator.pop(ctx);
+              },
+              child: const Text('Attach Voice Note'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -580,6 +661,9 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     _titleCtrl.clear();
     _tagsCtrl.clear();
     _selectedImagePaths.clear();
+
+    bool isAiExcluded = false;
+    String? selectedLocationTag;
 
     final auth = ref.read(authNotifierProvider).valueOrNull;
     final currentUser = auth is AuthAuthenticated ? auth.user : null;
@@ -623,21 +707,35 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                             horizontal: 24, vertical: 10),
                       ),
                       onPressed: () {
-                        final text = _contentCtrl.text.trim();
-                        if (text.isEmpty && _selectedImagePaths.isEmpty) return;
-                        final tags = _tagsCtrl.text
-                            .split(',')
-                            .map((t) => t.trim())
-                            .where((t) => t.isNotEmpty)
-                            .toList();
+                        final rawText = _contentCtrl.text.trim();
+                        if (rawText.isEmpty && _selectedImagePaths.isEmpty) return;
+
+                        String? title;
+                        String content = rawText;
+
+                        if (rawText.contains('\n')) {
+                          final lines = rawText.split('\n');
+                          title = lines.first.trim();
+                          content = lines.sublist(1).join('\n').trim();
+                          if (content.isEmpty) {
+                            content = title;
+                          }
+                        } else if (rawText.isNotEmpty) {
+                          title = rawText;
+                          content = rawText;
+                        }
+
+                        // Auto-extract #hashtags
+                        final tagMatches = RegExp(r'#(\w+)').allMatches(rawText);
+                        final tags = tagMatches.map((m) => m.group(1)!).toList();
 
                         ref.read(postsNotifierProvider.notifier).createPost(
-                              content: text,
-                              title: _titleCtrl.text.trim().isEmpty
-                                  ? null
-                                  : _titleCtrl.text.trim(),
+                              content: content,
+                              title: title,
                               imagePaths: List.from(_selectedImagePaths),
                               tags: tags,
+                              isAiExcluded: isAiExcluded,
+                              locationTag: selectedLocationTag,
                             );
 
                         Navigator.pop(ctx);
@@ -655,7 +753,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Main Content Field Area
+                // Main Content Field Area (Twitter / X Continuous Seamless Input)
                 Expanded(
                   child: SingleChildScrollView(
                     child: Row(
@@ -678,27 +776,13 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               TextField(
-                                controller: _titleCtrl,
-                                style: TextStyle(
-                                    color: colorScheme.onSurface,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16),
-                                decoration: InputDecoration(
-                                  hintText: 'Title (optional)',
-                                  hintStyle: TextStyle(
-                                      color: colorScheme.onSurfaceVariant
-                                          .withValues(alpha: 0.5)),
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                ),
-                              ),
-                              TextField(
                                 controller: _contentCtrl,
                                 maxLines: null,
+                                autofocus: true,
                                 style: TextStyle(
                                     color: colorScheme.onSurface, fontSize: 18),
                                 decoration: InputDecoration(
-                                  hintText: 'What\'s Happening ?',
+                                  hintText: "What's happening?",
                                   hintStyle: TextStyle(
                                     color: colorScheme.onSurfaceVariant,
                                     fontSize: 18,
@@ -707,20 +791,22 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                   border: InputBorder.none,
                                 ),
                               ),
-                              TextField(
-                                controller: _tagsCtrl,
-                                style: TextStyle(
-                                    color: colorScheme.onSurfaceVariant,
-                                    fontSize: 14),
-                                decoration: InputDecoration(
-                                  hintText: 'Tags (e.g. daily, note, fun)',
-                                  hintStyle: TextStyle(
-                                      color: colorScheme.onSurfaceVariant
-                                          .withValues(alpha: 0.5)),
-                                  border: InputBorder.none,
-                                  isDense: true,
+                              if (selectedLocationTag != null) ...[
+                                const SizedBox(height: 8),
+                                Chip(
+                                  avatar: const Icon(Icons.location_on_rounded,
+                                      size: 16, color: Color(0xFF8B95F6)),
+                                  label: Text(
+                                    selectedLocationTag!,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  deleteIcon: const Icon(Icons.close_rounded,
+                                      size: 14),
+                                  onDeleted: () {
+                                    setModalState(() => selectedLocationTag = null);
+                                  },
                                 ),
-                              ),
+                              ],
                               if (_selectedImagePaths.isNotEmpty) ...[
                                 const SizedBox(height: 12),
                                 SizedBox(
@@ -767,8 +853,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                               child: Container(
                                                 padding:
                                                     const EdgeInsets.all(4),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.black.withOpacity(0.8),
+                                                decoration: const BoxDecoration(
+                                                  color: Colors.black87,
                                                   shape: BoxShape.circle,
                                                 ),
                                                 child: const Icon(
@@ -792,26 +878,39 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                   ),
                 ),
 
-                // Footer Bar (Privacy Badge + Attachment Toolbar)
+                // Footer Bar (Privacy Badge Toggle + Attachment Toolbar)
                 Column(
                   children: [
                     Divider(color: colorScheme.outline.withValues(alpha: 0.2), height: 1),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        children: [
-                          Icon(Icons.public_rounded,
-                              size: 16, color: Color(0xFF8B95F6)),
-                          SizedBox(width: 6),
-                          Text(
-                            'AI can view this post',
-                            style: TextStyle(
-                              color: Color(0xFF8B95F6),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: InkWell(
+                        onTap: () {
+                          setModalState(() => isAiExcluded = !isAiExcluded);
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isAiExcluded ? Icons.lock_rounded : Icons.smart_toy_rounded,
+                                size: 16,
+                                color: isAiExcluded ? colorScheme.onSurfaceVariant : const Color(0xFF8B95F6),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isAiExcluded ? '🙈 AI cannot view this post' : '🤖 AI can view this post',
+                                style: TextStyle(
+                                  color: isAiExcluded ? colorScheme.onSurfaceVariant : const Color(0xFF8B95F6),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                     Row(
@@ -829,10 +928,17 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                         IconButton(
                           icon: const Icon(Icons.camera_alt_outlined,
                               color: Color(0xFF8B95F6), size: 24),
-                          tooltip: 'Camera Instant',
+                          tooltip: 'Take Photo',
                           onPressed: () {
-                            Navigator.pop(ctx);
-                            _openCreateInstantCamera();
+                            _openCreateInstantCamera(
+                              onPhotoCaptured: (path) {
+                                setModalState(() {
+                                  if (!_selectedImagePaths.contains(path)) {
+                                    _selectedImagePaths.add(path);
+                                  }
+                                });
+                              },
+                            );
                           },
                         ),
                         IconButton(
@@ -840,7 +946,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                               color: Color(0xFF8B95F6), size: 24),
                           tooltip: 'Record Voice Audio',
                           onPressed: () async {
-                            await _addAudioAttachment(_contentCtrl);
+                            await _showAudioRecorderModal(_contentCtrl);
                             setModalState(() {});
                           },
                         ),
@@ -857,8 +963,10 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                           icon: const Icon(Icons.format_list_bulleted_rounded,
                               color: Color(0xFF8B95F6), size: 24),
                           tooltip: 'Add List / To-Do',
-                          onPressed: () async {
-                            await _addTodoList(_contentCtrl);
+                          onPressed: () {
+                            final text = _contentCtrl.text;
+                            final listPrefix = text.isEmpty || text.endsWith('\n') ? '- [ ] ' : '\n- [ ] ';
+                            _contentCtrl.text = '$text$listPrefix';
                             setModalState(() {});
                           },
                         ),
@@ -867,8 +975,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                               color: Color(0xFF8B95F6), size: 24),
                           tooltip: 'Add Location Tag',
                           onPressed: () async {
-                            await _addLocationTag(_contentCtrl);
-                            setModalState(() {});
+                            final tag = await _fetchLocationTag();
+                            setModalState(() => selectedLocationTag = tag);
                           },
                         ),
                       ],
@@ -1584,10 +1692,29 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                         color: colorScheme.onSurfaceVariant)
                                     : null,
                               ),
-                              title: Text(authorName,
-                                  style: TextStyle(
-                                      color: colorScheme.onSurface,
-                                      fontWeight: FontWeight.bold)),
+                              title: Row(
+                                children: [
+                                  Text(authorName,
+                                      style: TextStyle(
+                                          color: colorScheme.onSurface,
+                                          fontWeight: FontWeight.bold)),
+                                  if (post.isAiExcluded) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.surfaceContainerHighest,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Text('🙈 AI Excluded',
+                                          style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
+                                ],
+                              ),
                               trailing: PopupMenuButton<String>(
                                 icon: Icon(Icons.more_vert_rounded,
                                     color: colorScheme.onSurfaceVariant),
@@ -1632,6 +1759,26 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                       post.content,
                                       style: TextStyle(
                                           color: colorScheme.onSurfaceVariant, fontSize: 13),
+                                    ),
+                                  ],
+                                  if (post.locationTag != null &&
+                                      post.locationTag!.isNotEmpty) ...[
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.location_on_rounded,
+                                            size: 13,
+                                            color: Color(0xFF8B95F6)),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          post.locationTag!,
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF8B95F6),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ],

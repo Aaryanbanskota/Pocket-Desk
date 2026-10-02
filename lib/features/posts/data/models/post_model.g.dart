@@ -47,43 +47,53 @@ const PostModelSchema = CollectionSchema(
       name: r'imagePaths',
       type: IsarType.stringList,
     ),
-    r'isLiked': PropertySchema(
+    r'isAiExcluded': PropertySchema(
       id: 6,
+      name: r'isAiExcluded',
+      type: IsarType.bool,
+    ),
+    r'isLiked': PropertySchema(
+      id: 7,
       name: r'isLiked',
       type: IsarType.bool,
     ),
     r'isPinned': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'isPinned',
       type: IsarType.bool,
     ),
     r'isSaved': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'isSaved',
       type: IsarType.bool,
     ),
     r'likesCount': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'likesCount',
       type: IsarType.long,
     ),
+    r'locationTag': PropertySchema(
+      id: 11,
+      name: r'locationTag',
+      type: IsarType.string,
+    ),
     r'tags': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'tags',
       type: IsarType.stringList,
     ),
     r'title': PropertySchema(
-      id: 11,
+      id: 13,
       name: r'title',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 12,
+      id: 14,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'userId': PropertySchema(
-      id: 13,
+      id: 15,
       name: r'userId',
       type: IsarType.long,
     )
@@ -145,6 +155,12 @@ int _postModelEstimateSize(
       bytesCount += value.length * 3;
     }
   }
+  {
+    final value = object.locationTag;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.tags.length * 3;
   {
     for (var i = 0; i < object.tags.length; i++) {
@@ -173,14 +189,16 @@ void _postModelSerialize(
   writer.writeString(offsets[3], object.content);
   writer.writeDateTime(offsets[4], object.createdAt);
   writer.writeStringList(offsets[5], object.imagePaths);
-  writer.writeBool(offsets[6], object.isLiked);
-  writer.writeBool(offsets[7], object.isPinned);
-  writer.writeBool(offsets[8], object.isSaved);
-  writer.writeLong(offsets[9], object.likesCount);
-  writer.writeStringList(offsets[10], object.tags);
-  writer.writeString(offsets[11], object.title);
-  writer.writeDateTime(offsets[12], object.updatedAt);
-  writer.writeLong(offsets[13], object.userId);
+  writer.writeBool(offsets[6], object.isAiExcluded);
+  writer.writeBool(offsets[7], object.isLiked);
+  writer.writeBool(offsets[8], object.isPinned);
+  writer.writeBool(offsets[9], object.isSaved);
+  writer.writeLong(offsets[10], object.likesCount);
+  writer.writeString(offsets[11], object.locationTag);
+  writer.writeStringList(offsets[12], object.tags);
+  writer.writeString(offsets[13], object.title);
+  writer.writeDateTime(offsets[14], object.updatedAt);
+  writer.writeLong(offsets[15], object.userId);
 }
 
 PostModel _postModelDeserialize(
@@ -197,14 +215,16 @@ PostModel _postModelDeserialize(
   object.createdAt = reader.readDateTime(offsets[4]);
   object.id = id;
   object.imagePaths = reader.readStringList(offsets[5]) ?? [];
-  object.isLiked = reader.readBool(offsets[6]);
-  object.isPinned = reader.readBool(offsets[7]);
-  object.isSaved = reader.readBool(offsets[8]);
-  object.likesCount = reader.readLong(offsets[9]);
-  object.tags = reader.readStringList(offsets[10]) ?? [];
-  object.title = reader.readStringOrNull(offsets[11]);
-  object.updatedAt = reader.readDateTime(offsets[12]);
-  object.userId = reader.readLong(offsets[13]);
+  object.isAiExcluded = reader.readBool(offsets[6]);
+  object.isLiked = reader.readBool(offsets[7]);
+  object.isPinned = reader.readBool(offsets[8]);
+  object.isSaved = reader.readBool(offsets[9]);
+  object.likesCount = reader.readLong(offsets[10]);
+  object.locationTag = reader.readStringOrNull(offsets[11]);
+  object.tags = reader.readStringList(offsets[12]) ?? [];
+  object.title = reader.readStringOrNull(offsets[13]);
+  object.updatedAt = reader.readDateTime(offsets[14]);
+  object.userId = reader.readLong(offsets[15]);
   return object;
 }
 
@@ -234,14 +254,18 @@ P _postModelDeserializeProp<P>(
     case 8:
       return (reader.readBool(offset)) as P;
     case 9:
-      return (reader.readLong(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 10:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readLong(offset)) as P;
     case 11:
       return (reader.readStringOrNull(offset)) as P;
     case 12:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 13:
+      return (reader.readStringOrNull(offset)) as P;
+    case 14:
+      return (reader.readDateTime(offset)) as P;
+    case 15:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1495,6 +1519,16 @@ extension PostModelQueryFilter
     });
   }
 
+  QueryBuilder<PostModel, PostModel, QAfterFilterCondition> isAiExcludedEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isAiExcluded',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<PostModel, PostModel, QAfterFilterCondition> isLikedEqualTo(
       bool value) {
     return QueryBuilder.apply(this, (query) {
@@ -1575,6 +1609,158 @@ extension PostModelQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterFilterCondition>
+      locationTagIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'locationTag',
+      ));
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterFilterCondition>
+      locationTagIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'locationTag',
+      ));
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterFilterCondition> locationTagEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'locationTag',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterFilterCondition>
+      locationTagGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'locationTag',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterFilterCondition> locationTagLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'locationTag',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterFilterCondition> locationTagBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'locationTag',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterFilterCondition>
+      locationTagStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'locationTag',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterFilterCondition> locationTagEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'locationTag',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterFilterCondition> locationTagContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'locationTag',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterFilterCondition> locationTagMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'locationTag',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterFilterCondition>
+      locationTagIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'locationTag',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterFilterCondition>
+      locationTagIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'locationTag',
+        value: '',
       ));
     });
   }
@@ -2083,6 +2269,18 @@ extension PostModelQuerySortBy on QueryBuilder<PostModel, PostModel, QSortBy> {
     });
   }
 
+  QueryBuilder<PostModel, PostModel, QAfterSortBy> sortByIsAiExcluded() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isAiExcluded', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterSortBy> sortByIsAiExcludedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isAiExcluded', Sort.desc);
+    });
+  }
+
   QueryBuilder<PostModel, PostModel, QAfterSortBy> sortByIsLiked() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isLiked', Sort.asc);
@@ -2128,6 +2326,18 @@ extension PostModelQuerySortBy on QueryBuilder<PostModel, PostModel, QSortBy> {
   QueryBuilder<PostModel, PostModel, QAfterSortBy> sortByLikesCountDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'likesCount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterSortBy> sortByLocationTag() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'locationTag', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterSortBy> sortByLocationTagDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'locationTag', Sort.desc);
     });
   }
 
@@ -2206,6 +2416,18 @@ extension PostModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<PostModel, PostModel, QAfterSortBy> thenByIsAiExcluded() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isAiExcluded', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterSortBy> thenByIsAiExcludedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isAiExcluded', Sort.desc);
+    });
+  }
+
   QueryBuilder<PostModel, PostModel, QAfterSortBy> thenByIsLiked() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isLiked', Sort.asc);
@@ -2251,6 +2473,18 @@ extension PostModelQuerySortThenBy
   QueryBuilder<PostModel, PostModel, QAfterSortBy> thenByLikesCountDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'likesCount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterSortBy> thenByLocationTag() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'locationTag', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QAfterSortBy> thenByLocationTagDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'locationTag', Sort.desc);
     });
   }
 
@@ -2330,6 +2564,12 @@ extension PostModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<PostModel, PostModel, QDistinct> distinctByIsAiExcluded() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isAiExcluded');
+    });
+  }
+
   QueryBuilder<PostModel, PostModel, QDistinct> distinctByIsLiked() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isLiked');
@@ -2351,6 +2591,13 @@ extension PostModelQueryWhereDistinct
   QueryBuilder<PostModel, PostModel, QDistinct> distinctByLikesCount() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'likesCount');
+    });
+  }
+
+  QueryBuilder<PostModel, PostModel, QDistinct> distinctByLocationTag(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'locationTag', caseSensitive: caseSensitive);
     });
   }
 
@@ -2426,6 +2673,12 @@ extension PostModelQueryProperty
     });
   }
 
+  QueryBuilder<PostModel, bool, QQueryOperations> isAiExcludedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isAiExcluded');
+    });
+  }
+
   QueryBuilder<PostModel, bool, QQueryOperations> isLikedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isLiked');
@@ -2447,6 +2700,12 @@ extension PostModelQueryProperty
   QueryBuilder<PostModel, int, QQueryOperations> likesCountProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'likesCount');
+    });
+  }
+
+  QueryBuilder<PostModel, String?, QQueryOperations> locationTagProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'locationTag');
     });
   }
 

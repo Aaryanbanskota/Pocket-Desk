@@ -21,6 +21,9 @@ class PostModel {
   int likesCount = 0;
   bool isLiked = false;
 
+  bool isAiExcluded = false;
+  String? locationTag;
+
   List<String> comments = [];
   List<String> commentAuthors = [];
   List<DateTime> commentDates = [];

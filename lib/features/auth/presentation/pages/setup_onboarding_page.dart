@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_routes.dart';
-import '../../../chat/presentation/widgets/ai_cardano_dots_widget.dart';
+import '../../../chat/presentation/widgets/ai_chef_mascot_widget.dart';
 
 class OnboardingStep {
   OnboardingStep({
@@ -130,7 +130,7 @@ class _SetupOnboardingPageState extends State<SetupOnboardingPage> {
                 children: [
                   Row(
                     children: [
-                      const AiCardanoDotsWidget(size: 28, animate: true),
+                      const AiChefMascotWidget(size: 28, animate: true),
                       const SizedBox(width: 8),
                       Text('Pocketdesk Setup', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                     ],

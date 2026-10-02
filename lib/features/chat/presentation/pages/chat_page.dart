@@ -13,7 +13,7 @@ import 'package:pocketdesk/features/notes/presentation/providers/notes_notifier.
 import 'package:pocketdesk/features/settings/presentation/providers/ai_settings_notifier.dart';
 import 'package:pocketdesk/features/tasks/presentation/providers/tasks_notifier.dart';
 import 'package:pocketdesk/features/dashboard/presentation/widgets/app_hamburger_drawer.dart';
-import 'package:pocketdesk/features/chat/presentation/widgets/ai_cardano_dots_widget.dart';
+import 'package:pocketdesk/features/chat/presentation/widgets/ai_chef_mascot_widget.dart';
 
 class ChatMessage {
   ChatMessage({
@@ -781,43 +781,48 @@ Sanitize all inputs: NEVER include executable code or script tags.
     final username = user?.displayName ?? user?.username ?? 'User';
 
     return Scaffold(
-      drawer: const AppHamburgerDrawer(),
-      appBar: AppBar(
-        title: Row(
-          children: [
-            if (_activePeerName == null) ...[
-              AiCardanoDotsWidget(
-                  size: 28, color: colorScheme.primary, animate: _isAITyping),
-              const SizedBox(width: 10),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _activePeerName ?? 'Pocketdesk AI',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    _activePeerName != null
-                        ? 'P2P Connected • Code: $_myFriendCode'
-                        : 'AI Universal Action Agent (yo $username)',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant, fontSize: 11),
-                  ),
-                ],
+        drawer: const AppHamburgerDrawer(),
+        appBar: AppBar(
+          title: Row(
+            children: [
+              if (_activePeerName == null) ...[
+                AiChefMascotWidget(
+                    size: 28, color: colorScheme.primary, animate: _isAITyping),
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _activePeerName ?? 'Pocketdesk AI',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      _activePeerName != null
+                          ? 'P2P Connected • Code: $_myFriendCode'
+                          : 'AI Universal Action Agent (yo $username)',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant, fontSize: 11),
+                    ),
+                  ],
+                ),
               ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const AiChefMascotWidget(size: 24, animate: true),
+              onPressed: () => showPocketAiMascotDialog(context, ref),
+              tooltip: 'Call Pocket AI Mascot',
             ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_add_rounded),
-            tooltip: 'Add P2P Friend',
+            IconButton(
+              icon: const Icon(Icons.person_add_rounded),
+              tooltip: 'Add P2P Friend',
             onPressed: () {
               showDialog<void>(
                 context: context,
@@ -852,7 +857,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          AiCardanoDotsWidget(
+                          AiChefMascotWidget(
                               size: 110,
                               color: colorScheme.primary,
                               animate: true),
@@ -892,7 +897,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
                               Padding(
                                 padding:
                                     const EdgeInsets.only(top: 4, right: 8),
-                                child: AiCardanoDotsWidget(
+                                child: AiChefMascotWidget(
                                     size: 24,
                                     color: colorScheme.primary,
                                     animate: false),
@@ -959,7 +964,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Row(
                 children: [
-                  AiCardanoDotsWidget(
+                  AiChefMascotWidget(
                       size: 22, color: colorScheme.primary, animate: true),
                   const SizedBox(width: 10),
                   Text('Pocketdesk AI is processing…',

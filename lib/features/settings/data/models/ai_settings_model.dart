@@ -22,6 +22,9 @@ class AISettingsModel {
   bool moneyAnalysisEnabled = true;
   bool noteAssistanceEnabled = true;
 
+  // Mascot Assistant Customization
+  String mascotDesignStyle = 'boxed'; // 'boxed' or 'minimalist'
+
   // Data Access Permissions
   bool allowNotesAccess = true;
   bool allowMoneyAccess = true;

@@ -13,7 +13,7 @@ import 'package:pocketdesk/features/notes/presentation/providers/notes_notifier.
 import 'package:pocketdesk/features/settings/presentation/providers/ai_settings_notifier.dart';
 import 'package:pocketdesk/features/tasks/presentation/providers/tasks_notifier.dart';
 import 'package:pocketdesk/features/dashboard/presentation/widgets/app_hamburger_drawer.dart';
-import 'package:pocketdesk/features/chat/presentation/widgets/ai_cardano_dots_widget.dart';
+import 'package:pocketdesk/features/chat/presentation/widgets/ai_chef_mascot_widget.dart';
 
 class ChatMessage {
   ChatMessage({
@@ -786,7 +786,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
         title: Row(
           children: [
             if (_activePeerName == null) ...[
-              AiCardanoDotsWidget(
+              AiChefMascotWidget(
                   size: 28, color: colorScheme.primary, animate: _isAITyping),
               const SizedBox(width: 10),
             ],
@@ -852,7 +852,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          AiCardanoDotsWidget(
+                          AiChefMascotWidget(
                               size: 110,
                               color: colorScheme.primary,
                               animate: true),
@@ -892,7 +892,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
                               Padding(
                                 padding:
                                     const EdgeInsets.only(top: 4, right: 8),
-                                child: AiCardanoDotsWidget(
+                                child: AiChefMascotWidget(
                                     size: 24,
                                     color: colorScheme.primary,
                                     animate: false),
@@ -959,7 +959,7 @@ Sanitize all inputs: NEVER include executable code or script tags.
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Row(
                 children: [
-                  AiCardanoDotsWidget(
+                  AiChefMascotWidget(
                       size: 22, color: colorScheme.primary, animate: true),
                   const SizedBox(width: 10),
                   Text('Pocketdesk AI is processing…',

@@ -18,6 +18,7 @@ import 'package:pocketdesk/features/dashboard/presentation/widgets/app_hamburger
 import 'package:pocketdesk/features/posts/data/models/instant_model.dart';
 import 'package:pocketdesk/features/posts/data/models/post_model.dart';
 import 'package:pocketdesk/features/posts/presentation/providers/posts_notifier.dart';
+import 'package:pocketdesk/features/chat/presentation/widgets/ai_chef_mascot_widget.dart';
 
 class PostsPage extends ConsumerStatefulWidget {
   const PostsPage({super.key});
@@ -1517,12 +1518,15 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: colorScheme.surfaceContainerHighest,
-                                  child: Icon(Icons.person_rounded,
-                                      size: 16, color: colorScheme.onSurfaceVariant),
-                                ),
+                                if (author.contains('Pocketdesk AI') || author.contains('AI'))
+                                  const AiChefMascotWidget(size: 32)
+                                else
+                                  CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: colorScheme.surfaceContainerHighest,
+                                    child: Icon(Icons.person_rounded,
+                                        size: 16, color: colorScheme.onSurfaceVariant),
+                                  ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(

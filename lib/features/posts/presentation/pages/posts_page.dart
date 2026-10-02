@@ -2454,10 +2454,6 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
   Process? _sysPlayProcess;
   Timer? _playTimer;
 
-  static const List<double> _waveformHeights = [
-    12, 20, 14, 26, 18, 30, 22, 16, 28, 24, 18, 12, 22, 16, 24, 14, 20, 10
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -2582,59 +2578,35 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
         : (_isPlaying ? ((_position.inSeconds % 10) / 10.0) : 0.0);
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colorScheme.surfaceContainerHighest,
-            colorScheme.surfaceContainerHigh,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFF8B95F6).withValues(alpha: 0.25),
+          color: colorScheme.outline.withValues(alpha: 0.15),
+          width: 0.5,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Row(
         children: [
           GestureDetector(
             onTap: _togglePlay,
             child: Container(
-              width: 44,
-              height: 44,
+              width: 32,
+              height: 32,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [Color(0xFF8B95F6), Color(0xFF6C5CE7)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0x668B95F6),
-                    blurRadius: 8,
-                    offset: Offset(0, 3),
-                  ),
-                ],
+                color: Color(0xFF8B95F6),
               ),
               child: Icon(
                 _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                 color: Colors.white,
-                size: 26,
+                size: 18,
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2642,53 +2614,35 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.mic_rounded, size: 14, color: Color(0xFF8B95F6)),
+                    const Icon(Icons.mic_rounded, size: 12, color: Color(0xFF8B95F6)),
                     const SizedBox(width: 4),
-                    const Text(
-                      'Voice Note',
+                    Text(
+                      'Voice note',
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.3,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        durationText,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF8B95F6),
-                        ),
+                    Text(
+                      durationText,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 30,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: List.generate(_waveformHeights.length, (i) {
-                      final barRatio = i / _waveformHeights.length;
-                      final isActive = barRatio <= progressRatio;
-                      return Container(
-                        width: 3.5,
-                        height: _waveformHeights[i],
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? const Color(0xFF8B95F6)
-                              : colorScheme.outline.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      );
-                    }),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: progressRatio,
+                    minHeight: 3,
+                    backgroundColor: colorScheme.outline.withValues(alpha: 0.2),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF8B95F6)),
                   ),
                 ),
               ],

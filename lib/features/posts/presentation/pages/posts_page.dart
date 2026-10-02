@@ -2095,14 +2095,14 @@ class _InstantCameraModalState extends State<_InstantCameraModal> {
         }
         setState(() => _isCapturing = false);
       } else {
-        // Desktop / Laptop fallback: open file picker directly if no active camera stream
-        final pickerResult =
-            await FilePicker.platform.pickFiles(type: FileType.image);
-        if (pickerResult != null && pickerResult.files.single.path != null) {
-          finalPath = pickerResult.files.single.path!;
-        } else {
-          return;
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Camera stream not active. Tap top-right gallery icon to choose a photo.'),
+            ),
+          );
         }
+        return;
       }
     }
 

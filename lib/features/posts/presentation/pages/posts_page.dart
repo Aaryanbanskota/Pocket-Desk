@@ -300,34 +300,10 @@ class _PostsPageState extends ConsumerState<PostsPage> {
             const SizedBox(height: 6),
             InkWell(
               onTap: () => _openVoicePlayingModal(context, audioPath),
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF8B95F6).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: const Color(0xFF8B95F6).withValues(alpha: 0.3),
-                    width: 0.8,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const VoicePlayingIconWidget(size: 24, color: Color(0xFF8B95F6)),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Voice Note',
-                      style: TextStyle(
-                        color: Color(0xFF8B95F6),
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Icon(Icons.play_circle_fill_rounded, size: 18, color: Color(0xFF8B95F6)),
-                  ],
-                ),
+              borderRadius: BorderRadius.circular(12),
+              child: const Padding(
+                padding: EdgeInsets.all(4.0),
+                child: VoicePlayingIconWidget(size: 28, color: Color(0xFF8B95F6)),
               ),
             ),
           ],
@@ -2829,6 +2805,7 @@ void _openVoicePlayingModal(BuildContext context, String audioPath) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    showDragHandle: false,
     backgroundColor: Colors.transparent,
     builder: (ctx) => VoicePlayingModalContent(audioPath: audioPath),
   );

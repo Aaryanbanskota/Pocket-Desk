@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:camera/camera.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -8,6 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
+import 'package:pocketdesk/core/logging/app_logger.dart';
 import 'package:pocketdesk/features/auth/presentation/providers/auth_notifier.dart';
 import 'package:pocketdesk/features/dashboard/presentation/widgets/app_hamburger_drawer.dart';
 import 'package:pocketdesk/features/posts/data/models/instant_model.dart';
@@ -266,6 +270,37 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     item1Ctrl.dispose();
     item2Ctrl.dispose();
     item3Ctrl.dispose();
+  }
+
+  Widget _buildPostContentWithAudio(
+      BuildContext context, String content, ColorScheme colorScheme) {
+    final voiceNoteRegExp =
+        RegExp(r'(?:🎙️ Voice Note:|\[Audio Note:)\s*([^\n\]]+)\]?');
+    final match = voiceNoteRegExp.firstMatch(content);
+
+    if (match != null) {
+      final audioPath = match.group(1)?.trim() ?? '';
+      final textWithoutAudio = content.replaceAll(voiceNoteRegExp, '').trim();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (textWithoutAudio.isNotEmpty)
+            Text(
+              textWithoutAudio,
+              style:
+                  TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+            ),
+          if (audioPath.isNotEmpty && File(audioPath).existsSync())
+            VoiceNotePlayerWidget(audioPath: audioPath),
+        ],
+      );
+    }
+
+    return Text(
+      content,
+      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -539,36 +574,50 @@ class _PostsPageState extends ConsumerState<PostsPage> {
 
   Future<String> _fetchLocationTag() async {
     try {
-      if (!kIsWeb && Platform.isLinux) {
-        return 'Kathmandu, Nepal';
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        return 'Location Services Disabled';
       }
+
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return 'Location Permission Denied';
+        }
       }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        return 'Kathmandu, Nepal';
+
+      if (permission == LocationPermission.deniedForever) {
+        return 'Location Permission Blocked';
       }
-      if (!await Geolocator.isLocationServiceEnabled()) {
-        return 'Kathmandu, Nepal';
-      }
+
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-          timeLimit: Duration(seconds: 8),
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
         ),
       );
       return '${position.latitude.toStringAsFixed(4)}° N, ${position.longitude.toStringAsFixed(4)}° E';
-    } catch (_) {
-      return 'Kathmandu, Nepal';
+    } catch (e) {
+      return 'GPS Location Unavailable';
     }
   }
 
   Future<void> _showAudioRecorderModal(TextEditingController controller) async {
-    int secondsRecorded = 0;
+    final recorder = AudioRecorder();
     bool isRecording = false;
+    int secondsRecorded = 0;
     Timer? timer;
+    String? recordedFilePath;
+
+    if (!await recorder.hasPermission()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Microphone permission denied')),
+        );
+      }
+      return;
+    }
 
     await showDialog<void>(
       context: context,
@@ -578,7 +627,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
             children: [
               Icon(Icons.mic_rounded, color: Color(0xFF8B95F6)),
               SizedBox(width: 8),
-              Text('Voice Recorder'),
+              Text('Record Voice Note'),
             ],
           ),
           content: Column(
@@ -590,23 +639,44 @@ class _PostsPageState extends ConsumerState<PostsPage> {
               ),
               const SizedBox(height: 16),
               GestureDetector(
-                onTap: () {
+                onTap: () async {
                   if (isRecording) {
                     timer?.cancel();
+                    try {
+                      recordedFilePath = await recorder.stop();
+                    } catch (e) {
+                      AppLogger.w('Error stopping recorder: $e');
+                    }
                     setDialogState(() => isRecording = false);
                   } else {
-                    setDialogState(() {
-                      isRecording = true;
-                      secondsRecorded = 0;
-                    });
-                    timer = Timer.periodic(const Duration(seconds: 1), (t) {
-                      setDialogState(() => secondsRecorded++);
-                    });
+                    final dir = await getApplicationDocumentsDirectory();
+                    final path =
+                        '${dir.path}/voice_note_${DateTime.now().millisecondsSinceEpoch}.m4a';
+                    try {
+                      await recorder.start(
+                        const RecordConfig(encoder: AudioEncoder.aacLc),
+                        path: path,
+                      );
+                      setDialogState(() {
+                        isRecording = true;
+                        secondsRecorded = 0;
+                      });
+                      timer = Timer.periodic(const Duration(seconds: 1), (t) {
+                        setDialogState(() => secondsRecorded++);
+                      });
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Could not start recording: $e')),
+                        );
+                      }
+                    }
                   }
                 },
                 child: CircleAvatar(
                   radius: 36,
-                  backgroundColor: isRecording ? Colors.redAccent : const Color(0xFF8B95F6),
+                  backgroundColor:
+                      isRecording ? Colors.redAccent : const Color(0xFF8B95F6),
                   child: Icon(
                     isRecording ? Icons.stop_rounded : Icons.mic_rounded,
                     size: 36,
@@ -616,7 +686,11 @@ class _PostsPageState extends ConsumerState<PostsPage> {
               ),
               const SizedBox(height: 12),
               Text(
-                isRecording ? 'Recording... Tap to stop' : 'Tap mic to start recording',
+                isRecording
+                    ? 'Recording... Tap to stop'
+                    : (recordedFilePath != null
+                        ? 'Recorded! Tap attach to add.'
+                        : 'Tap mic to start recording'),
                 style: TextStyle(
                   color: isRecording ? Colors.redAccent : Colors.grey,
                   fontWeight: FontWeight.w600,
@@ -626,23 +700,31 @@ class _PostsPageState extends ConsumerState<PostsPage> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 timer?.cancel();
-                Navigator.pop(ctx);
+                if (isRecording) await recorder.stop();
+                await recorder.dispose();
+                if (context.mounted) Navigator.pop(ctx);
               },
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 timer?.cancel();
-                if (secondsRecorded > 0 || isRecording) {
-                  final dur = secondsRecorded == 0 ? 1 : secondsRecorded;
-                  final text = controller.text;
-                  controller.text = text.isEmpty
-                      ? '🎙️ Voice Note (0:${dur.toString().padLeft(2, '0')})'
-                      : '$text\n🎙️ Voice Note (0:${dur.toString().padLeft(2, '0')})';
+                if (isRecording) {
+                  recordedFilePath = await recorder.stop();
                 }
-                Navigator.pop(ctx);
+                await recorder.dispose();
+
+                if (recordedFilePath != null &&
+                    recordedFilePath!.isNotEmpty &&
+                    File(recordedFilePath!).existsSync()) {
+                  final text = controller.text;
+                  final voiceTag = '🎙️ Voice Note: $recordedFilePath';
+                  controller.text =
+                      text.isEmpty ? voiceTag : '$text\n$voiceTag';
+                }
+                if (context.mounted) Navigator.pop(ctx);
               },
               child: const Text('Attach Voice Note'),
             ),
@@ -1240,6 +1322,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
     final auth = ref.read(authNotifierProvider).valueOrNull;
     final currentUser = auth is AuthAuthenticated ? auth.user : null;
     final authorName = currentUser?.displayName ?? currentUser?.username ?? 'User';
+    final avatarB64 = currentUser?.avatarBase64;
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -1291,8 +1374,13 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                         contentPadding: EdgeInsets.zero,
                         leading: CircleAvatar(
                           backgroundColor: colorScheme.surfaceContainerHighest,
-                          child: Icon(Icons.person_rounded,
-                              color: colorScheme.onSurfaceVariant),
+                          backgroundImage: avatarB64 != null
+                              ? MemoryImage(base64Decode(avatarB64))
+                              : null,
+                          child: avatarB64 == null
+                              ? Icon(Icons.person_rounded,
+                                  color: colorScheme.onSurfaceVariant)
+                              : null,
                         ),
                         title: Text(authorName,
                             style: TextStyle(
@@ -1755,11 +1843,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                     ),
                                   if (post.content.isNotEmpty) ...[
                                     const SizedBox(height: 4),
-                                    Text(
-                                      post.content,
-                                      style: TextStyle(
-                                          color: colorScheme.onSurfaceVariant, fontSize: 13),
-                                    ),
+                                    _buildPostContentWithAudio(
+                                        context, post.content, colorScheme),
                                   ],
                                   if (post.locationTag != null &&
                                       post.locationTag!.isNotEmpty) ...[
@@ -2243,6 +2328,140 @@ class _InstantCameraModalState extends State<_InstantCameraModal> {
                       color: canSwitchCamera ? Colors.white : Colors.white38,
                       size: 22,
                     ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class VoiceNotePlayerWidget extends StatefulWidget {
+  const VoiceNotePlayerWidget({super.key, required this.audioPath});
+
+  final String audioPath;
+
+  @override
+  State<VoiceNotePlayerWidget> createState() => _VoiceNotePlayerWidgetState();
+}
+
+class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
+  late AudioPlayer _player;
+  bool _isPlaying = false;
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+  StreamSubscription<Duration>? _durationSub;
+  StreamSubscription<Duration>? _positionSub;
+  StreamSubscription<PlayerState>? _playerStateSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _player = AudioPlayer();
+    _durationSub = _player.onDurationChanged.listen((d) {
+      if (mounted) setState(() => _duration = d);
+    });
+    _positionSub = _player.onPositionChanged.listen((p) {
+      if (mounted) setState(() => _position = p);
+    });
+    _playerStateSub = _player.onPlayerStateChanged.listen((state) {
+      if (mounted) {
+        setState(() => _isPlaying = state == PlayerState.playing);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _durationSub?.cancel();
+    _positionSub?.cancel();
+    _playerStateSub?.cancel();
+    _player.dispose();
+    super.dispose();
+  }
+
+  Future<void> _togglePlay() async {
+    if (_isPlaying) {
+      await _player.pause();
+    } else {
+      if (File(widget.audioPath).existsSync()) {
+        await _player.play(DeviceFileSource(widget.audioPath));
+      }
+    }
+  }
+
+  String _formatDuration(Duration d) {
+    final mins = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final secs = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$mins:$secs';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          IconButton.filled(
+            icon: Icon(_isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded),
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFF8B95F6),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: _togglePlay,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.mic_rounded, size: 14, color: Color(0xFF8B95F6)),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Voice Note',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${_formatDuration(_position)} / ${_formatDuration(_duration)}',
+                      style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+                SliderTheme(
+                  data: SliderThemeData(
+                    trackHeight: 3,
+                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 10),
+                    activeTrackColor: const Color(0xFF8B95F6),
+                    inactiveTrackColor: colorScheme.outline.withValues(alpha: 0.3),
+                    thumbColor: const Color(0xFF8B95F6),
+                  ),
+                  child: Slider(
+                    value: _duration.inMilliseconds > 0
+                        ? (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0)
+                        : 0.0,
+                    onChanged: (val) {
+                      final newPos = Duration(milliseconds: (val * _duration.inMilliseconds).toInt());
+                      _player.seek(newPos);
+                    },
                   ),
                 ),
               ],

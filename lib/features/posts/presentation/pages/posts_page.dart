@@ -1425,11 +1425,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                           ),
                         ),
                       if (currentPost.content.isNotEmpty)
-                        Text(
-                          currentPost.content,
-                          style: TextStyle(
-                              color: colorScheme.onSurfaceVariant, fontSize: 14),
-                        ),
+                        _buildPostContentWithAudio(
+                            context, currentPost.content, colorScheme),
                       const SizedBox(height: 12),
 
                       // Attached Media Container
@@ -1895,12 +1892,26 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                                         .read(postsNotifierProvider.notifier)
                                         .toggleLike(post),
                                   ),
-                                  IconButton(
-                                    icon: Icon(
-                                        Icons.mode_comment_outlined,
-                                        color: colorScheme.onSurfaceVariant),
-                                    onPressed: () =>
-                                        _showCommentComposerSheet(post),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                            Icons.mode_comment_outlined,
+                                            color: colorScheme.onSurfaceVariant),
+                                        onPressed: () =>
+                                            _showCommentComposerSheet(post),
+                                      ),
+                                      if (post.comments.isNotEmpty)
+                                        Text(
+                                          '${post.comments.length}',
+                                          style: TextStyle(
+                                            color: colorScheme.onSurfaceVariant,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                   const Spacer(),
                                   IconButton(

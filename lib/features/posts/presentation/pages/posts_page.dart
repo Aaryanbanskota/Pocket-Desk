@@ -2466,6 +2466,10 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
   @override
   void initState() {
     super.initState();
+    if (!kIsWeb && Platform.isLinux) {
+      _player = null;
+      return;
+    }
     try {
       final player = AudioPlayer();
       _player = player;

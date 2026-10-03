@@ -104,6 +104,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   Future<void> register({
     required String username,
     required String password,
+    String? email,
     String? displayName,
     String? securityQuestion,
     String? securityAnswer,
@@ -114,6 +115,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       final result = await repo.register(
         username: username,
         password: password,
+        email: email,
         displayName: displayName,
         securityQuestion: securityQuestion,
         securityAnswer: securityAnswer,
@@ -129,6 +131,34 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         AuthError(
             UnexpectedFailure('Registration failed', error: e, stackTrace: st)),
       );
+    }
+  }
+
+  Future<AppFailure?> convertLocalToCloudAccount({
+    required String email,
+    required String cloudPassword,
+  }) async {
+    final current = state.valueOrNull;
+    if (current is! AuthAuthenticated) {
+      return const AuthFailure('Not logged in');
+    }
+    try {
+      final repo = await ref.read(authRepositoryProvider.future);
+      final err = await repo.convertLocalToCloudAccount(
+        userId: current.user.id,
+        email: email,
+        cloudPassword: cloudPassword,
+      );
+      if (err == null) {
+        // Refresh authenticated state with updated user record
+        final updatedUser = await repo.restoreSession();
+        if (updatedUser != null) {
+          state = AsyncValue.data(AuthAuthenticated(updatedUser));
+        }
+      }
+      return err;
+    } catch (e, st) {
+      return UnexpectedFailure('Account conversion failed', error: e, stackTrace: st);
     }
   }
 
@@ -150,9 +180,9 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     }
   }
 
-  Future<String?> getSecurityQuestion(String username) async {
+  Future<String?> getSecurityQuestion(String usernameOrEmail) async {
     final repo = await ref.read(authRepositoryProvider.future);
-    return repo.getSecurityQuestion(username);
+    return repo.getSecurityQuestion(usernameOrEmail);
   }
 
   Future<AppFailure?> resetPasswordWithSecurityAnswer({
@@ -179,7 +209,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     state = const AsyncValue.loading();
     try {
       final repo = await ref.read(authRepositoryProvider.future);
-      final result = await repo.login(username: username, password: password);
+      final result = await repo.login(usernameOrEmail: username, password: password);
       if (result.error != null) {
         state = AsyncValue.data(AuthError(result.error!));
       } else {

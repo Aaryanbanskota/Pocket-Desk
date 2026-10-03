@@ -224,10 +224,14 @@ class _SubscriptionPlanPageState extends ConsumerState<SubscriptionPlanPage> {
                       ),
                     );
 
+                    final activeUser = authState.user;
+
                     // Execute real Supabase Auth signup call
                     final authRes = await SupabaseAuthService.signUp(
                       email: userEmail,
                       password: userPass,
+                      username: activeUser.username,
+                      displayName: activeUser.displayName ?? activeUser.username,
                     );
 
                     if (!context.mounted) return;
@@ -244,13 +248,38 @@ class _SubscriptionPlanPageState extends ConsumerState<SubscriptionPlanPage> {
                       return;
                     }
 
+                    final assignedUserId = authRes.userId ?? activeUser.id.toString();
+
+                    await SupabaseAuthService.upsertProfile(
+                      userId: assignedUserId,
+                      email: userEmail,
+                      username: activeUser.username,
+                      displayName: activeUser.displayName ?? activeUser.username,
+                      accountType: 'cloud',
+                      cloudPlan: _selectedPlan.name,
+                      isProActivated: _selectedPlan == CloudPlan.pro,
+                      isActive: true,
+                    );
+
                     // If Pro plan selected, create record in pro_requests database table
                     if (_selectedPlan == CloudPlan.pro) {
                       await SupabaseAuthService.createProRequest(
                         email: userEmail,
-                        userId: authRes.userId,
+                        userId: assignedUserId,
                       );
                     }
+
+                    // Update local user model with email & cloud master password
+                    await ref
+                        .read(authNotifierProvider.notifier)
+                        .convertLocalToCloudAccount(
+                          email: userEmail,
+                          cloudPassword: userPass,
+                        );
+
+                    await ref
+                        .read(accountPlanProvider.notifier)
+                        .syncCloudProfile(userEmail);
 
                     await ref
                         .read(accountPlanProvider.notifier)
@@ -263,7 +292,7 @@ class _SubscriptionPlanPageState extends ConsumerState<SubscriptionPlanPage> {
                         SnackBar(
                           content: Text(
                             'Confirmation email sent to $userEmail! Please check your inbox and click the link to confirm your account.\n\n'
-                            'Your Pro request has been registered. Text data storage is active. Administrator will email payment link & activate Pro Image/Audio buckets manually upon payment.',
+                            'Your Pro request has been registered. Full backup (Text + Images + Audio) is active.',
                           ),
                           duration: const Duration(seconds: 10),
                           backgroundColor: Colors.indigo,
@@ -298,19 +327,21 @@ class _SubscriptionPlanPageState extends ConsumerState<SubscriptionPlanPage> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          'Pro upgrade request recorded! Text data storage is active. Payment link will be emailed to activate media buckets.',
+                          'Pro upgrade request recorded! Text & media backup active.',
                         ),
                         duration: Duration(seconds: 6),
                         backgroundColor: Colors.indigo,
                       ),
                     );
                   }
-                  if (context.canPop()) {
-                    context.pop();
-                  } else if (isAuthenticated) {
-                    context.go(AppRoutes.dashboard);
+                  if (isAuthenticated) {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go(AppRoutes.dashboard);
+                    }
                   } else {
-                    context.push(AppRoutes.login);
+                    context.push(AppRoutes.register);
                   }
                 },
                 style: FilledButton.styleFrom(

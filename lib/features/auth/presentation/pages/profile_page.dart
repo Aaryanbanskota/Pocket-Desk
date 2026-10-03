@@ -301,6 +301,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   child: Column(
                     children: [
                       _InfoRow(label: 'Username', value: user.username),
+                      if (user.email != null && user.email!.isNotEmpty)
+                        _InfoRow(label: 'Email (Gmail)', value: user.email!),
                       _InfoRow(
                         label: 'Account Mode',
                         value: planState.accountType == AccountType.cloud

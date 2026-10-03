@@ -17,11 +17,21 @@ class UserModel {
   @Index(unique: true, replace: false)
   late String username;
 
+  /// User's email address (Gmail)
+  @Index()
+  String? email;
+
   /// Argon2id hash of the password (hex-encoded).
   late String passwordHash;
 
   /// Random salt used during hashing (hex-encoded).
   late String passwordSalt;
+
+  /// Cloud account master password hash (if converted from local).
+  String? cloudPasswordHash;
+
+  /// Cloud account master password salt (if converted from local).
+  String? cloudPasswordSalt;
 
   /// Optional display name (may differ from username).
   String? displayName;

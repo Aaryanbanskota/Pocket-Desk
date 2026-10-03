@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/services/account_plan_service.dart';
+import '../../../../core/services/supabase_auth_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/validators.dart';
@@ -24,6 +26,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
   
   final _nameCtrl = TextEditingController();
   final _userCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
   
@@ -78,6 +81,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
     _fadeCtrl.dispose();
     _nameCtrl.dispose();
     _userCtrl.dispose();
+    _emailCtrl.dispose();
     _passCtrl.dispose();
     _confirmCtrl.dispose();
     _customQ1Ctrl.dispose();
@@ -112,14 +116,20 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
 
     final combinedQuestion = '$finalQ1 | $finalQ2';
     final combinedAnswer = '${_ans1Ctrl.text.trim()} | ${_ans2Ctrl.text.trim()}';
+    final planState = ref.read(accountPlanProvider);
+    final isCloud = planState.accountType == AccountType.cloud;
+    final userEmail = isCloud ? _emailCtrl.text.trim() : null;
+    final userUsername = _userCtrl.text.trim();
+    final userDisplayName = _nameCtrl.text.trim().isEmpty ? null : _nameCtrl.text.trim();
+    final userPass = _passCtrl.text;
 
     setState(() => _submitting = true);
 
     await ref.read(authNotifierProvider.notifier).register(
-          username: _userCtrl.text.trim(),
-          password: _passCtrl.text,
-          displayName:
-              _nameCtrl.text.trim().isEmpty ? null : _nameCtrl.text.trim(),
+          username: userUsername,
+          email: userEmail,
+          password: userPass,
+          displayName: userDisplayName,
           securityQuestion: combinedQuestion,
           securityAnswer: combinedAnswer,
         );
@@ -129,6 +139,59 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
 
     final authState = ref.read(authNotifierProvider).valueOrNull;
     if (authState is AuthAuthenticated) {
+      // Trigger Supabase Auth registration if in Cloud Account mode
+      final planState = ref.read(accountPlanProvider);
+      if (planState.accountType == AccountType.cloud && userEmail != null) {
+        final signUpRes = await SupabaseAuthService.signUp(
+          email: userEmail,
+          password: userPass,
+          username: userUsername,
+          displayName: userDisplayName,
+        );
+        if (!signUpRes.success) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Cloud Auth Error: ${signUpRes.errorMessage}'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+                duration: const Duration(seconds: 6),
+              ),
+            );
+          }
+        } else {
+          final assignedUserId = signUpRes.userId ?? authState.user.id.toString();
+          await SupabaseAuthService.upsertProfile(
+            userId: assignedUserId,
+            email: userEmail,
+            username: userUsername,
+            displayName: userDisplayName,
+            accountType: 'cloud',
+            cloudPlan: planState.cloudPlan.name,
+            isProActivated: planState.cloudPlan == CloudPlan.pro,
+            isActive: true,
+          );
+          if (planState.cloudPlan == CloudPlan.pro) {
+            await SupabaseAuthService.createProRequest(
+              email: userEmail,
+              userId: assignedUserId,
+            );
+            await ref.read(accountPlanProvider.notifier).markProPending(true);
+          } else {
+            await ref.read(accountPlanProvider.notifier).markProPending(false);
+          }
+          await ref.read(accountPlanProvider.notifier).syncCloudProfile(userEmail);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Account created! Verification email dispatched to $userEmail. Check your inbox to verify.'),
+                backgroundColor: Colors.green.shade800,
+                duration: const Duration(seconds: 8),
+              ),
+            );
+          }
+        }
+      }
+      if (!mounted) return;
       context.go(AppRoutes.setupOnboarding);
     } else if (authState is AuthError) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -234,6 +297,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
   }
 
   Widget _buildStep1(ThemeData theme, ColorScheme colorScheme) {
+    final planState = ref.watch(accountPlanProvider);
+    final isCloud = planState.accountType == AccountType.cloud;
+
     return Form(
       key: _step1FormKey,
       child: Column(
@@ -267,7 +333,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Your data stays on your device — always.',
+            isCloud
+                ? 'Cloud mode: Online sync with Supabase enabled.'
+                : 'Your data stays on your device — always.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
@@ -288,6 +356,22 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
             textInputAction: TextInputAction.next,
             autocorrect: false,
           ),
+          if (isCloud) ...[
+            const SizedBox(height: AppSpacing.md),
+            PDTextField(
+              controller: _emailCtrl,
+              label: 'Gmail / Email Address',
+              prefixIcon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Email is required';
+                if (!v.contains('@') || !v.contains('.')) return 'Enter a valid email address';
+                return null;
+              },
+              textInputAction: TextInputAction.next,
+              autocorrect: false,
+            ),
+          ],
           const SizedBox(height: AppSpacing.md),
           PDTextField(
             controller: _passCtrl,

@@ -89,7 +89,7 @@ class AccountSelectorPage extends ConsumerWidget {
                             .read(accountPlanProvider.notifier)
                             .selectAccountType(AccountType.local);
                         if (context.mounted) {
-                          context.push(AppRoutes.login);
+                          context.push(AppRoutes.register);
                         }
                       },
                     ),

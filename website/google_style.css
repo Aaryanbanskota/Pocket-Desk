@@ -200,6 +200,27 @@ body.dark-mode .navbar {
   transform: translateY(-1px);
 }
 
+.btn-dark {
+  background-color: #202124;
+  color: #ffffff !important;
+}
+
+.btn-dark:hover {
+  background-color: #000000;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  transform: translateY(-1px);
+}
+
+body.dark-mode .btn-dark {
+  background-color: #ffffff;
+  color: #121212 !important;
+}
+
+body.dark-mode .btn-dark:hover {
+  background-color: #f1f3f4;
+  box-shadow: 0 4px 14px rgba(255,255,255,0.25);
+}
+
 .btn-outlined {
   background-color: transparent;
   color: var(--google-blue);
@@ -725,88 +746,114 @@ body.dark-mode .navbar {
 }
 
 /* ==========================================================================
-   Big Google & Antigravity Style Multi-Column Footer
+   Google Antigravity Style Inverted Footer
    ========================================================================== */
 
-.big-footer {
+.antigravity-footer {
   background-color: var(--surface-low);
   border-top: 1px solid var(--border-color);
   padding: 80px 24px 40px;
   margin-top: 100px;
 }
 
-.footer-grid {
+.footer-upper {
   max-width: var(--max-width);
-  margin: 0 auto 60px;
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
   gap: 40px;
 }
 
-@media (max-width: 900px) {
-  .footer-grid { grid-template-columns: 1fr 1fr; }
+.footer-upper-left .footer-slogan {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.6px;
+  margin-bottom: 8px;
+}
+
+.footer-upper-right {
+  display: flex;
+  gap: 80px;
 }
 
 @media (max-width: 600px) {
-  .footer-grid { grid-template-columns: 1fr; }
+  .footer-upper-right { gap: 40px; }
 }
 
-.footer-brand-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin-bottom: 14px;
-}
-
-.footer-brand-desc {
-  font-size: 14px;
+.footer-column .footer-heading {
+  font-size: 13px;
+  font-weight: 600;
   color: var(--text-secondary);
-  line-height: 1.6;
-  max-width: 360px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
-.footer-col-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-bottom: 20px;
-}
-
-.footer-list {
+.footer-links-list {
   list-style: none;
 }
 
-.footer-list li {
+.footer-links-list li {
   margin-bottom: 12px;
 }
 
-.footer-list a {
+.footer-links-list a {
   text-decoration: none;
-  font-size: 14px;
-  color: var(--text-secondary);
+  font-size: 14.5px;
+  color: var(--text-primary);
+  font-weight: 500;
   transition: var(--transition);
 }
 
-.footer-list a:hover {
+.footer-links-list a:hover {
   color: var(--google-blue);
 }
 
-.footer-bottom-bar {
+.footer-giant-branding {
+  max-width: var(--max-width);
+  margin: 60px auto 30px;
+  font-size: clamp(64px, 14vw, 175px);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 0.9;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.footer-bottom-line {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding-top: 32px;
-  border-top: 1px solid var(--border-color);
+  padding-top: 28px;
+  border-top: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
+}
+
+.footer-brand-left {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.footer-legal-links {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.footer-legal-links a {
+  text-decoration: none;
   font-size: 13.5px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.footer-legal-links a:hover {
+  color: var(--google-blue);
 }

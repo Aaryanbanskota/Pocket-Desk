@@ -23,7 +23,7 @@
         <span>PocketDesk</span>
       </a>
       <nav class="nav-links">
-        <a href="features.html" class="nav-link">Features</a>
+        <a href="features.html" class="nav-link">Products</a>
         <a href="docs.html" class="nav-link">Docs</a>
         <a href="index.html#plans" class="nav-link">Pricing</a>
         <a href="logs.html" class="nav-link">Release Logs</a>
@@ -43,7 +43,14 @@
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
           </svg>
         </button>
-        <a href="download.html" class="btn-pill btn-primary">Download App</a>
+        <a href="download.html" class="btn-pill btn-dark" style="gap: 6px;">
+          <span>Download</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </a>
       </div>
     </div>
   </header>
@@ -127,57 +134,48 @@
   </main>
 
   <!-- Big Google & Antigravity Style Footer -->
-  <footer class="big-footer">
-    <div class="footer-grid">
-      <div>
-        <div class="footer-brand-title">
-          <div class="logo-badge">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-              <polyline points="17 21 17 13 7 13 7 21"></polyline>
-              <polyline points="7 3 7 8 15 8"></polyline>
-            </svg>
-          </div>
-          PocketDesk
+  <footer class="antigravity-footer">
+    <div class="footer-upper">
+      <div class="footer-upper-left">
+        <h3 class="footer-slogan">Experience liftoff</h3>
+      </div>
+      <div class="footer-upper-right">
+        <div class="footer-column">
+          <h4 class="footer-heading">Product</h4>
+          <ul class="footer-links-list">
+            <li><a href="download.html">Download</a></li>
+            <li><a href="features.html">Product</a></li>
+            <li><a href="docs.html">Docs</a></li>
+            <li><a href="logs.html">Changelog</a></li>
+            <li><a href="logs.html">Releases</a></li>
+          </ul>
         </div>
-        <p class="footer-brand-desc">
-          The privacy-first workspace hub. Manage your tasks, smart calendar, notes, expenses, and AI companions with local privacy or cloud backup.
-        </p>
-      </div>
-
-      <div>
-        <div class="footer-col-title">Product</div>
-        <ul class="footer-list">
-          <li><a href="index.html#dashboard">Dashboard</a></li>
-          <li><a href="features.html">Features</a></li>
-          <li><a href="index.html#plans">Pricing Plans</a></li>
-          <li><a href="download.html">Download App</a></li>
-        </ul>
-      </div>
-
-      <div>
-        <div class="footer-col-title">Resources</div>
-        <ul class="footer-list">
-          <li><a href="docs.html">Documentation</a></li>
-          <li><a href="logs.html">Release Logs</a></li>
-          <li><a href="faq.html">FAQ</a></li>
-          <li><a href="https://github.com/Aaryanbanskota/Pocket-Desk" target="_blank" rel="noopener">GitHub Repository</a></li>
-        </ul>
-      </div>
-
-      <div>
-        <div class="footer-col-title">Legal & Security</div>
-        <ul class="footer-list">
-          <li><a href="privacy.html">Privacy Policy</a></li>
-          <li><a href="terms.html">Terms of Service</a></li>
-          <li><a href="docs.html#security">Security Architecture</a></li>
-        </ul>
+        <div class="footer-column">
+          <h4 class="footer-heading">Resources</h4>
+          <ul class="footer-links-list">
+            <li><a href="docs.html">Architecture</a></li>
+            <li><a href="index.html#plans">Pricing</a></li>
+            <li><a href="features.html">Use Cases</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+          </ul>
+        </div>
       </div>
     </div>
 
-    <div class="footer-bottom-bar">
-      <span>&copy; 2026 PocketDesk. Google & Antigravity Minimalist Design System.</span>
-      <span>Built with Flutter & Supabase.</span>
+    <div class="footer-giant-branding">
+      PocketDesk
+    </div>
+
+    <div class="footer-bottom-line">
+      <div class="footer-brand-left">
+        PocketDesk
+      </div>
+      <div class="footer-legal-links">
+        <a href="index.html">About PocketDesk</a>
+        <a href="features.html">Products</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+      </div>
     </div>
   </footer>
 

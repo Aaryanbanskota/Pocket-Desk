@@ -159,12 +159,7 @@ class AccountPlanNotifier extends StateNotifier<AccountPlanState> {
   }
 
   Future<void> resetToLocalAccount() async {
-    await _storage.delete(key: 'account_type');
-    await _storage.delete(key: 'cloud_plan');
-    await _storage.delete(key: 'pro_pending');
-    await _storage.delete(key: 'cloud_email');
-    await _storage.delete(key: 'cloud_user_id');
-    await _storage.delete(key: 'is_pro_active');
+    await _storage.deleteAll();
     state = const AccountPlanState(
       accountType: AccountType.local,
       cloudPlan: CloudPlan.free,

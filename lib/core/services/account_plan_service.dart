@@ -85,7 +85,7 @@ class AccountPlanNotifier extends StateNotifier<AccountPlanState> {
         isProActive: isProActiveStr == 'true' || planStr == 'pro',
         isProApprovalPending: pendingStr == 'true',
         isBlacklisted: blacklistedStr == 'true',
-        storageUsedBytes: 42 * 1024 * 1024,
+        storageUsedBytes: 0,
         cloudEmail: emailStr,
         cloudUserId: userIdStr,
       );

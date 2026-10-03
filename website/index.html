@@ -3,85 +3,330 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PocketDesk — The Ultimate Offline-First Privacy Organizer</title>
-  <meta name="description" content="Manage your calendars, tasks, and notes with end-to-end sync, zero cloud footprint, and complete local privacy. PocketDesk keeps your life organized, locally.">
+  <title>PocketDesk — AI-Powered Productivity Hub & Privacy Workspace</title>
+  <meta name="description" content="Manage calendars, tasks, rich notes, financial tracking, P2P file sharing, and AI assistant — with zero-cloud local privacy or seamless Supabase cloud backup.">
   
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- CSS -->
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="index.css">
+  <!-- Google Design Stylesheet -->
+  <link rel="stylesheet" href="google_style.css">
 </head>
-<body class="light-mode">
+<body>
+
+  <!-- Google Minimalist Navigation -->
   <header class="navbar">
     <div class="nav-container">
       <a href="index.html" class="logo">
-        <span class="logo-icon">🚀</span>
-        <span class="logo-text">PocketDesk</span>
+        <div class="logo-badge">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+        </div>
+        <span>PocketDesk</span>
       </a>
       <nav class="nav-links">
-        <a href="features.html">Features</a>
-        <a href="logs.html">Logs</a>
-        <a href="index.html#screenshots" class="active">Screenshots</a>
-        <a href="faq.html">FAQ</a>
-        <a href="docs.html">Docs</a>
-        <a href="download.html" class="btn-primary">Download</a>
+        <a href="#dashboard" class="nav-link">Dashboard</a>
+        <a href="#ai-mascot" class="nav-link">AI Mascot</a>
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#plans" class="nav-link">Plans & Pricing</a>
+        <a href="#about" class="nav-link">About</a>
+        <a href="docs.html" class="nav-link">Docs</a>
       </nav>
-      <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark mode">
-        <span class="sun-icon">☀️</span>
-        <span class="moon-icon">🌙</span>
-      </button>
+      <div class="nav-actions">
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+        <a href="download.html" class="btn-pill btn-primary">Download App</a>
+      </div>
     </div>
   </header>
 
   <main>
-    <!-- Hero Section -->
-    <section class="hero">
-      <div class="hero-content">
-        <h1 class="hero-title">Your Life. <br><span class="gradient-text">Fully Offline.</span></h1>
-        <p class="hero-subtitle">PocketDesk is your privacy-first productivity hub. Manage calendars, tasks, rich notes, financial health, AI companions, network file sharing, and self-hosted in-app updates—all completely offline without cloud lock-in.</p>
-        <div class="hero-actions">
-          <a href="download.html" id="hero-download-btn" class="btn-hero">Download for Linux</a>
-          <a href="features.html" class="btn-secondary">Learn More &rarr;</a>
-        </div>
-        <p class="detected-os" id="os-detector">Detected OS: Linux</p>
+    <!-- Hero Banner -->
+    <section class="hero-section">
+      <div class="pill-tag">
+        <span style="font-size: 16px;">🤖</span> Pocket AI Mascot & Local Privacy Workspace
+      </div>
+      <h1 class="hero-title">
+        Organize Everything.<br>
+        <span class="blue">Smart.</span> <span class="green">Private.</span> <span class="amber">AI-Powered.</span>
+      </h1>
+      <p class="hero-subtitle">
+        PocketDesk combines Tasks, Smart Calendar, Rich Notes, Expense Tracker, P2P File Sharing, and an AI Mascot Assistant. Choose 100% offline local privacy or optional Supabase cloud backup.
+      </p>
+      <div class="hero-buttons">
+        <a href="download.html" class="btn-pill btn-primary" style="padding: 14px 32px; font-size: 16px;">
+          Get PocketDesk Free
+        </a>
+        <a href="#plans" class="btn-pill btn-outlined" style="padding: 14px 32px; font-size: 16px;">
+          View Plans & Pricing
+        </a>
       </div>
     </section>
 
-    <!-- Screenshots Showcase -->
-    <section id="screenshots" class="screenshots">
-      <h2 class="section-title">Beautiful Dashboard Layout</h2>
-      <div class="carousel-container">
-        <div class="screenshot-showcase">
-          <div class="browser-mockup">
-            <div class="mockup-header">
-              <span class="dot red"></span>
-              <span class="dot yellow"></span>
-              <span class="dot green"></span>
+    <!-- App Showcase & AI Mascot Container -->
+    <section id="dashboard" class="section-wrapper">
+      <div class="showcase-container">
+        <div class="showcase-header">
+          <div class="window-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span class="window-title">PocketDesk Master Dashboard & Pocket AI Mascot</span>
+          <span style="width: 50px;"></span>
+        </div>
+        <div class="showcase-body">
+          
+          <!-- Dashboard Wireframe/Mockup -->
+          <div class="dashboard-preview-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h3 style="font-size: 18px; font-weight: 700; color: var(--text-primary);">📊 Master Workspace</h3>
+              <span style="font-size: 12px; font-weight: 600; color: var(--google-green-text); background: var(--google-green-container); padding: 4px 12px; border-radius: 12px;">Active Session</span>
             </div>
-            <div class="mockup-body">
-              <p class="mockup-placeholder">💻 PocketDesk UI Showcase — Multi-platform Flutter Application</p>
+
+            <div class="dash-grid">
+              <div class="dash-widget">
+                <h4>📝 Rich Notes</h4>
+                <p>Text, High-Res Images & Audio Attachments</p>
+              </div>
+              <div class="dash-widget">
+                <h4>✅ Smart Tasks</h4>
+                <p>Priority Levels, Due Dates & Checklists</p>
+              </div>
+              <div class="dash-widget">
+                <h4>📅 Calendar Hub</h4>
+                <p>Event Schedules, Reminders & Timelines</p>
+              </div>
+              <div class="dash-widget">
+                <h4>💸 Money Tracker</h4>
+                <p>Wallets, Expenses & Budget Stats</p>
+              </div>
             </div>
           </div>
+
+          <!-- AI Mascot Card -->
+          <div id="ai-mascot" class="mascot-showcase-box">
+            <!-- Animated SVG Mascot Avatar -->
+            <svg class="mascot-avatar-svg" viewBox="0 0 100 100" fill="none">
+              <rect x="15" y="20" width="70" height="60" rx="20" fill="#4F46E5" />
+              <rect x="22" y="27" width="56" height="46" rx="14" fill="#6366F1" />
+              <circle cx="38" cy="45" r="7" fill="#FFFFFF" />
+              <circle cx="62" cy="45" r="7" fill="#FFFFFF" />
+              <circle cx="40" cy="45" r="3" fill="#1E1B4B" />
+              <circle cx="64" cy="45" r="3" fill="#1E1B4B" />
+              <path d="M 40 60 Q 50 68 60 60" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
+              <!-- Antenna -->
+              <line x1="50" y1="20" x2="50" y2="8" stroke="#818CF8" stroke-width="4" stroke-linecap="round" />
+              <circle cx="50" cy="6" r="5" fill="#10B981" />
+            </svg>
+
+            <div class="mascot-title">Pocket AI Assistant</div>
+            <span class="mascot-tag">OpenRouter & Local LLM</span>
+            <p class="mascot-desc">
+              Meet your built-in AI mascot! Execute smart task generation, note summarization, context selection toolbars, and instant Q&A using your choice of models (GPT-4o, Claude 3.5, Gemini Flash).
+            </p>
+          </div>
+
         </div>
       </div>
     </section>
+
+    <!-- Comprehensive Feature Grid -->
+    <section id="features" class="section-wrapper">
+      <div class="section-header">
+        <h2 class="section-title">Everything You Need. All in One Place.</h2>
+        <p class="section-desc">Engineered for maximum productivity, privacy control, and seamless user experience.</p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+          <div class="feature-icon-badge blue">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+          </div>
+          <h3>Rich Notes & Media</h3>
+          <p>Organize your thoughts with markdown, image attachments, audio voice recordings, tags, and instant search.</p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-card">
+          <div class="feature-icon-badge green">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <h3>Smart Task Management</h3>
+          <p>Prioritize tasks, organize by project, set reminders, and reorder widgets with intuitive Drag-and-Drop.</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-card">
+          <div class="feature-icon-badge yellow">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </div>
+          <h3>Calendar & Schedules</h3>
+          <p>Never miss a event. View schedules in timeline or grid mode, synced with your local or cloud profile.</p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="feature-card">
+          <div class="feature-icon-badge red">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+          </div>
+          <h3>Financial Money Tracker</h3>
+          <p>Track daily expenses, categorize budgets across multi-currency wallets, and analyze financial reports.</p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="feature-card">
+          <div class="feature-icon-badge blue">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+          </div>
+          <h3>P2P QR File Sharing</h3>
+          <p>Share files and desktop login sessions across local network companion devices via camera QR codes.</p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="feature-card">
+          <div class="feature-icon-badge green">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <h3>Local-First & E2E Encryption</h3>
+          <p>Your data stays on your device by default. Zero unwanted cloud tracking, complete privacy peace of mind.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Plans & Pricing Section -->
+    <section id="plans" class="section-wrapper">
+      <div class="section-header">
+        <h2 class="section-title">Simple, Transparent Account Plans</h2>
+        <p class="section-desc">Choose between 100% private Local Mode or Supabase Cloud Sync.</p>
+      </div>
+
+      <div class="pricing-grid">
+        
+        <!-- Plan 1: Local Account -->
+        <div class="pricing-card">
+          <div>
+            <div class="plan-name">Local Account</div>
+            <div class="plan-price">$0 <span>/ forever</span></div>
+            <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 24px;">100% private, zero-cloud offline mode. Data stays strictly on your device.</p>
+            <ul class="plan-features">
+              <li><span class="check-icon">✓</span> Offline-First Local Isar DB</li>
+              <li><span class="check-icon">✓</span> Unlimited Notes, Tasks & Calendar</li>
+              <li><span class="check-icon">✓</span> Money Tracker & Multi-Wallet</li>
+              <li><span class="check-icon">✓</span> P2P QR File Share</li>
+              <li><span class="check-icon">✓</span> Pocket AI Mascot (Local Keys)</li>
+            </ul>
+          </div>
+          <a href="download.html" class="btn-pill btn-outlined" style="width: 100%; text-align: center;">Use Local Mode</a>
+        </div>
+
+        <!-- Plan 2: Cloud Free -->
+        <div class="pricing-card">
+          <div>
+            <div class="plan-name">Cloud Free</div>
+            <div class="plan-price">$0 <span>/ month</span></div>
+            <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 24px;">500 MB Supabase Cloud Storage for syncing notes & schedules across devices.</p>
+            <ul class="plan-features">
+              <li><span class="check-icon">✓</span> Everything in Local Mode</li>
+              <li><span class="check-icon">✓</span> 500 MB Supabase Cloud Storage</li>
+              <li><span class="check-icon">✓</span> Multi-Device Text Data Sync</li>
+              <li><span class="check-icon">✓</span> Automatic Cloud Backup</li>
+              <li><span class="check-icon">✓</span> Gmail Auth Verification</li>
+            </ul>
+          </div>
+          <a href="download.html" class="btn-pill btn-outlined" style="width: 100%; text-align: center;">Sign Up Free Cloud</a>
+        </div>
+
+        <!-- Plan 3: Cloud Pro -->
+        <div class="pricing-card featured">
+          <div class="plan-badge">MOST POPULAR PRO</div>
+          <div>
+            <div class="plan-name">Cloud Pro</div>
+            <div class="plan-price">$5 <span>/ month</span></div>
+            <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 24px;">10 GB Storage with full High-Res Image, Audio & Video attachment sync.</p>
+            <ul class="plan-features">
+              <li><span class="check-icon">✓</span> Everything in Cloud Free</li>
+              <li><span class="check-icon">✓</span> 10 GB Cloud Storage</li>
+              <li><span class="check-icon">✓</span> Image & Audio Attachment Buckets</li>
+              <li><span class="check-icon">✓</span> Priority Supabase Sync</li>
+              <li><span class="check-icon">✓</span> Dedicated Pro Support</li>
+            </ul>
+          </div>
+          <a href="download.html" class="btn-pill btn-primary" style="width: 100%; text-align: center;">Upgrade to Pro</a>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="section-wrapper">
+      <div class="section-header">
+        <h2 class="section-title">Built with Local-First Privacy Philosophy</h2>
+        <p class="section-desc">
+          PocketDesk was crafted by developers who believe your personal productivity data belongs to you. Whether you choose full offline isolation or Supabase cloud sync, you remain in complete control.
+        </p>
+      </div>
+    </section>
+
   </main>
 
+  <!-- Google Footer -->
   <footer class="footer">
     <div class="footer-container">
-      <p>&copy; 2026 PocketDesk. Built offline-first for privacy.</p>
+      <div class="footer-text">
+        &copy; 2026 PocketDesk. Built with Google Material 3 design principles.
+      </div>
       <div class="footer-links">
-        <a href="#privacy">Privacy Policy</a>
-        <a href="#terms">Terms</a>
+        <a href="verification_success.html">Email Verification</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="docs.html">Docs</a>
       </div>
     </div>
   </footer>
 
-  <!-- JS -->
-  <script src="app.js"></script>
+  <!-- Theme Toggle Script -->
+  <script>
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+    });
+  </script>
 </body>
 </html>

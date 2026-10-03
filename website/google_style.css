@@ -1,0 +1,620 @@
+/* ==========================================================================
+   PocketDesk Website - Google Minimalist Design System (Material 3 Aesthetic)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Google Brand Color Palette */
+  --google-blue: #1a73e8;
+  --google-blue-hover: #1557b0;
+  --google-blue-container: #e8f0fe;
+  --google-blue-text: #174ea6;
+
+  --google-green: #34a853;
+  --google-green-container: #e6f4ea;
+  --google-green-text: #137333;
+
+  --google-yellow: #fbbc04;
+  --google-yellow-container: #fef7e0;
+  --google-yellow-text: #b06000;
+
+  --google-red: #ea4335;
+  --google-red-container: #fce8e6;
+  --google-red-text: #c5221f;
+
+  /* Surfaces & Backgrounds */
+  --bg-color: #f8f9fa;
+  --surface-color: #ffffff;
+  --surface-low: #f1f3f4;
+  --surface-variant: #e8eaed;
+
+  /* Text Colors */
+  --text-primary: #202124;
+  --text-secondary: #5f6368;
+  --text-tertiary: #80868b;
+
+  /* Borders & Shadows */
+  --border-color: #dadce0;
+  --border-subtle: rgba(218, 220, 224, 0.6);
+  --shadow-sm: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+  --shadow-md: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
+  --shadow-lg: 0 4px 12px 0 rgba(60,64,67,0.2), 0 8px 24px 4px rgba(60,64,67,0.12);
+
+  /* Geometry & Radius */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 100px;
+
+  --max-width: 1240px;
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Mode Theme */
+body.dark-mode {
+  --bg-color: #121212;
+  --surface-color: #1e1e1e;
+  --surface-low: #252525;
+  --surface-variant: #2d2d2d;
+
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0a6;
+  --text-tertiary: #80868b;
+
+  --border-color: #3c4043;
+  --border-subtle: rgba(60, 64, 67, 0.6);
+  
+  --google-blue-container: rgba(26, 115, 232, 0.2);
+  --google-blue-text: #8ab4f8;
+  --google-green-container: rgba(52, 168, 83, 0.2);
+  --google-green-text: #81c995;
+  --google-yellow-container: rgba(251, 188, 4, 0.2);
+  --google-yellow-text: #fde293;
+  --google-red-container: rgba(234, 67, 53, 0.2);
+  --google-red-text: #f28b82;
+
+  --shadow-sm: 0 1px 3px 0 rgba(0,0,0,0.5);
+  --shadow-md: 0 4px 12px 0 rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 24px 0 rgba(0,0,0,0.6);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Google Sans', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   Navigation Bar (Google Header Aesthetic)
+   ========================================================================== */
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: rgba(248, 249, 250, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-subtle);
+  transition: var(--transition);
+}
+
+body.dark-mode .navbar {
+  background-color: rgba(18, 18, 18, 0.85);
+}
+
+.nav-container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--text-primary);
+}
+
+.logo-badge {
+  width: 38px;
+  height: 38px;
+  background: var(--google-blue);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(26, 115, 232, 0.3);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 14.5px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  transition: var(--transition);
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--google-blue);
+  background-color: var(--google-blue-container);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: var(--radius-pill);
+  font-size: 14.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: var(--transition);
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background-color: var(--google-blue);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(26, 115, 232, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: var(--google-blue-hover);
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-outlined {
+  background-color: transparent;
+  color: var(--google-blue);
+  border: 1px solid var(--border-color);
+}
+
+.btn-outlined:hover {
+  background-color: var(--google-blue-container);
+  border-color: var(--google-blue);
+}
+
+.theme-toggle {
+  background: var(--surface-low);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.theme-toggle:hover {
+  background: var(--surface-variant);
+}
+
+/* ==========================================================================
+   Hero Section (Google Minimalist Banner)
+   ========================================================================== */
+
+.hero-section {
+  padding: 80px 24px 60px;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.pill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background-color: var(--google-blue-container);
+  color: var(--google-blue-text);
+  border-radius: var(--radius-pill);
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.hero-title {
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -1.2px;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+
+.hero-title span.blue { color: var(--google-blue); }
+.hero-title span.green { color: var(--google-green); }
+.hero-title span.amber { color: var(--google-yellow-text); }
+
+.hero-subtitle {
+  font-size: 20px;
+  color: var(--text-secondary);
+  max-width: 780px;
+  margin: 0 auto 36px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.hero-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+
+/* ==========================================================================
+   Mascot & App Preview Showcase Box
+   ========================================================================== */
+
+.showcase-container {
+  max-width: 1040px;
+  margin: 0 auto 80px;
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.showcase-header {
+  background-color: var(--surface-low);
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.window-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.dot.red { background-color: var(--google-red); }
+.dot.yellow { background-color: var(--google-yellow); }
+.dot.green { background-color: var(--google-green); }
+
+.window-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.showcase-body {
+  padding: 40px;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 32px;
+  align-items: center;
+}
+
+/* App Dashboard Layout Preview */
+.dashboard-preview-card {
+  background: var(--surface-low);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  border: 1px solid var(--border-subtle);
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.dash-widget {
+  background: var(--surface-color);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+}
+
+.dash-widget h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.dash-widget p {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+/* Mascot Box Widget */
+.mascot-showcase-box {
+  background: linear-gradient(145deg, var(--google-blue-container) 0%, var(--surface-color) 100%);
+  border: 1px solid var(--google-blue-text);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  text-align: center;
+}
+
+.mascot-avatar-svg {
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 14px;
+}
+
+.mascot-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.mascot-tag {
+  display: inline-block;
+  background: var(--google-blue);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.mascot-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+/* ==========================================================================
+   Features Section Grid (Google Cards)
+   ========================================================================== */
+
+.section-wrapper {
+  max-width: var(--max-width);
+  margin: 0 auto 80px;
+  padding: 0 24px;
+}
+
+.section-header {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 48px;
+}
+
+.section-title {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+}
+
+.section-desc {
+  font-size: 17px;
+  color: var(--text-secondary);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.feature-card {
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 32px;
+  transition: var(--transition);
+}
+
+.feature-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--google-blue);
+}
+
+.feature-icon-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.feature-icon-badge.blue { background: var(--google-blue-container); color: var(--google-blue-text); }
+.feature-icon-badge.green { background: var(--google-green-container); color: var(--google-green-text); }
+.feature-icon-badge.yellow { background: var(--google-yellow-container); color: var(--google-yellow-text); }
+.feature-icon-badge.red { background: var(--google-red-container); color: var(--google-red-text); }
+
+.feature-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+}
+
+.feature-card p {
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+/* ==========================================================================
+   Plans & Subscription Section
+   ========================================================================== */
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .pricing-grid { grid-template-columns: 1fr; }
+}
+
+.pricing-card {
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 36px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: var(--transition);
+  position: relative;
+}
+
+.pricing-card.featured {
+  border: 2px solid var(--google-blue);
+  box-shadow: var(--shadow-md);
+}
+
+.plan-badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--google-blue);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 16px;
+  border-radius: var(--radius-pill);
+}
+
+.plan-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.plan-price {
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.plan-price span {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.plan-features {
+  list-style: none;
+  margin-bottom: 32px;
+}
+
+.plan-features li {
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.plan-features li:last-child {
+  border-bottom: none;
+}
+
+.check-icon {
+  color: var(--google-green);
+  font-weight: bold;
+}
+
+/* ==========================================================================
+   Footer (Google Footer Style)
+   ========================================================================== */
+
+.footer {
+  background-color: var(--surface-low);
+  border-top: 1px solid var(--border-color);
+  padding: 48px 24px;
+  margin-top: 80px;
+}
+
+.footer-container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.footer-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.footer-links {
+  display: flex;
+  gap: 20px;
+}
+
+.footer-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.footer-links a:hover {
+  color: var(--google-blue);
+}

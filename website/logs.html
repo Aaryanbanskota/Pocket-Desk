@@ -3,121 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PocketDesk — Release Logs & Change Details</title>
-  <meta name="description" content="Detailed release logs and change history for PocketDesk. Formatted for AI and developer inspection with expandable summaries.">
-  
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <title>PocketDesk — Release Logs & Dev Changelog</title>
+  <meta name="description" content="Detailed release logs and change history for PocketDesk. Formatted for developer inspection with expandable summaries.">
+  <link rel="stylesheet" href="google_style.css">
   
   <style>
-    :root {
-      --bg-color: #ffffff;
-      --surface-color: #f8f9fa;
-      --surface-hover: #f1f3f4;
-      --border-color: #dadce0;
-      --text-primary: #202124;
-      --text-secondary: #5f6368;
-      --text-muted: #80868b;
-      
-      --google-blue: #1a73e8;
-      --google-blue-bg: #e8f0fe;
-      --google-green: #137333;
-      --google-green-bg: #e6f4ea;
-      --google-amber: #b06000;
-      --google-amber-bg: #feefc3;
-      
-      --radius-card: 12px;
-      --radius-chip: 16px;
-      --font-main: 'Google Sans', 'Plus Jakarta Sans', -apple-system, sans-serif;
-      --font-code: 'Roboto Mono', monospace;
+    .logs-container {
+      max-width: var(--max-width);
+      margin: 40px auto;
+      padding: 0 24px;
     }
-
-    body.dark-mode {
-      --bg-color: #202124;
-      --surface-color: #292a2d;
-      --surface-hover: #35363a;
-      --border-color: #3c4043;
-      --text-primary: #e8eaed;
-      --text-secondary: #9aa0a6;
-      --text-muted: #80868b;
-      
-      --google-blue: #8ab4f8;
-      --google-blue-bg: rgba(138, 180, 248, 0.15);
-      --google-green: #81c995;
-      --google-green-bg: rgba(129, 201, 149, 0.15);
-      --google-amber: #fdd663;
-      --google-amber-bg: rgba(253, 214, 99, 0.15);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-primary);
-      font-family: var(--font-main);
-      line-height: 1.5;
-      padding: 0;
-      transition: background-color 0.2s, color 0.2s;
-    }
-
-    /* Header */
-    header {
-      position: sticky;
-      top: 0;
-      background: var(--bg-color);
-      border-bottom: 1px solid var(--border-color);
-      padding: 16px 24px;
-      z-index: 10;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
-      color: var(--text-primary);
-      font-size: 1.25rem;
-      font-weight: 500;
-    }
-
-    .brand-icon {
-      width: 32px;
-      height: 32px;
-      background: var(--google-blue-bg);
-      color: var(--google-blue);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-    }
-
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .theme-toggle {
-      background: transparent;
+    .log-card {
+      background: var(--surface-color);
       border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      padding: 6px 12px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 0.875rem;
+      border-radius: var(--radius-md);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .log-version {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--google-blue);
+      margin-bottom: 8px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
+    }
+    .log-date {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <div class="logo-badge">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+        </div>
+        <span>PocketDesk</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="features.html" class="nav-link">Features</a>
+        <a href="docs.html" class="nav-link">Docs</a>
+        <a href="logs.html" class="nav-link active">Release Logs</a>
+        <a href="faq.html" class="nav-link">FAQ</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="download.html" class="btn-pill btn-primary">Download App</a>
+      </div>
+    </div>
+  </header>
     }
 
     /* Main Container */
@@ -415,8 +358,17 @@ fvm flutter analyze --no-pub
     </div>
   </main>
 
-  <footer>
-    <p>PocketDesk Change Logs — Minimal Google-inspired Design System</p>
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-text">&copy; 2026 PocketDesk Release Logs. Google Material Minimalist Design.</div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="docs.html">Docs</a>
+        <a href="faq.html">FAQ</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+      </div>
+    </div>
   </footer>
 
   <script>
@@ -437,12 +389,6 @@ fvm flutter analyze --no-pub
         }
       });
     }
-
-    // Theme toggle
-    const themeBtn = document.getElementById('theme-toggle');
-    themeBtn.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-    });
   </script>
 </body>
 </html>

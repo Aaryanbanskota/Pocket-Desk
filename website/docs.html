@@ -62,14 +62,23 @@
   <main class="section-wrapper" style="padding-top: 60px; max-width: 960px;">
     <div class="section-header" style="text-align: left; margin-bottom: 40px;">
       <div class="pill-tag">Developer & User Manual</div>
-      <h1 class="section-title" style="text-align: left;">PocketDesk Documentation</h1>
-      <p class="section-desc">Technical guide to PocketDesk's architecture, database schemas, AI integrations, and synchronization protocols.</p>
+      <h1 class="section-title" style="text-align: left;">PocketDesk Technical Documentation</h1>
+      <p class="section-desc">Architecture specifications, database schemas, AI mascot configuration, and P2P sync protocols.</p>
+
+      <!-- Antigravity Style Docs Quick Navigation Pills -->
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px;">
+        <a href="#arch" class="btn-pill btn-outlined" style="padding: 6px 16px; font-size: 13px;">System Architecture</a>
+        <a href="#schemas" class="btn-pill btn-outlined" style="padding: 6px 16px; font-size: 13px;">Database Schemas</a>
+        <a href="#ai-setup" class="btn-pill btn-outlined" style="padding: 6px 16px; font-size: 13px;">Pocket AI Mascot</a>
+        <a href="#p2p-sync" class="btn-pill btn-outlined" style="padding: 6px 16px; font-size: 13px;">P2P QR Sync</a>
+        <a href="logs.html" class="btn-pill btn-outlined" style="padding: 6px 16px; font-size: 13px;">Release Logs</a>
+      </div>
     </div>
 
     <div class="docs-content">
       
       <!-- 1. Architecture Overview -->
-      <div class="docs-section">
+      <div id="arch" class="docs-section">
         <h3>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--google-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
           1. System Architecture & Entry Points
@@ -97,7 +106,7 @@ lib/
       </div>
 
       <!-- 2. Database Schema -->
-      <div class="docs-section">
+      <div id="schemas" class="docs-section">
         <h3>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--google-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
           2. Database Engine & Supabase PostgreSQL Sync
@@ -134,7 +143,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
       </div>
 
       <!-- 3. Pocket AI Mascot Integration -->
-      <div class="docs-section">
+      <div id="ai-setup" class="docs-section">
         <h3>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--google-amber-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><rect x="4" y="8" width="16" height="12" rx="4"></rect><circle cx="9" cy="13" r="1.5"></circle><circle cx="15" cy="13" r="1.5"></circle></svg>
           3. Pocket AI Mascot & OpenRouter API Setup
@@ -151,7 +160,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
       </div>
 
       <!-- 4. P2P Local Network Sync -->
-      <div class="docs-section">
+      <div id="p2p-sync" class="docs-section">
         <h3>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--google-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           4. Peer-to-Peer QR Device Pairing

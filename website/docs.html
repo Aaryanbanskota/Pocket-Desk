@@ -3,68 +3,223 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Docs — PocketDesk</title>
-  
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- CSS -->
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="docs.css">
+  <title>Documentation & Dev Guide — PocketDesk</title>
+  <meta name="description" content="Official technical documentation, architecture specs, database schema, AI Mascot setup, and developer guide for PocketDesk.">
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="apple-touch-icon" href="assets/logo.png">
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark-mode' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark-mode');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="google_style.css">
 </head>
-<body class="light-mode">
+<body>
+
+  <!-- Google Minimalist Navigation -->
   <header class="navbar">
     <div class="nav-container">
       <a href="index.html" class="logo">
-        <span class="logo-icon">🚀</span>
-        <span class="logo-text">PocketDesk</span>
+        <img src="assets/logo.png" alt="PocketDesk" class="logo-img">
+        <span>PocketDesk</span>
       </a>
       <nav class="nav-links">
-        <a href="features.html">Features</a>
-        <a href="index.html#screenshots">Screenshots</a>
-        <a href="faq.html">FAQ</a>
-        <a href="docs.html" class="active">Docs</a>
-        <a href="download.html" class="btn-primary">Download</a>
+        <a href="features.html" class="nav-link">Products</a>
+        <a href="docs.html" class="nav-link active">Docs</a>
+        <a href="index.html#plans" class="nav-link">Pricing</a>
+        <a href="logs.html" class="nav-link">Release Logs</a>
+        <a href="faq.html" class="nav-link">FAQ</a>
       </nav>
-      <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark mode">
-        <span class="sun-icon">☀️</span>
-        <span class="moon-icon">🌙</span>
-      </button>
+      <div class="nav-actions">
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+        <a href="download.html" class="btn-pill btn-dark" style="gap: 6px;">
+          <span>Download</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </a>
+      </div>
     </div>
   </header>
 
-  <main>
-    <section class="docs">
-      <h2 class="section-title">Developer & User Documentation</h2>
-      <div class="docs-box">
-        <h3>🚀 Project Architecture & Code Entry Points</h3>
-        <p>PocketDesk is built with Flutter and organized clean architecture. If you're a developer getting started:</p>
-        <ul>
-          <li><strong>lib/main.dart</strong> — The primary application entry point.</li>
-          <li><strong>lib/main_dev.dart</strong> — Development build entry point.</li>
-          <li><strong>lib/main_prod.dart</strong> — Production build entry point.</li>
-          <li><strong>lib/core/theme/</strong> — App colors, sizes, and fonts.</li>
-        </ul>
-        <br>
-        <h3>💡 Synchronization Guide</h3>
-        <p>Go to Settings &rarr; Sync & Sharing to discover other devices. Scan the QR code or enter the WebSocket IP to pair your devices securely over your local network.</p>
+  <main class="section-wrapper" style="padding-top: 60px; max-width: 960px;">
+    <div class="section-header" style="text-align: left; margin-bottom: 40px;">
+      <div class="pill-tag">Developer & User Manual</div>
+      <h1 class="section-title" style="text-align: left;">PocketDesk Documentation</h1>
+      <p class="section-desc">Technical guide to PocketDesk's architecture, database schemas, AI integrations, and synchronization protocols.</p>
+    </div>
+
+    <div class="docs-content">
+      
+      <!-- 1. Architecture Overview -->
+      <div class="docs-section">
+        <h3>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--google-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          1. System Architecture & Entry Points
+        </h3>
+        <p>
+          PocketDesk is built with Flutter (Dart 3.x) using Feature-First Clean Architecture and Riverpod state management.
+        </p>
+        <div class="code-block">
+lib/
+├── main.dart                      # Primary application entry point
+├── core/
+│   ├── router/app_router.dart     # GoRouter auth-aware navigation
+│   ├── services/
+│   │   ├── account_plan_service.dart   # Local & Cloud plan state manager
+│   │   └── supabase_auth_service.dart # Supabase REST API & profile sync
+│   └── theme/                     # App colors, padding, typography
+└── features/
+    ├── auth/                      # Authentication & Profile pages
+    ├── tasks/                     # Task manager & priority models
+    ├── notes/                     # Rich notes & media attachments
+    ├── calendar/                  # Smart calendar & timeline events
+    ├── money_tracker/             # Wallets & expense logging
+    └── file_share/                # Local network P2P QR sharing
+        </div>
       </div>
-    </section>
+
+      <!-- 2. Database Schema -->
+      <div class="docs-section">
+        <h3>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--google-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+          2. Database Engine & Supabase PostgreSQL Sync
+        </h3>
+        <p>
+          PocketDesk uses a dual-layer database approach:
+        </p>
+        <p>
+          <strong>Local Storage Engine:</strong> Isar NoSQL local database stored securely on-device with zero network latency.<br>
+          <strong>Cloud Sync Engine:</strong> PostgreSQL REST API on Supabase. A Postgres trigger automatically mirrors user creation to `public.profiles`:
+        </p>
+        <div class="code-block">
+-- PostgreSQL Trigger on auth.users -> public.profiles
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, username, display_name, account_type, account_plan, is_active, updated_at, created_at)
+  VALUES (
+    new.id,
+    new.email,
+    COALESCE(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
+    COALESCE(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1)),
+    'cloud',
+    'free',
+    true,
+    now(),
+    now()
+  )
+  ON CONFLICT (id) DO NOTHING;
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+        </div>
+      </div>
+
+      <!-- 3. Pocket AI Mascot Integration -->
+      <div class="docs-section">
+        <h3>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--google-amber-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><rect x="4" y="8" width="16" height="12" rx="4"></rect><circle cx="9" cy="13" r="1.5"></circle><circle cx="15" cy="13" r="1.5"></circle></svg>
+          3. Pocket AI Mascot & OpenRouter API Setup
+        </h3>
+        <p>
+          The Pocket AI Mascot integrates with OpenRouter API and local LLM backends. To enable AI assistance:
+        </p>
+        <p>
+          1. Go to <strong>Settings &rarr; AI Settings</strong> in your PocketDesk application.<br>
+          2. Enter your OpenRouter API key.<br>
+          3. Select your model: <code>gpt-4o</code>, <code>anthropic/claude-3.5-sonnet</code>, or <code>google/gemini-flash-1.5</code>.<br>
+          4. Double tap anywhere in the app or highlight text to invoke the Pocket AI Mascot toolbar.
+        </p>
+      </div>
+
+      <!-- 4. P2P Local Network Sync -->
+      <div class="docs-section">
+        <h3>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--google-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          4. Peer-to-Peer QR Device Pairing
+        </h3>
+        <p>
+          PocketDesk allows cross-device P2P transfer over local WiFi networks. Open <strong>Settings &rarr; Share Tab &rarr; Generate Login QR Code</strong> to share desktop sessions and files directly with companion devices without internet servers.
+        </p>
+      </div>
+
+      <!-- 5. Release Logs Link -->
+      <div class="docs-section">
+        <h3>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--google-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          5. Developer Release Logs & Changelog
+        </h3>
+        <p>
+          Inspect all recent build logs, architectural updates, and release history on our dedicated <a href="logs.html" style="color: var(--google-blue); font-weight: 600;">Developer Release Logs</a> page.
+        </p>
+      </div>
+
+    </div>
   </main>
 
-  <footer class="footer">
-    <div class="footer-container">
-      <p>&copy; 2026 PocketDesk. Built offline-first for privacy.</p>
-      <div class="footer-links">
-        <a href="#privacy">Privacy Policy</a>
-        <a href="#terms">Terms</a>
+  <footer class="antigravity-footer">
+    <div class="footer-upper">
+      <div class="footer-upper-left">
+        <h3 class="footer-slogan">Experience liftoff</h3>
+      </div>
+      <div class="footer-upper-right">
+        <div class="footer-column">
+          <h4 class="footer-heading">Product</h4>
+          <ul class="footer-links-list">
+            <li><a href="download.html">Download</a></li>
+            <li><a href="features.html">Product</a></li>
+            <li><a href="docs.html">Docs</a></li>
+            <li><a href="logs.html">Changelog</a></li>
+            <li><a href="logs.html">Releases</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h4 class="footer-heading">Resources</h4>
+          <ul class="footer-links-list">
+            <li><a href="docs.html">Architecture</a></li>
+            <li><a href="index.html#plans">Pricing</a></li>
+            <li><a href="features.html">Use Cases</a></li>
+            <li><a href="faq.html">FAQ</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-giant-branding">
+      PocketDesk
+    </div>
+
+    <div class="footer-bottom-line">
+      <div class="footer-brand-left">
+        PocketDesk
+      </div>
+      <div class="footer-legal-links">
+        <a href="index.html">About PocketDesk</a>
+        <a href="features.html">Products</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
       </div>
     </div>
   </footer>
 
-  <!-- JS -->
   <script src="app.js"></script>
 </body>
 </html>

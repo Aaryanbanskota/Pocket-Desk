@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PocketDesk — Release Logs & Dev Changelog</title>
-  <meta name="description" content="Detailed release logs and change history for PocketDesk. Formatted for developer inspection with expandable summaries.">
+  <title>Terms of Service — PocketDesk</title>
+  <meta name="description" content="Terms of Service for PocketDesk productivity software and account plans.">
   <link rel="icon" type="image/png" href="assets/logo.png">
   <link rel="apple-touch-icon" href="assets/logo.png">
   <script>
@@ -19,7 +19,7 @@
 </head>
 <body>
 
-  <!-- Google Minimalist Navbar -->
+  <!-- Google Minimalist Navigation -->
   <header class="navbar">
     <div class="nav-container">
       <a href="index.html" class="logo">
@@ -30,7 +30,7 @@
         <a href="features.html" class="nav-link">Products</a>
         <a href="docs.html" class="nav-link">Docs</a>
         <a href="index.html#plans" class="nav-link">Pricing</a>
-        <a href="logs.html" class="nav-link active">Release Logs</a>
+        <a href="logs.html" class="nav-link">Release Logs</a>
         <a href="faq.html" class="nav-link">FAQ</a>
       </nav>
       <div class="nav-actions">
@@ -59,68 +59,22 @@
     </div>
   </header>
 
-  <main class="section-wrapper" style="padding-top: 60px; max-width: 900px;">
-    <div class="section-header" style="text-align: left; margin-bottom: 40px;">
-      <div class="pill-tag">Release History</div>
-      <h1 class="section-title" style="text-align: left;">Developer & Release Logs</h1>
-      <p class="section-desc">Detailed change history, build updates, and architectural fixes for PocketDesk.</p>
-    </div>
+  <main class="section-wrapper" style="padding-top: 60px; max-width: 840px;">
+    <h1 class="section-title" style="text-align: left; margin-bottom: 24px;">Terms of Service</h1>
+    <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 14px;">Effective Date: October 3, 2026</p>
 
-    <!-- Release Log 1 -->
-    <div class="log-item">
-      <div class="log-header">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <span class="badge badge-feature">Feature & Rework</span>
-          <strong style="color: var(--text-primary);">Auth Rework, Supabase REST Sync & Account Badges</strong>
-        </div>
-        <span style="font-size: 13px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;">v1.3.0</span>
-      </div>
-      <div class="log-body">
-        <p><strong>Summary:</strong> Complete architectural overhaul of authentication flow, dynamic local/cloud registration, custom Supabase database profile synchronization, and device storage manager.</p>
-        <ul style="margin-top: 10px; margin-left: 20px; line-height: 1.6;">
-          <li>Dual sign-in for both Local and Supabase Cloud user accounts.</li>
-          <li>Gmail email validation & verification email dispatches.</li>
-          <li>Master Profile account status badges: Local User, Cloud Free, Cloud Pro, Pending Pro User.</li>
-          <li>Multi-account Check Data manager in Settings -> Privacy.</li>
-        </ul>
-      </div>
-    </div>
+    <div style="background: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 36px; line-height: 1.7; color: var(--text-secondary);">
+      <h3 style="color: var(--text-primary); margin-bottom: 12px; font-size: 18px;">1. Usage Terms</h3>
+      <p style="margin-bottom: 20px;">By using PocketDesk, you agree to these terms. PocketDesk provides productivity software for personal and professional organization.</p>
 
-    <!-- Release Log 2 -->
-    <div class="log-item">
-      <div class="log-header">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <span class="badge badge-fix">Fix</span>
-          <strong style="color: var(--text-primary);">Isar Database & Calendar Sync Integration</strong>
-        </div>
-        <span style="font-size: 13px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;">v1.2.0</span>
-      </div>
-      <div class="log-body">
-        <p><strong>Summary:</strong> Resolved database persistence rules for task priority filters and recurring calendar event scheduling.</p>
-        <ul style="margin-top: 10px; margin-left: 20px; line-height: 1.6;">
-          <li>Task sub-item checklist reordering handles.</li>
-          <li>Calendar timeline event notifications and alarm dispatcher.</li>
-        </ul>
-      </div>
-    </div>
+      <h3 style="color: var(--text-primary); margin-bottom: 12px; font-size: 18px;">2. Account Plans & Billing</h3>
+      <p style="margin-bottom: 20px;">Local Accounts and Cloud Free Accounts are provided free of charge. Cloud Pro accounts ($5/month) provide expanded 10 GB cloud storage and media attachment bucket backup.</p>
 
-    <!-- Release Log 3 -->
-    <div class="log-item">
-      <div class="log-header">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <span class="badge badge-refactor">Architecture</span>
-          <strong style="color: var(--text-primary);">P2P Local WiFi Network Encrypted Sharing</strong>
-        </div>
-        <span style="font-size: 13px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;">v1.0.0</span>
-      </div>
-      <div class="log-body">
-        <p><strong>Summary:</strong> Implemented local P2P WebSocket server with QR code scanner pairing for cross-device desktop and mobile session sharing.</p>
-      </div>
+      <h3 style="color: var(--text-primary); margin-bottom: 12px; font-size: 18px;">3. Intellectual Property & Open Architecture</h3>
+      <p>PocketDesk software rights belong to PocketDesk project maintainers. Open Source components remain governed by their respective licenses.</p>
     </div>
-
   </main>
 
-  <!-- Big Google & Antigravity Style Footer -->
   <footer class="antigravity-footer">
     <div class="footer-upper">
       <div class="footer-upper-left">
@@ -166,6 +120,13 @@
     </div>
   </footer>
 
-  <script src="app.js"></script>
+  <script>
+    const themeBtn = document.getElementById('theme-toggle');
+    if (themeBtn) {
+      themeBtn.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+      });
+    }
+  </script>
 </body>
 </html>

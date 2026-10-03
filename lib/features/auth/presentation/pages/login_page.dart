@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/utils/validators.dart';
 import '../providers/auth_notifier.dart';
 import '../widgets/auth_logo_header.dart';
 import '../widgets/pd_text_field.dart';
@@ -573,9 +572,11 @@ class _LoginPageState extends ConsumerState<LoginPage>
             const SizedBox(height: AppSpacing.xl),
             PDTextField(
               controller: _userCtrl,
-              label: 'Username',
+              label: 'Email or Username',
               prefixIcon: Icons.person_outline_rounded,
-              validator: Validators.username,
+              validator: (v) => v == null || v.trim().isEmpty
+                  ? 'Enter email or username'
+                  : null,
               textInputAction: TextInputAction.next,
               autocorrect: false,
             ),
@@ -702,7 +703,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
               ),
             ),
             TextButton(
-              onPressed: () => context.go(AppRoutes.register),
+              onPressed: () => context.push(AppRoutes.accountSelector),
               child: const Text('Create one'),
             ),
           ],

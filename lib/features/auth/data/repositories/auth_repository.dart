@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:isar/isar.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../features/calendar/data/models/calendar_event_model.dart';
@@ -15,6 +16,7 @@ import '../../../../features/tasks/data/models/task_model.dart';
 import '../../../../features/trash/data/models/trash_item_model.dart';
 import '../../../../core/error/app_failure.dart';
 import '../../../../core/logging/app_logger.dart';
+import '../../../../core/services/supabase_auth_service.dart';
 import '../models/user_model.dart';
 import '../services/password_hasher.dart';
 import '../services/secure_auth_storage.dart';
@@ -37,33 +39,52 @@ class AuthRepository {
   // Registration
   // --------------------------------------------------------------------------
 
-  /// Creates a new local user account with optional security question.
+  /// Creates a new user account with optional security question.
   Future<({UserModel user, AppFailure? error})> register({
     required String username,
     required String password,
+    String? email,
     String? displayName,
     String? securityQuestion,
     String? securityAnswer,
   }) async {
     try {
-      // Check uniqueness
-      final existing = await _isar.userModels
+      final trimmedUser = username.trim();
+      final trimmedEmail = email?.trim().toLowerCase();
+
+      // Check username uniqueness
+      final existingUser = await _isar.userModels
           .where()
-          .usernameEqualTo(username.trim())
+          .usernameEqualTo(trimmedUser)
           .findFirst();
 
-      if (existing != null) {
+      if (existingUser != null) {
         return (
           user: UserModel(),
           error: const AuthFailure('Username already taken'),
         );
       }
 
+      // Check email uniqueness if provided
+      if (trimmedEmail != null && trimmedEmail.isNotEmpty) {
+        final existingEmail = await _isar.userModels
+            .filter()
+            .emailEqualTo(trimmedEmail)
+            .findFirst();
+        if (existingEmail != null) {
+          return (
+            user: UserModel(),
+            error: const AuthFailure('Email address is already registered'),
+          );
+        }
+      }
+
       final hashResult = await PasswordHasher.hash(password);
       final now = DateTime.now();
 
       final user = UserModel()
-        ..username = username.trim()
+        ..username = trimmedUser
+        ..email = trimmedEmail
         ..passwordHash = hashResult.hash
         ..passwordSalt = hashResult.salt
         ..displayName = displayName?.trim()
@@ -89,7 +110,7 @@ class AuthRepository {
       });
 
       await _secureStorage.saveActiveUserId(user.id);
-      AppLogger.i('User registered: ${user.username}', tag: 'AuthRepository');
+      AppLogger.i('User registered: ${user.username} (${user.email})', tag: 'AuthRepository');
       return (user: user, error: null);
     } catch (e, st) {
       AppLogger.e('Registration failed',
@@ -102,15 +123,49 @@ class AuthRepository {
     }
   }
 
+  /// Converts a local account into a Cloud Account by attaching Gmail and Cloud Master Password.
+  Future<AppFailure?> convertLocalToCloudAccount({
+    required int userId,
+    required String email,
+    required String cloudPassword,
+  }) async {
+    try {
+      final user = await _isar.userModels.get(userId);
+      if (user == null) return const AuthFailure('User account not found');
+
+      final hashResult = await PasswordHasher.hash(cloudPassword);
+      await _isar.writeTxn(() async {
+        user.email = email.trim().toLowerCase();
+        user.cloudPasswordHash = hashResult.hash;
+        user.cloudPasswordSalt = hashResult.salt;
+        await _isar.userModels.put(user);
+      });
+
+      AppLogger.i('Local account converted to Cloud for ${user.username} with email $email',
+          tag: 'AuthRepository');
+      return null;
+    } catch (e, st) {
+      AppLogger.e('Failed to convert account',
+          tag: 'AuthRepository', error: e, st: st);
+      return UnexpectedFailure('Failed to convert account',
+          error: e, stackTrace: st);
+    }
+  }
+
   // --------------------------------------------------------------------------
   // Password Recovery via Security Question
   // --------------------------------------------------------------------------
 
-  Future<String?> getSecurityQuestion(String username) async {
+  Future<String?> getSecurityQuestion(String usernameOrEmail) async {
     try {
-      final user = await _isar.userModels
+      final term = usernameOrEmail.trim().toLowerCase();
+      var user = await _isar.userModels
           .where()
-          .usernameEqualTo(username.trim())
+          .usernameEqualTo(term)
+          .findFirst();
+      user ??= await _isar.userModels
+          .filter()
+          .emailEqualTo(term)
           .findFirst();
       return user?.securityQuestion;
     } catch (e) {
@@ -165,11 +220,27 @@ class AuthRepository {
 
   Future<AppFailure?> deleteAccount(int userId) async {
     try {
+      // 1. Fetch cloud email from secure storage or user model to wipe cloud profiles & requests
+      const rawStorage = FlutterSecureStorage();
+      var cloudEmail = await rawStorage.read(key: 'cloud_email');
+      
+      final user = await _isar.userModels.get(userId);
+      if (user?.email != null && user!.email!.isNotEmpty) {
+        cloudEmail = user.email;
+      }
+
+      if (cloudEmail != null && cloudEmail.isNotEmpty) {
+        await SupabaseAuthService.deleteUserData(email: cloudEmail);
+      }
+
+      // 2. Clear all local database records across all Isar schemas
       await _isar.writeTxn(() async {
         await _isar.clear();
       });
+
+      // 3. Clear all secure storage credentials and state keys
       await _secureStorage.clearAll();
-      AppLogger.i('Account and all database records wiped completely',
+      AppLogger.i('Account and all database records (cloud profiles, requests, local Isar tables) wiped completely',
           tag: 'AuthRepository');
       return null;
     } catch (e, st) {
@@ -190,6 +261,10 @@ class AuthRepository {
     final account = await _isar.userModels.get(userId);
     if (account == null) {
       throw StateError('The stored account no longer exists.');
+    }
+
+    if (account.email != null && account.email!.isNotEmpty) {
+      await SupabaseAuthService.deleteUserData(email: account.email!);
     }
 
     await _isar.writeTxn(() async {
@@ -214,45 +289,94 @@ class AuthRepository {
   // Login
   // --------------------------------------------------------------------------
 
-  /// Authenticates a user by username + password.
-  ///
-  /// Returns [AuthFailure] for invalid credentials.
+  /// Authenticates a user by (username or email) + (primary password or master cloud password).
+  /// Works seamlessly for both Local and Cloud accounts.
   Future<({UserModel? user, AppFailure? error})> login({
-    required String username,
+    required String usernameOrEmail,
     required String password,
   }) async {
     try {
-      final user = await _isar.userModels
+      final input = usernameOrEmail.trim().toLowerCase();
+      var user = await _isar.userModels
           .where()
-          .usernameEqualTo(username.trim())
+          .usernameEqualTo(usernameOrEmail.trim())
           .findFirst();
 
-      if (user == null) {
-        // Constant-time: still run hash to prevent username enumeration timing
-        await PasswordHasher.hash(password);
-        return (user: null, error: const AuthFailure('Invalid credentials'));
+      user ??= await _isar.userModels
+          .filter()
+          .emailEqualTo(input)
+          .findFirst();
+
+      if (user != null) {
+        // Check primary password
+        var valid = await PasswordHasher.verify(
+          password,
+          user.passwordHash,
+          user.passwordSalt,
+        );
+
+        // Check secondary master cloud password if primary didn't match
+        if (!valid && user.cloudPasswordHash != null && user.cloudPasswordSalt != null) {
+          valid = await PasswordHasher.verify(
+            password,
+            user.cloudPasswordHash!,
+            user.cloudPasswordSalt!,
+          );
+        }
+
+        if (valid) {
+          await _isar.writeTxn(() async {
+            user!.lastLoginAt = DateTime.now();
+            await _isar.userModels.put(user);
+          });
+
+          await _secureStorage.saveActiveUserId(user.id);
+          await _secureStorage.saveLastUsername(user.username);
+          AppLogger.i('User logged in locally: ${user.username}', tag: 'AuthRepository');
+          return (user: user, error: null);
+        }
       }
 
-      final valid = await PasswordHasher.verify(
-        password,
-        user.passwordHash,
-        user.passwordSalt,
-      );
+      // If local lookup failed or password didn't match local hash, try Supabase Cloud Auth login (if input is email or username)
+      if (input.contains('@')) {
+        final cloudRes = await SupabaseAuthService.signInWithPassword(
+          email: input,
+          password: password,
+        );
 
-      if (!valid) {
-        return (user: null, error: const AuthFailure('Invalid credentials'));
+        if (cloudRes.success) {
+          final profileRes = await SupabaseAuthService.syncProfileFromSupabase(email: input);
+          final hashResult = await PasswordHasher.hash(password);
+          final now = DateTime.now();
+          final username = profileRes.username ?? input.split('@').first;
+          final displayName = profileRes.displayName ?? username;
+
+          final newUser = UserModel()
+            ..username = username
+            ..email = input
+            ..passwordHash = hashResult.hash
+            ..passwordSalt = hashResult.salt
+            ..displayName = displayName
+            ..themePreference = 'system'
+            ..notificationsEnabled = true
+            ..createdAt = now
+            ..lastLoginAt = now
+            ..deviceId = _generateDeviceId();
+
+          await _isar.writeTxn(() async {
+            await _isar.userModels.put(newUser);
+          });
+
+          await _secureStorage.saveActiveUserId(newUser.id);
+          await _secureStorage.saveLastUsername(newUser.username);
+          AppLogger.i('User logged in via Supabase Cloud Auth: ${newUser.username}', tag: 'AuthRepository');
+          return (user: newUser, error: null);
+        }
       }
 
-      // Update last login timestamp
-      await _isar.writeTxn(() async {
-        user.lastLoginAt = DateTime.now();
-        await _isar.userModels.put(user);
-      });
-
-      await _secureStorage.saveActiveUserId(user.id);
-      await _secureStorage.saveLastUsername(user.username);
-      AppLogger.i('User logged in: ${user.username}', tag: 'AuthRepository');
-      return (user: user, error: null);
+      // If neither local nor cloud auth matched
+      await PasswordHasher.hash(password);
+      return (user: null, error: const AuthFailure('Invalid email/username or password'));
     } catch (e, st) {
       AppLogger.e('Login failed', tag: 'AuthRepository', error: e, st: st);
       return (

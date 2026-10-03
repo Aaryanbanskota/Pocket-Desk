@@ -22,63 +22,78 @@ const UserModelSchema = CollectionSchema(
       name: r'avatarBase64',
       type: IsarType.string,
     ),
-    r'createdAt': PropertySchema(
+    r'cloudPasswordHash': PropertySchema(
       id: 1,
+      name: r'cloudPasswordHash',
+      type: IsarType.string,
+    ),
+    r'cloudPasswordSalt': PropertySchema(
+      id: 2,
+      name: r'cloudPasswordSalt',
+      type: IsarType.string,
+    ),
+    r'createdAt': PropertySchema(
+      id: 3,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'deviceId': PropertySchema(
-      id: 2,
+      id: 4,
       name: r'deviceId',
       type: IsarType.string,
     ),
     r'displayName': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'displayName',
       type: IsarType.string,
     ),
+    r'email': PropertySchema(
+      id: 6,
+      name: r'email',
+      type: IsarType.string,
+    ),
     r'lastLoginAt': PropertySchema(
-      id: 4,
+      id: 7,
       name: r'lastLoginAt',
       type: IsarType.dateTime,
     ),
     r'notificationsEnabled': PropertySchema(
-      id: 5,
+      id: 8,
       name: r'notificationsEnabled',
       type: IsarType.bool,
     ),
     r'passwordHash': PropertySchema(
-      id: 6,
+      id: 9,
       name: r'passwordHash',
       type: IsarType.string,
     ),
     r'passwordSalt': PropertySchema(
-      id: 7,
+      id: 10,
       name: r'passwordSalt',
       type: IsarType.string,
     ),
     r'securityAnswerHash': PropertySchema(
-      id: 8,
+      id: 11,
       name: r'securityAnswerHash',
       type: IsarType.string,
     ),
     r'securityAnswerSalt': PropertySchema(
-      id: 9,
+      id: 12,
       name: r'securityAnswerSalt',
       type: IsarType.string,
     ),
     r'securityQuestion': PropertySchema(
-      id: 10,
+      id: 13,
       name: r'securityQuestion',
       type: IsarType.string,
     ),
     r'themePreference': PropertySchema(
-      id: 11,
+      id: 14,
       name: r'themePreference',
       type: IsarType.string,
     ),
     r'username': PropertySchema(
-      id: 12,
+      id: 15,
       name: r'username',
       type: IsarType.string,
     )
@@ -97,6 +112,19 @@ const UserModelSchema = CollectionSchema(
       properties: [
         IndexPropertySchema(
           name: r'username',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    ),
+    r'email': IndexSchema(
+      id: -26095440403582047,
+      name: r'email',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'email',
           type: IndexType.hash,
           caseSensitive: true,
         )
@@ -136,9 +164,27 @@ int _userModelEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.cloudPasswordHash;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.cloudPasswordSalt;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.deviceId.length * 3;
   {
     final value = object.displayName;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.email;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
     }
@@ -175,18 +221,21 @@ void _userModelSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.avatarBase64);
-  writer.writeDateTime(offsets[1], object.createdAt);
-  writer.writeString(offsets[2], object.deviceId);
-  writer.writeString(offsets[3], object.displayName);
-  writer.writeDateTime(offsets[4], object.lastLoginAt);
-  writer.writeBool(offsets[5], object.notificationsEnabled);
-  writer.writeString(offsets[6], object.passwordHash);
-  writer.writeString(offsets[7], object.passwordSalt);
-  writer.writeString(offsets[8], object.securityAnswerHash);
-  writer.writeString(offsets[9], object.securityAnswerSalt);
-  writer.writeString(offsets[10], object.securityQuestion);
-  writer.writeString(offsets[11], object.themePreference);
-  writer.writeString(offsets[12], object.username);
+  writer.writeString(offsets[1], object.cloudPasswordHash);
+  writer.writeString(offsets[2], object.cloudPasswordSalt);
+  writer.writeDateTime(offsets[3], object.createdAt);
+  writer.writeString(offsets[4], object.deviceId);
+  writer.writeString(offsets[5], object.displayName);
+  writer.writeString(offsets[6], object.email);
+  writer.writeDateTime(offsets[7], object.lastLoginAt);
+  writer.writeBool(offsets[8], object.notificationsEnabled);
+  writer.writeString(offsets[9], object.passwordHash);
+  writer.writeString(offsets[10], object.passwordSalt);
+  writer.writeString(offsets[11], object.securityAnswerHash);
+  writer.writeString(offsets[12], object.securityAnswerSalt);
+  writer.writeString(offsets[13], object.securityQuestion);
+  writer.writeString(offsets[14], object.themePreference);
+  writer.writeString(offsets[15], object.username);
 }
 
 UserModel _userModelDeserialize(
@@ -197,19 +246,22 @@ UserModel _userModelDeserialize(
 ) {
   final object = UserModel();
   object.avatarBase64 = reader.readStringOrNull(offsets[0]);
-  object.createdAt = reader.readDateTime(offsets[1]);
-  object.deviceId = reader.readString(offsets[2]);
-  object.displayName = reader.readStringOrNull(offsets[3]);
+  object.cloudPasswordHash = reader.readStringOrNull(offsets[1]);
+  object.cloudPasswordSalt = reader.readStringOrNull(offsets[2]);
+  object.createdAt = reader.readDateTime(offsets[3]);
+  object.deviceId = reader.readString(offsets[4]);
+  object.displayName = reader.readStringOrNull(offsets[5]);
+  object.email = reader.readStringOrNull(offsets[6]);
   object.id = id;
-  object.lastLoginAt = reader.readDateTimeOrNull(offsets[4]);
-  object.notificationsEnabled = reader.readBool(offsets[5]);
-  object.passwordHash = reader.readString(offsets[6]);
-  object.passwordSalt = reader.readString(offsets[7]);
-  object.securityAnswerHash = reader.readStringOrNull(offsets[8]);
-  object.securityAnswerSalt = reader.readStringOrNull(offsets[9]);
-  object.securityQuestion = reader.readStringOrNull(offsets[10]);
-  object.themePreference = reader.readString(offsets[11]);
-  object.username = reader.readString(offsets[12]);
+  object.lastLoginAt = reader.readDateTimeOrNull(offsets[7]);
+  object.notificationsEnabled = reader.readBool(offsets[8]);
+  object.passwordHash = reader.readString(offsets[9]);
+  object.passwordSalt = reader.readString(offsets[10]);
+  object.securityAnswerHash = reader.readStringOrNull(offsets[11]);
+  object.securityAnswerSalt = reader.readStringOrNull(offsets[12]);
+  object.securityQuestion = reader.readStringOrNull(offsets[13]);
+  object.themePreference = reader.readString(offsets[14]);
+  object.username = reader.readString(offsets[15]);
   return object;
 }
 
@@ -223,28 +275,34 @@ P _userModelDeserializeProp<P>(
     case 0:
       return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 4:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 5:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 8:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 9:
-      return (reader.readStringOrNull(offset)) as P;
-    case 10:
-      return (reader.readStringOrNull(offset)) as P;
-    case 11:
       return (reader.readString(offset)) as P;
+    case 10:
+      return (reader.readString(offset)) as P;
+    case 11:
+      return (reader.readStringOrNull(offset)) as P;
     case 12:
+      return (reader.readStringOrNull(offset)) as P;
+    case 13:
+      return (reader.readStringOrNull(offset)) as P;
+    case 14:
+      return (reader.readString(offset)) as P;
+    case 15:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -433,6 +491,71 @@ extension UserModelQueryWhere
               indexName: r'username',
               lower: [],
               upper: [username],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterWhereClause> emailIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'email',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterWhereClause> emailIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'email',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterWhereClause> emailEqualTo(
+      String? email) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'email',
+        value: [email],
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterWhereClause> emailNotEqualTo(
+      String? email) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'email',
+              lower: [],
+              upper: [email],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'email',
+              lower: [email],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'email',
+              lower: [email],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'email',
+              lower: [],
+              upper: [email],
               includeUpper: false,
             ));
       }
@@ -635,6 +758,314 @@ extension UserModelQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'avatarBase64',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordHashIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'cloudPasswordHash',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordHashIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'cloudPasswordHash',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordHashEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'cloudPasswordHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordHashGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'cloudPasswordHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordHashLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'cloudPasswordHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordHashBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'cloudPasswordHash',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordHashStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'cloudPasswordHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordHashEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'cloudPasswordHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordHashContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'cloudPasswordHash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordHashMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'cloudPasswordHash',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordHashIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'cloudPasswordHash',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordHashIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'cloudPasswordHash',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordSaltIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'cloudPasswordSalt',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordSaltIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'cloudPasswordSalt',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordSaltEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'cloudPasswordSalt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordSaltGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'cloudPasswordSalt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordSaltLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'cloudPasswordSalt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordSaltBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'cloudPasswordSalt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordSaltStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'cloudPasswordSalt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordSaltEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'cloudPasswordSalt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordSaltContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'cloudPasswordSalt',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordSaltMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'cloudPasswordSalt',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordSaltIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'cloudPasswordSalt',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      cloudPasswordSaltIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'cloudPasswordSalt',
         value: '',
       ));
     });
@@ -972,6 +1403,152 @@ extension UserModelQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'displayName',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> emailIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'email',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> emailIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'email',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> emailEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'email',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> emailGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'email',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> emailLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'email',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> emailBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'email',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> emailStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'email',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> emailEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'email',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> emailContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'email',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> emailMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'email',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> emailIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'email',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> emailIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'email',
         value: '',
       ));
     });
@@ -2131,6 +2708,32 @@ extension UserModelQuerySortBy on QueryBuilder<UserModel, UserModel, QSortBy> {
     });
   }
 
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> sortByCloudPasswordHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cloudPasswordHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy>
+      sortByCloudPasswordHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cloudPasswordHash', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> sortByCloudPasswordSalt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cloudPasswordSalt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy>
+      sortByCloudPasswordSaltDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cloudPasswordSalt', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserModel, UserModel, QAfterSortBy> sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -2164,6 +2767,18 @@ extension UserModelQuerySortBy on QueryBuilder<UserModel, UserModel, QSortBy> {
   QueryBuilder<UserModel, UserModel, QAfterSortBy> sortByDisplayNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'displayName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> sortByEmail() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'email', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> sortByEmailDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'email', Sort.desc);
     });
   }
 
@@ -2295,6 +2910,32 @@ extension UserModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> thenByCloudPasswordHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cloudPasswordHash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy>
+      thenByCloudPasswordHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cloudPasswordHash', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> thenByCloudPasswordSalt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cloudPasswordSalt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy>
+      thenByCloudPasswordSaltDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cloudPasswordSalt', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserModel, UserModel, QAfterSortBy> thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -2328,6 +2969,18 @@ extension UserModelQuerySortThenBy
   QueryBuilder<UserModel, UserModel, QAfterSortBy> thenByDisplayNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'displayName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> thenByEmail() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'email', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> thenByEmailDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'email', Sort.desc);
     });
   }
 
@@ -2466,6 +3119,22 @@ extension UserModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<UserModel, UserModel, QDistinct> distinctByCloudPasswordHash(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'cloudPasswordHash',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QDistinct> distinctByCloudPasswordSalt(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'cloudPasswordSalt',
+          caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<UserModel, UserModel, QDistinct> distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'createdAt');
@@ -2483,6 +3152,13 @@ extension UserModelQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'displayName', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QDistinct> distinctByEmail(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'email', caseSensitive: caseSensitive);
     });
   }
 
@@ -2567,6 +3243,20 @@ extension UserModelQueryProperty
     });
   }
 
+  QueryBuilder<UserModel, String?, QQueryOperations>
+      cloudPasswordHashProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'cloudPasswordHash');
+    });
+  }
+
+  QueryBuilder<UserModel, String?, QQueryOperations>
+      cloudPasswordSaltProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'cloudPasswordSalt');
+    });
+  }
+
   QueryBuilder<UserModel, DateTime, QQueryOperations> createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'createdAt');
@@ -2582,6 +3272,12 @@ extension UserModelQueryProperty
   QueryBuilder<UserModel, String?, QQueryOperations> displayNameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'displayName');
+    });
+  }
+
+  QueryBuilder<UserModel, String?, QQueryOperations> emailProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'email');
     });
   }
 

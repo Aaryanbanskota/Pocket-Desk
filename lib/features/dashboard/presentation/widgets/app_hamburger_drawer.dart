@@ -72,12 +72,25 @@ class AppHamburgerDrawer extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    final isOnline = ref.watch(networkConnectivityProvider).valueOrNull ?? true;
+    final isOnline = ref.read(networkConnectivityProvider).valueOrNull ?? true;
     final drawerState = ref.watch(drawerCustomizationProvider);
+    final enableRearrange = ref.read(enableRearrangeProvider).valueOrNull ?? false;
+
+    // Pre-decode avatar bytes once per build
+    Uint8List? avatarBytes;
+    if (user?.avatarBase64 != null && user!.avatarBase64!.isNotEmpty) {
+      try {
+        avatarBytes = base64Decode(user.avatarBase64!);
+      } catch (_) {}
+    }
+
+    final visibleKeys = drawerState.itemOrder
+        .where((key) => !drawerState.disabledItems.contains(key))
+        .toList();
 
     return Drawer(
       backgroundColor: cs.surface,
-      width: 320,
+      width: 300,
       child: SafeArea(
         child: Column(
           children: [
@@ -97,25 +110,17 @@ class AppHamburgerDrawer extends ConsumerWidget {
                     children: [
                       Stack(
                         children: [
-                          Builder(builder: (context) {
-                            Uint8List? bytes;
-                            if (user?.avatarBase64 != null && user!.avatarBase64!.isNotEmpty) {
-                              try {
-                                bytes = base64Decode(user.avatarBase64!);
-                              } catch (_) {}
-                            }
-                            return CircleAvatar(
-                              radius: 24,
-                              backgroundColor: cs.primary,
-                              backgroundImage: bytes != null ? MemoryImage(bytes) : null,
-                              child: bytes == null
-                                  ? Text(
-                                      username.isNotEmpty ? username[0].toUpperCase() : 'U',
-                                      style: TextStyle(color: cs.onPrimary, fontSize: 20, fontWeight: FontWeight.bold),
-                                    )
-                                  : null,
-                            );
-                          }),
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: cs.primary,
+                            backgroundImage: avatarBytes != null ? MemoryImage(avatarBytes) : null,
+                            child: avatarBytes == null
+                                ? Text(
+                                    username.isNotEmpty ? username[0].toUpperCase() : 'U',
+                                    style: TextStyle(color: cs.onPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+                                  )
+                                : null,
+                          ),
                           Positioned(
                             right: 0,
                             bottom: 0,
@@ -133,7 +138,7 @@ class AppHamburgerDrawer extends ConsumerWidget {
                       ),
                       Row(
                         children: [
-                          if (ref.watch(enableRearrangeProvider).valueOrNull ?? false)
+                          if (enableRearrange)
                             IconButton(
                               icon: const Icon(Icons.tune_rounded, size: 22),
                               tooltip: 'Customize Menu Items',
@@ -210,11 +215,11 @@ class AppHamburgerDrawer extends ConsumerWidget {
 
             // Customized Navigation Items List
             Expanded(
-              child: ListView(
+              child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                children: drawerState.itemOrder
-                    .where((key) => !drawerState.disabledItems.contains(key))
-                    .map((key) {
+                itemCount: visibleKeys.length,
+                itemBuilder: (context, index) {
+                  final key = visibleKeys[index];
                   final config = kDrawerItemsMap[key];
                   if (config == null) return const SizedBox();
                   return _NavItem(
@@ -229,7 +234,7 @@ class AppHamburgerDrawer extends ConsumerWidget {
                       }
                     },
                   );
-                }).toList(),
+                },
               ),
             ),
 

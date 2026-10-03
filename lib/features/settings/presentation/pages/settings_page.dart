@@ -42,61 +42,114 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   List<_SettingSearchItem> _getSearchableItems(bool isShareUnlocked) {
     return [
+      // ─── AI TAB ─────────────────────────────────────────────────────────────
       const _SettingSearchItem(
-        title: 'AI Model & Provider',
-        subtitle: 'Configure Ollama, OpenAI, or local AI endpoints',
+        title: 'AI Master Control & Toggle',
+        subtitle: 'Turn AI functionality on/off or allow action execution',
         tabName: 'AI',
         icon: Icons.smart_toy_rounded,
       ),
       const _SettingSearchItem(
+        title: 'OpenRouter API Key & Unlock',
+        subtitle: 'Configure your OpenRouter key, password unlock & API security',
+        tabName: 'AI',
+        icon: Icons.key_rounded,
+      ),
+      const _SettingSearchItem(
+        title: 'AI Model Selection',
+        subtitle: 'Choose models: GPT-4o, Claude 3.5 Sonnet, Llama 3.1, Gemini Flash',
+        tabName: 'AI',
+        icon: Icons.psychology_rounded,
+      ),
+      const _SettingSearchItem(
+        title: 'AI Mascot Design Style',
+        subtitle: 'Toggle floating minimalist mascot or boxed card chat dialog style',
+        tabName: 'AI',
+        icon: Icons.design_services_rounded,
+      ),
+      const _SettingSearchItem(
         title: 'AI Temperature & Token Limit',
-        subtitle: 'Tune response creativity and token limits',
+        subtitle: 'Tune response creativity, max tokens, and context window limits',
         tabName: 'AI',
         icon: Icons.tune_rounded,
       ),
+
+      // ─── SHARE TAB (IF UNLOCKED) ────────────────────────────────────────────
       if (isShareUnlocked)
         const _SettingSearchItem(
           title: 'Generate Login QR Code',
-          subtitle: 'Share desktop session credentials with mobile app',
+          subtitle: 'Share desktop session credentials with mobile app via camera QR',
           tabName: 'Share',
           icon: Icons.qr_code_2_rounded,
         ),
       if (isShareUnlocked)
         const _SettingSearchItem(
-          title: 'Export / Import Settings',
-          subtitle: 'Sync app state via QR or file payload',
+          title: 'Export / Import Settings & Sync',
+          subtitle: 'Backup or sync app configuration via QR or file payload',
           tabName: 'Share',
           icon: Icons.swap_horiz_rounded,
         ),
+
+      // ─── DEVICES TAB ────────────────────────────────────────────────────────
       const _SettingSearchItem(
-        title: 'Connected Devices',
-        subtitle: 'Manage local network paired companion devices',
+        title: 'Connected Devices & P2P Sync',
+        subtitle: 'Manage local network paired companion devices, device name & status',
         tabName: 'Devices',
         icon: Icons.devices_rounded,
       ),
       const _SettingSearchItem(
+        title: 'App Software Updates',
+        subtitle: 'Check for PocketDesk app updates, channel releases, and version info',
+        tabName: 'Devices',
+        icon: Icons.system_update_rounded,
+      ),
+
+      // ─── APPEARANCE TAB ─────────────────────────────────────────────────────
+      const _SettingSearchItem(
         title: 'Theme Mode (Light / Dark / System)',
-        subtitle: 'Switch application color theme and high contrast colors',
+        subtitle: 'Switch application color theme, dark mode, and high contrast colors',
         tabName: 'Appearance',
         icon: Icons.palette_rounded,
       ),
       const _SettingSearchItem(
+        title: 'Text Size & Typography',
+        subtitle: 'Adjust app font scaling, readable text size, and spacing',
+        tabName: 'Appearance',
+        icon: Icons.format_size_rounded,
+      ),
+      const _SettingSearchItem(
         title: 'Rearrange Dashboard & Menu Widgets',
-        subtitle: 'Toggle custom widget reordering feature on or off',
+        subtitle: 'Toggle custom widget reordering feature on or off on homepage',
         tabName: 'Appearance',
         icon: Icons.widgets_rounded,
       ),
+
+      // ─── PRIVACY TAB ────────────────────────────────────────────────────────
       const _SettingSearchItem(
-        title: 'Data Privacy & Analytics',
-        subtitle: 'Manage telemetry, diagnostics, and data collection',
+        title: 'Data Privacy & Local Encryption',
+        subtitle: 'Manage telemetry, local database encryption, analytics & cloud backup',
         tabName: 'Privacy',
         icon: Icons.privacy_tip_rounded,
       ),
       const _SettingSearchItem(
-        title: 'App Lock & Security Credentials',
-        subtitle: 'Biometrics, passcode protection, and encryption',
+        title: 'Sync & Data Sharing Permissions',
+        subtitle: 'Configure P2P syncing, peer permissions, and offline mode data',
+        tabName: 'Privacy',
+        icon: Icons.sync_rounded,
+      ),
+
+      // ─── SECURITY TAB ───────────────────────────────────────────────────────
+      const _SettingSearchItem(
+        title: 'Biometric Authentication & App Lock',
+        subtitle: 'Fingerprint unlock, Face ID, biometrics, passcode, and auto-lock security',
         tabName: 'Security',
-        icon: Icons.security_rounded,
+        icon: Icons.fingerprint_rounded,
+      ),
+      const _SettingSearchItem(
+        title: 'Change Account Password & Credentials',
+        subtitle: 'Update user account login password and credential security',
+        tabName: 'Security',
+        icon: Icons.lock_reset_rounded,
       ),
     ];
   }
@@ -176,13 +229,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ];
 
     final searchableItems = _getSearchableItems(isShareUnlocked);
-    final filteredItems = _searchQuery.isEmpty
+    final queryTokens = _searchQuery
+        .trim()
+        .toLowerCase()
+        .split(RegExp(r'\s+'))
+        .where((t) => t.isNotEmpty)
+        .toList();
+
+    final filteredItems = queryTokens.isEmpty
         ? searchableItems
         : searchableItems.where((item) {
-            final q = _searchQuery.toLowerCase();
-            return item.title.toLowerCase().contains(q) ||
-                item.subtitle.toLowerCase().contains(q) ||
-                item.tabName.toLowerCase().contains(q);
+            final searchableText =
+                '${item.title} ${item.subtitle} ${item.tabName}'.toLowerCase();
+            // All typed query tokens must match somewhere in title/subtitle/tabName
+            return queryTokens.every((token) => searchableText.contains(token));
           }).toList();
 
     return DefaultTabController(

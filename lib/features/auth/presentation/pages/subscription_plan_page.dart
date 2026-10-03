@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/services/account_plan_service.dart';
+import '../../../../core/services/supabase_auth_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../providers/auth_notifier.dart';
 
 class SubscriptionPlanPage extends ConsumerStatefulWidget {
   const SubscriptionPlanPage({super.key});
@@ -79,6 +81,243 @@ class _SubscriptionPlanPageState extends ConsumerState<SubscriptionPlanPage> {
               const SizedBox(height: AppSpacing.xl),
               FilledButton.icon(
                 onPressed: () async {
+                  final authState = ref.read(authNotifierProvider).valueOrNull;
+                  final isAuthenticated = authState is AuthAuthenticated;
+                  final planState = ref.read(accountPlanProvider);
+
+                  // If user is logged into local account, prompt for Gmail email and password for Supabase conversion
+                  if (isAuthenticated && planState.accountType == AccountType.local) {
+                    final emailCtrl = TextEditingController();
+                    final passCtrl = TextEditingController();
+                    final formKey = GlobalKey<FormState>();
+
+                    final converted = await showModalBottomSheet<bool>(
+                      context: context,
+                      isScrollControlled: true,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                      ),
+                      builder: (bottomCtx) {
+                        final bottomInset = MediaQuery.of(bottomCtx).viewInsets.bottom;
+                        return Padding(
+                          padding: EdgeInsets.fromLTRB(20, 12, 20, bottomInset + 20),
+                          child: Form(
+                            key: formKey,
+                            child: SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // Drag indicator handle
+                                  Center(
+                                    child: Container(
+                                      width: 40,
+                                      height: 4,
+                                      margin: const EdgeInsets.only(bottom: 16),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.cloud_upload_rounded, color: colorScheme.primary, size: 24),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          'Cloud Account Setup',
+                                          style: theme.textTheme.titleLarge?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.close_rounded),
+                                        onPressed: () => Navigator.pop(bottomCtx, false),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Enter your Gmail address & password to convert your local account into a synced Supabase Cloud account:',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextFormField(
+                                    controller: emailCtrl,
+                                    keyboardType: TextInputType.emailAddress,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Gmail / Email Address',
+                                      border: OutlineInputBorder(),
+                                      prefixIcon: Icon(Icons.email_outlined),
+                                    ),
+                                    validator: (v) => v == null || !v.contains('@')
+                                        ? 'Enter a valid email address'
+                                        : null,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  TextFormField(
+                                    controller: passCtrl,
+                                    obscureText: true,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Cloud Account Password',
+                                      border: OutlineInputBorder(),
+                                      prefixIcon: Icon(Icons.lock_outline_rounded),
+                                    ),
+                                    validator: (v) => v == null || v.length < 6
+                                        ? 'Password must be at least 6 characters'
+                                        : null,
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(bottomCtx, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      FilledButton.icon(
+                                        onPressed: () async {
+                                          if (!formKey.currentState!.validate()) return;
+                                          Navigator.pop(bottomCtx, true);
+                                        },
+                                        icon: const Icon(Icons.cloud_done_rounded, size: 18),
+                                        label: const Text('Convert Account'),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+
+                    if (converted != true || !context.mounted) return;
+
+                    final userEmail = emailCtrl.text.trim();
+                    final userPass = passCtrl.text;
+
+                    // Show loading indicator
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Row(
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Text('Connecting to Supabase Auth & sending confirmation email...'),
+                          ],
+                        ),
+                        duration: Duration(seconds: 10),
+                      ),
+                    );
+
+                    final activeUser = authState.user;
+
+                    // Execute real Supabase Auth signup call
+                    final authRes = await SupabaseAuthService.signUp(
+                      email: userEmail,
+                      password: userPass,
+                      username: activeUser.username,
+                      displayName: activeUser.displayName ?? activeUser.username,
+                    );
+
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+                    if (!authRes.success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Supabase Cloud Registration Error: ${authRes.errorMessage}'),
+                          backgroundColor: Colors.red.shade700,
+                          duration: const Duration(seconds: 6),
+                        ),
+                      );
+                      return;
+                    }
+
+                    final assignedUserId = authRes.userId ?? activeUser.id.toString();
+
+                    await SupabaseAuthService.upsertProfile(
+                      userId: assignedUserId,
+                      email: userEmail,
+                      username: activeUser.username,
+                      displayName: activeUser.displayName ?? activeUser.username,
+                      accountType: 'cloud',
+                      cloudPlan: _selectedPlan.name,
+                      isProActivated: _selectedPlan == CloudPlan.pro,
+                      isActive: true,
+                    );
+
+                    // If Pro plan selected, create record in pro_requests database table
+                    if (_selectedPlan == CloudPlan.pro) {
+                      await SupabaseAuthService.createProRequest(
+                        email: userEmail,
+                        userId: assignedUserId,
+                      );
+                    }
+
+                    // Update local user model with email & cloud master password
+                    await ref
+                        .read(authNotifierProvider.notifier)
+                        .convertLocalToCloudAccount(
+                          email: userEmail,
+                          cloudPassword: userPass,
+                        );
+
+                    await ref
+                        .read(accountPlanProvider.notifier)
+                        .syncCloudProfile(userEmail);
+
+                    await ref
+                        .read(accountPlanProvider.notifier)
+                        .convertToCloudAccount(email: userEmail, plan: _selectedPlan);
+
+                    if (!context.mounted) return;
+
+                    if (_selectedPlan == CloudPlan.pro) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Confirmation email sent to $userEmail! Please check your inbox and click the link to confirm your account.\n\n'
+                            'Your Pro request has been registered. Full backup (Text + Images + Audio) is active.',
+                          ),
+                          duration: const Duration(seconds: 10),
+                          backgroundColor: Colors.indigo,
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Confirmation email sent to $userEmail! Please check your inbox and click the link to activate Free Cloud sync (500 MB Text).',
+                          ),
+                          duration: const Duration(seconds: 8),
+                          backgroundColor: Colors.green.shade800,
+                        ),
+                      );
+                    }
+
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go(AppRoutes.dashboard);
+                    }
+                    return;
+                  }
+
                   await ref
                       .read(accountPlanProvider.notifier)
                       .selectCloudPlan(_selectedPlan);
@@ -88,14 +327,22 @@ class _SubscriptionPlanPageState extends ConsumerState<SubscriptionPlanPage> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          'Pro approval request sent to Admin! A payment link will be emailed shortly. Log in below to proceed.',
+                          'Pro upgrade request recorded! Text & media backup active.',
                         ),
-                        duration: Duration(seconds: 5),
+                        duration: Duration(seconds: 6),
                         backgroundColor: Colors.indigo,
                       ),
                     );
                   }
-                  context.push(AppRoutes.login);
+                  if (isAuthenticated) {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go(AppRoutes.dashboard);
+                    }
+                  } else {
+                    context.push(AppRoutes.register);
+                  }
                 },
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(56),
@@ -227,7 +474,7 @@ class _SubscriptionPlanPageState extends ConsumerState<SubscriptionPlanPage> {
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.check_circle_outline_rounded,
+                const Icon(Icons.check_circle_outline_rounded,
                     size: 18, color: Colors.green),
                 const SizedBox(width: 8),
                 Expanded(

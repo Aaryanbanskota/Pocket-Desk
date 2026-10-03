@@ -86,7 +86,7 @@ body.dark-mode {
 
 html {
   scroll-behavior: smooth;
-  scroll-snap-type: y mandatory;
+  scroll-snap-type: y proximity;
 }
 
 @view-transition {
@@ -294,7 +294,7 @@ body.dark-mode .btn-dark:hover {
   box-sizing: border-box;
   padding: 60px 24px;
   scroll-snap-align: start;
-  scroll-snap-stop: always;
+  scroll-snap-stop: normal;
   opacity: 0;
   transform: translateY(50px) scale(0.98);
   transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
@@ -316,7 +316,7 @@ body.dark-mode .btn-dark:hover {
   margin: 0 auto;
   text-align: center;
   scroll-snap-align: start;
-  scroll-snap-stop: always;
+  scroll-snap-stop: normal;
 }
 
 .pill-tag {
@@ -814,6 +814,8 @@ body.dark-mode .btn-dark:hover {
   border-top: 1px solid var(--border-color);
   padding: 80px 24px 40px;
   margin-top: 100px;
+  scroll-snap-align: end;
+  scroll-snap-stop: normal;
 }
 
 .footer-upper {

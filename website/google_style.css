@@ -1,11 +1,11 @@
 /* ==========================================================================
-   PocketDesk Website - Ultra-Minimalist Google Design System (Material 3)
+   PocketDesk Website - Google Minimalist & Antigravity Design System
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Google Palette */
+  /* Google Brand Colors */
   --google-blue: #1a73e8;
   --google-blue-hover: #1557b0;
   --google-blue-container: #e8f0fe;
@@ -48,7 +48,7 @@
   --shadow-lg: 0 4px 16px 0 rgba(60,64,67,0.12), 0 12px 32px 4px rgba(60,64,67,0.08);
 
   --max-width: 1200px;
-  --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.24s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body.dark-mode {
@@ -97,14 +97,14 @@ body {
 }
 
 /* ==========================================================================
-   Header Navbar
+   Header Navbar (Minimalist Google & Antigravity Header)
    ========================================================================== */
 
 .navbar {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-subtle);
@@ -112,7 +112,7 @@ body {
 }
 
 body.dark-mode .navbar {
-  background-color: rgba(18, 18, 18, 0.9);
+  background-color: rgba(18, 18, 18, 0.92);
 }
 
 .nav-container {
@@ -127,7 +127,7 @@ body.dark-mode .navbar {
 .logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   text-decoration: none;
   font-weight: 700;
   font-size: 20px;
@@ -150,7 +150,7 @@ body.dark-mode .navbar {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .nav-link {
@@ -158,7 +158,7 @@ body.dark-mode .navbar {
   color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
-  padding: 8px 16px;
+  padding: 8px 18px;
   border-radius: var(--radius-pill);
   transition: var(--transition);
 }
@@ -230,7 +230,7 @@ body.dark-mode .navbar {
 }
 
 /* ==========================================================================
-   Hero Section
+   Hero Section & Container Layout
    ========================================================================== */
 
 .hero-section {
@@ -284,7 +284,7 @@ body.dark-mode .navbar {
 }
 
 /* ==========================================================================
-   Showcase Box & Pocket AI Mascot Component
+   Showcase Box & Mascot Component
    ========================================================================== */
 
 .showcase-container {
@@ -375,7 +375,6 @@ body.dark-mode .navbar {
   line-height: 1.4;
 }
 
-/* Mascot Section */
 .mascot-card {
   background: linear-gradient(145deg, var(--google-blue-container) 0%, var(--surface-color) 100%);
   border: 1px solid rgba(26, 115, 232, 0.3);
@@ -581,7 +580,68 @@ body.dark-mode .navbar {
 }
 
 /* ==========================================================================
-   Documentation Box Styling
+   FAQ Smooth Expandable Accordion
+   ========================================================================== */
+
+.faq-container {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.faq-item {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.faq-question {
+  padding: 22px 28px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.faq-question:hover {
+  background: var(--surface-low);
+}
+
+.faq-chevron {
+  width: 20px;
+  height: 20px;
+  stroke: var(--text-secondary);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faq-item.open .faq-chevron {
+  transform: rotate(180deg);
+  stroke: var(--google-blue);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.35s ease;
+  padding: 0 28px;
+  color: var(--text-secondary);
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.faq-item.open .faq-answer {
+  max-height: 400px;
+  padding: 0 28px 24px;
+}
+
+/* ==========================================================================
+   Documentation & Release Logs
    ========================================================================== */
 
 .docs-content {
@@ -592,7 +652,7 @@ body.dark-mode .navbar {
 }
 
 .docs-section {
-  margin-bottom: 40px;
+  margin-bottom: 36px;
 }
 
 .docs-section:last-child {
@@ -613,7 +673,7 @@ body.dark-mode .navbar {
   font-size: 15px;
   color: var(--text-secondary);
   line-height: 1.6;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .code-block {
@@ -628,44 +688,125 @@ body.dark-mode .navbar {
   margin-bottom: 16px;
 }
 
-/* ==========================================================================
-   Footer
-   ========================================================================== */
-
-.footer {
-  background-color: var(--surface-low);
-  border-top: 1px solid var(--border-color);
-  padding: 40px 24px;
-  margin-top: 80px;
+/* Release Logs Styling */
+.log-item {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  overflow: hidden;
 }
 
-.footer-container {
+.log-header {
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  background: var(--surface-low);
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge-feature { background: var(--google-blue-container); color: var(--google-blue-text); }
+.badge-fix { background: var(--google-green-container); color: var(--google-green-text); }
+.badge-refactor { background: var(--google-amber-container); color: var(--google-amber-text); }
+
+.log-body {
+  padding: 20px 24px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+/* ==========================================================================
+   Big Google & Antigravity Style Multi-Column Footer
+   ========================================================================== */
+
+.big-footer {
+  background-color: var(--surface-low);
+  border-top: 1px solid var(--border-color);
+  padding: 80px 24px 40px;
+  margin-top: 100px;
+}
+
+.footer-grid {
+  max-width: var(--max-width);
+  margin: 0 auto 60px;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 40px;
+}
+
+@media (max-width: 900px) {
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 600px) {
+  .footer-grid { grid-template-columns: 1fr; }
+}
+
+.footer-brand-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+
+.footer-brand-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 360px;
+  margin-bottom: 20px;
+}
+
+.footer-col-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 20px;
+}
+
+.footer-list {
+  list-style: none;
+}
+
+.footer-list li {
+  margin-bottom: 12px;
+}
+
+.footer-list a {
+  text-decoration: none;
+  font-size: 14px;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+
+.footer-list a:hover {
+  color: var(--google-blue);
+}
+
+.footer-bottom-bar {
   max-width: var(--max-width);
   margin: 0 auto;
+  padding-top: 32px;
+  border-top: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-}
-
-.footer-text {
   font-size: 13.5px;
-  color: var(--text-secondary);
-}
-
-.footer-links {
-  display: flex;
-  gap: 18px;
-}
-
-.footer-links a {
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 13.5px;
-  transition: var(--transition);
-}
-
-.footer-links a:hover {
-  color: var(--google-blue);
+  color: var(--text-tertiary);
 }

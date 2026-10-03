@@ -6,37 +6,10 @@
   <title>PocketDesk — Release Logs & Dev Changelog</title>
   <meta name="description" content="Detailed release logs and change history for PocketDesk. Formatted for developer inspection with expandable summaries.">
   <link rel="stylesheet" href="google_style.css">
-  
-  <style>
-    .logs-container {
-      max-width: var(--max-width);
-      margin: 40px auto;
-      padding: 0 24px;
-    }
-    .log-card {
-      background: var(--surface-color);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 24px;
-      margin-bottom: 20px;
-    }
-    .log-version {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--google-blue);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .log-date {
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-  </style>
 </head>
 <body>
 
+  <!-- Google Minimalist Navbar -->
   <header class="navbar">
     <div class="nav-container">
       <a href="index.html" class="logo">
@@ -50,345 +23,151 @@
         <span>PocketDesk</span>
       </a>
       <nav class="nav-links">
-        <a href="index.html" class="nav-link">Home</a>
         <a href="features.html" class="nav-link">Features</a>
         <a href="docs.html" class="nav-link">Docs</a>
+        <a href="index.html#plans" class="nav-link">Pricing</a>
         <a href="logs.html" class="nav-link active">Release Logs</a>
-        <a href="faq.html" class="nav-link">FAQ</a>
       </nav>
       <div class="nav-actions">
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
         <a href="download.html" class="btn-pill btn-primary">Download App</a>
       </div>
     </div>
   </header>
-    }
 
-    /* Main Container */
-    main {
-      max-width: 860px;
-      margin: 40px auto;
-      padding: 0 24px;
-    }
-
-    .title-section {
-      margin-bottom: 32px;
-    }
-
-    h1 {
-      font-size: 2rem;
-      font-weight: 500;
-      letter-spacing: -0.5px;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      color: var(--text-secondary);
-      font-size: 1rem;
-    }
-
-    /* AI Summary Banner */
-    .ai-banner {
-      background: var(--surface-color);
-      border: 1px solid var(--border-color);
-      border-left: 4px solid var(--google-blue);
-      border-radius: var(--radius-card);
-      padding: 20px;
-      margin-bottom: 32px;
-    }
-
-    .ai-banner-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 500;
-      color: var(--google-blue);
-      margin-bottom: 8px;
-    }
-
-    /* Filters */
-    .filter-bar {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-    }
-
-    .filter-chip {
-      background: var(--surface-color);
-      border: 1px solid var(--border-color);
-      color: var(--text-secondary);
-      padding: 6px 16px;
-      border-radius: var(--radius-chip);
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .filter-chip.active, .filter-chip:hover {
-      background: var(--google-blue-bg);
-      color: var(--google-blue);
-      border-color: transparent;
-    }
-
-    /* Log Items Accordion */
-    .log-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .log-item {
-      background: var(--surface-color);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-card);
-      overflow: hidden;
-      transition: border-color 0.2s, background-color 0.2s;
-    }
-
-    .log-item:hover {
-      border-color: var(--google-blue);
-    }
-
-    .log-header {
-      padding: 16px 20px;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      user-select: none;
-    }
-
-    .log-title-area {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .badge {
-      font-size: 0.75rem;
-      font-weight: 500;
-      padding: 2px 10px;
-      border-radius: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .badge-fix { background: var(--google-green-bg); color: var(--google-green); }
-    .badge-feature { background: var(--google-blue-bg); color: var(--google-blue); }
-    .badge-build { background: var(--google-amber-bg); color: var(--google-amber); }
-
-    .log-title {
-      font-weight: 500;
-      font-size: 1rem;
-    }
-
-    .log-meta {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--text-muted);
-      font-size: 0.875rem;
-    }
-
-    .chevron {
-      transition: transform 0.2s ease;
-    }
-
-    .log-item.open .chevron {
-      transform: rotate(180deg);
-    }
-
-    .log-body {
-      display: none;
-      padding: 0 20px 20px 20px;
-      border-top: 1px solid var(--border-color);
-      margin-top: 4px;
-      padding-top: 16px;
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-    }
-
-    .log-item.open .log-body {
-      display: block;
-    }
-
-    .log-body h4 {
-      color: var(--text-primary);
-      font-size: 0.9rem;
-      margin: 12px 0 6px 0;
-      font-weight: 500;
-    }
-
-    .code-block {
-      background: var(--bg-color);
-      border: 1px solid var(--border-color);
-      padding: 12px;
-      border-radius: 6px;
-      font-family: var(--font-code);
-      font-size: 0.85rem;
-      overflow-x: auto;
-      margin: 8px 0;
-    }
-
-    footer {
-      text-align: center;
-      padding: 40px 0;
-      color: var(--text-muted);
-      font-size: 0.875rem;
-      border-top: 1px solid var(--border-color);
-      margin-top: 60px;
-    }
-  </style>
-</head>
-<body class="light-mode">
-
-  <header>
-    <a href="index.html" class="brand">
-      <div class="brand-icon">⚡</div>
-      <span>PocketDesk Logs</span>
-    </a>
-    <div class="nav-right">
-      <button class="theme-toggle" id="theme-toggle">☀️ Light / 🌙 Dark</button>
-    </div>
-  </header>
-
-  <main>
-    <div class="title-section">
-      <h1>Change Details & Release Logs</h1>
-      <p class="subtitle">Structured changelog and diagnostic summaries designed for developers and AI assistants.</p>
+  <main class="section-wrapper" style="padding-top: 60px; max-width: 900px;">
+    <div class="section-header" style="text-align: left; margin-bottom: 40px;">
+      <div class="pill-tag">Release History</div>
+      <h1 class="section-title" style="text-align: left;">Developer & Release Logs</h1>
+      <p class="section-desc">Detailed change history, build updates, and architectural fixes for PocketDesk.</p>
     </div>
 
-    <!-- AI Summary Banner -->
-    <div class="ai-banner">
-      <div class="ai-banner-header">
-        <span>✨</span> AI Summary
+    <!-- Release Log 1 -->
+    <div class="log-item">
+      <div class="log-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span class="badge badge-feature">Feature & Rework</span>
+          <strong style="color: var(--text-primary);">Auth Rework, Supabase REST Sync & Account Badges</strong>
+        </div>
+        <span style="font-size: 13px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;">v1.3.0</span>
       </div>
-      <p>PocketDesk v1.2.0 features universal multi-screen AI integration (Isar direct query), Argon2id password protection for saved API keys, complete Money Health wallet tracker with AI Spending Score (0–100), offline Personal Social Feed, Task & Event preview modals, and complete Note formatting/checklist suite pinned to Flutter 3.24.0 SDK via FVM.</p>
+      <div class="log-body">
+        <p><strong>Summary:</strong> Complete architectural overhaul of authentication flow, dynamic local/cloud registration, custom Supabase database profile synchronization, and device storage manager.</p>
+        <ul style="margin-top: 10px; margin-left: 20px; line-height: 1.6;">
+          <li>Dual sign-in for both Local and Supabase Cloud user accounts.</li>
+          <li>Gmail email validation & verification email dispatches.</li>
+          <li>Master Profile account status badges: Local User, Cloud Free, Cloud Pro, Pending Pro User.</li>
+          <li>Multi-account Check Data manager in Settings -> Privacy.</li>
+        </ul>
+      </div>
     </div>
 
-    <!-- Filters -->
-    <div class="filter-bar">
-      <button class="filter-chip active" onclick="filterLogs('all')">All Changes</button>
-      <button class="filter-chip" onclick="filterLogs('fix')">Fixes</button>
-      <button class="filter-chip" onclick="filterLogs('feature')">Features</button>
-      <button class="filter-chip" onclick="filterLogs('build')">Build / Infra</button>
+    <!-- Release Log 2 -->
+    <div class="log-item">
+      <div class="log-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span class="badge badge-fix">Fix</span>
+          <strong style="color: var(--text-primary);">Isar Database & Calendar Sync Integration</strong>
+        </div>
+        <span style="font-size: 13px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;">v1.2.0</span>
+      </div>
+      <div class="log-body">
+        <p><strong>Summary:</strong> Resolved database persistence rules for task priority filters and recurring calendar event scheduling.</p>
+        <ul style="margin-top: 10px; margin-left: 20px; line-height: 1.6;">
+          <li>Task sub-item checklist reordering handles.</li>
+          <li>Calendar timeline event notifications and alarm dispatcher.</li>
+        </ul>
+      </div>
     </div>
 
-    <!-- Logs Accordion -->
-    <div class="log-list">
-
-      <!-- Log Item 0: v1.2.0 -->
-      <div class="log-item open" data-category="feature">
-        <div class="log-header" onclick="toggleLog(this)">
-          <div class="log-title-area">
-            <span class="badge badge-feature">Major Release</span>
-            <span class="log-title">v1.2.0 — Universal AI Companion, Money Health & Security Lock</span>
-          </div>
-          <div class="log-meta">
-            <span>v1.2.0</span>
-            <span class="chevron">▼</span>
-          </div>
+    <!-- Release Log 3 -->
+    <div class="log-item">
+      <div class="log-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span class="badge badge-refactor">Architecture</span>
+          <strong style="color: var(--text-primary);">P2P Local WiFi Network Encrypted Sharing</strong>
         </div>
-        <div class="log-body">
-          <p><strong>Summary:</strong> Integrated direct database Isar querying for reliable AI execution across all pages, added Argon2id password locking for API keys, Money Health dashboard, task/event previews, and rich note checklist ecosystem.</p>
-          
-          <h4>Key Features & Fixes:</h4>
-          <ul>
-            <li><strong>AI Database Persistence:</strong> Direct Isar DB lookup (`AISettingsRepository`) eliminates transient provider initialization errors permanently across Money Health, Note Editor, Chat Buddy ("yo {username}"), and Feed.</li>
-            <li><strong>Security API Key Lock:</strong> Password verification dialog (`AuthNotifier.verifyPassword`) prevents unauthorized access or modification to saved OpenRouter API keys.</li>
-            <li><strong>Money Health & Wallet:</strong> Initial wallet balance setup, automatic calculation upon adding/editing expenses, category breakdowns, and AI Spending Score (0–100).</li>
-            <li><strong>Task & Event Previews:</strong> Tapping tasks or calendar events displays detailed preview sheets with quick edit and delete icons.</li>
-            <li><strong>Note Checklist & Editor:</strong> Added auto-save, archive, trash/restore, duplicate notes, rich markdown formatting, and media attachments.</li>
-            <li><strong>FVM SDK Pinning:</strong> Pinned Flutter SDK version to 3.24.0 for build reproducibility.</li>
-          </ul>
-
-          <div class="code-block">
-fvm flutter analyze --no-pub
-# Output: No issues found! (0 analyzer errors)
-          </div>
-        </div>
+        <span style="font-size: 13px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace;">v1.0.0</span>
       </div>
-
-      <!-- Log Item 2 -->
-      <div class="log-item" data-category="fix">
-        <div class="log-header" onclick="toggleLog(this)">
-          <div class="log-title-area">
-            <span class="badge badge-fix">Fix</span>
-            <span class="log-title">Calendar & Task Manager Integration Wiring</span>
-          </div>
-          <div class="log-meta">
-            <span>v1.1.0+1</span>
-            <span class="chevron">▼</span>
-          </div>
-        </div>
-        <div class="log-body">
-          <p><strong>Summary:</strong> Verified end-to-end data persistence between Isar database providers and UI state management for tasks, subtasks, and calendar events.</p>
-          
-          <h4>Details:</h4>
-          <ul>
-            <li>Connected task priority filters with Riverpod providers.</li>
-            <li>Fixed RFC 5545 recurrence rule parsing for recurring calendar items.</li>
-          </ul>
-        </div>
+      <div class="log-body">
+        <p><strong>Summary:</strong> Implemented local P2P WebSocket server with QR code scanner pairing for cross-device desktop and mobile session sharing.</p>
       </div>
-
-      <!-- Log Item 3 -->
-      <div class="log-item" data-category="feature">
-        <div class="log-header" onclick="toggleLog(this)">
-          <div class="log-title-area">
-            <span class="badge badge-feature">Feature</span>
-            <span class="log-title">Device-to-Device Offline Encryption Engine</span>
-          </div>
-          <div class="log-meta">
-            <span>v1.0.0</span>
-            <span class="chevron">▼</span>
-          </div>
-        </div>
-        <div class="log-body">
-          <p><strong>Summary:</strong> Implemented local WebSocket sync with AES-GCM-128 encryption and QR code pairing for zero-cloud data transfer.</p>
-          
-          <h4>Details:</h4>
-          <ul>
-            <li>HMAC-SHA256 authentication tokens generated during local pairing.</li>
-            <li>Delta-sync protocol queue for auto-resume when reconnecting on LAN.</li>
-          </ul>
-        </div>
-      </div>
-
     </div>
+
   </main>
 
-  <footer class="footer">
-    <div class="footer-container">
-      <div class="footer-text">&copy; 2026 PocketDesk Release Logs. Google Material Minimalist Design.</div>
-      <div class="footer-links">
-        <a href="index.html">Home</a>
-        <a href="docs.html">Docs</a>
-        <a href="faq.html">FAQ</a>
-        <a href="privacy.html">Privacy Policy</a>
-        <a href="terms.html">Terms of Service</a>
+  <!-- Big Google & Antigravity Style Footer -->
+  <footer class="big-footer">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand-title">
+          <div class="logo-badge">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+          </div>
+          PocketDesk
+        </div>
+        <p class="footer-brand-desc">
+          The privacy-first workspace hub. Manage your tasks, smart calendar, notes, expenses, and AI companions with local privacy or cloud backup.
+        </p>
       </div>
+
+      <div>
+        <div class="footer-col-title">Product</div>
+        <ul class="footer-list">
+          <li><a href="index.html#dashboard">Dashboard</a></li>
+          <li><a href="features.html">Features</a></li>
+          <li><a href="index.html#plans">Pricing Plans</a></li>
+          <li><a href="download.html">Download App</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Resources</div>
+        <ul class="footer-list">
+          <li><a href="docs.html">Documentation</a></li>
+          <li><a href="logs.html">Release Logs</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+          <li><a href="https://github.com/Aaryanbanskota/Pocket-Desk" target="_blank" rel="noopener">GitHub Repository</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Legal & Security</div>
+        <ul class="footer-list">
+          <li><a href="privacy.html">Privacy Policy</a></li>
+          <li><a href="terms.html">Terms of Service</a></li>
+          <li><a href="docs.html#security">Security Architecture</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom-bar">
+      <span>&copy; 2026 PocketDesk. Google & Antigravity Minimalist Design System.</span>
+      <span>Built with Flutter & Supabase.</span>
     </div>
   </footer>
 
   <script>
-    function toggleLog(header) {
-      const item = header.parentElement;
-      item.classList.toggle('open');
-    }
-
-    function filterLogs(category) {
-      document.querySelectorAll('.filter-chip').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-
-      document.querySelectorAll('.log-item').forEach(item => {
-        if (category === 'all' || item.dataset.category === category) {
-          item.style.display = 'block';
-        } else {
-          item.style.display = 'none';
-        }
-      });
-    }
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+    });
   </script>
 </body>
 </html>

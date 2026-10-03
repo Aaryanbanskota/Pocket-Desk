@@ -201,6 +201,81 @@ body.dark-mode .navbar {
   gap: 12px;
 }
 
+.hamburger-btn {
+  display: none;
+  background: var(--surface-variant);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  z-index: 1001;
+}
+
+.hamburger-btn:hover {
+  background: var(--border-color);
+}
+
+.mobile-menu-drawer {
+  display: none;
+  position: fixed;
+  top: 72px;
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 72px);
+  background: var(--bg-color);
+  box-sizing: border-box;
+  padding: 32px 24px;
+  flex-direction: column;
+  gap: 24px;
+  z-index: 999;
+  overflow-y: auto;
+  border-top: 1px solid var(--border-subtle);
+  transform: translateY(-10px);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.mobile-menu-drawer.active {
+  display: flex;
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-nav-link {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+
+.mobile-nav-link:hover, .mobile-nav-link.active {
+  background-color: var(--google-blue-container);
+  color: var(--google-blue);
+}
+
+.mobile-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-subtle);
+}
+
 .btn-pill {
   display: inline-flex;
   align-items: center;
@@ -980,17 +1055,23 @@ body.dark-mode .btn-hero-dark:hover {
 @media (max-width: 768px) {
   .full-section {
     min-height: auto;
-    padding: 60px 16px 40px;
+    padding: 48px 16px 36px;
   }
 
   .hero-section {
     min-height: auto;
-    padding: 60px 16px 40px;
+    padding: 48px 16px 36px;
   }
 
   .hero-title {
-    font-size: clamp(34px, 9vw, 48px);
-    margin-bottom: 24px;
+    font-size: clamp(30px, 8vw, 44px);
+    margin-bottom: 20px;
+    line-height: 1.15;
+  }
+
+  .hero-subtitle {
+    font-size: 15px !important;
+    margin-bottom: 24px !important;
   }
 
   .logo {
@@ -998,25 +1079,74 @@ body.dark-mode .btn-hero-dark:hover {
   }
 
   .logo-img {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
   }
 
   .hero-badge-img {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
   }
 
   .hero-badge-text {
-    font-size: 19px;
+    font-size: 18px;
   }
 
   .nav-links {
-    display: none; /* Collapsed for clean mobile layout */
+    display: none; /* Hidden on mobile in favor of hamburger drawer */
+  }
+
+  .nav-actions .btn-pill {
+    display: none; /* Moved into mobile drawer for mobile */
+  }
+
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .showcase-container {
+    width: 100%;
+    border-radius: 16px;
+  }
+
+  .showcase-header {
+    padding: 12px 16px;
+  }
+
+  .window-title {
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+  }
+
+  .showcase-body {
+    padding: 20px 16px;
+    gap: 20px;
+  }
+
+  .dashboard-preview-card {
+    padding: 18px 14px;
   }
 
   .dash-grid {
     grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .dash-widget {
+    padding: 16px;
+  }
+
+  .mascot-card {
+    padding: 24px 18px;
+  }
+
+  .mascot-svg-avatar {
+    width: 85px;
+    height: 85px;
+    margin-bottom: 14px;
   }
 
   .features-grid {

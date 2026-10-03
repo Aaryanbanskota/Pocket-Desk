@@ -56,23 +56,28 @@
   </header>
 
   <main>
-    <!-- Antigravity Hero Banner -->
-    <section class="hero-section" style="padding: 60px 24px 36px;">
-      <h1 class="hero-title" style="font-size: clamp(40px, 6vw, 68px); font-weight: 700; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 24px;">
+    <!-- Antigravity Hero Section (Full Viewport) -->
+    <section class="hero-section full-section">
+      <h1 class="hero-title" style="font-size: clamp(42px, 6vw, 72px); font-weight: 700; letter-spacing: -1.6px; line-height: 1.1; margin-bottom: 24px;">
         Experience liftoff with the<br>next-gen local-first platform
       </h1>
-      <p class="hero-subtitle" style="max-width: 640px; margin: 0 auto 32px; font-size: 18px; color: var(--text-secondary);">
+      <p class="hero-subtitle" style="max-width: 640px; margin: 0 auto 36px; font-size: 19px; color: var(--text-secondary);">
         PocketDesk combines Tasks, Smart Calendar, Rich Notes, Expense Tracker, P2P File Sync, and an AI Mascot Assistant — with 100% local privacy or optional Supabase cloud.
       </p>
       <div class="hero-buttons" style="justify-content: center;">
-        <a href="download.html" class="btn-pill btn-dark" style="padding: 12px 32px; font-size: 15px;">
-          Download
+        <a href="download.html" class="btn-pill btn-dark" style="padding: 14px 36px; font-size: 16px;">
+          <span>Download</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
         </a>
       </div>
     </section>
 
-    <!-- App Showcase & AI Mascot Container -->
-    <section id="dashboard" class="section-wrapper">
+    <!-- App Showcase & AI Mascot Container (Full Viewport Section) -->
+    <section id="dashboard" class="section-wrapper full-section">
       <div class="showcase-container">
         <div class="showcase-header">
           <div class="window-dots">
@@ -172,8 +177,8 @@
       </div>
     </section>
 
-    <!-- Comprehensive Feature Grid -->
-    <section id="features" class="section-wrapper">
+    <!-- Comprehensive Feature Grid (Full Viewport Section) -->
+    <section id="features" class="section-wrapper full-section">
       <div class="section-header">
         <h2 class="section-title">Everything You Need. Designed Privately.</h2>
         <p class="section-desc">Engineered for peak performance, clean organization, and privacy autonomy.</p>
@@ -251,8 +256,8 @@
       </div>
     </section>
 
-    <!-- Plans & Pricing Section -->
-    <section id="plans" class="section-wrapper">
+    <!-- Plans & Pricing Section (Full Viewport Section) -->
+    <section id="plans" class="section-wrapper full-section">
       <div class="section-header">
         <h2 class="section-title">Simple, Transparent Account Tiers</h2>
         <p class="section-desc">Choose between 100% offline Local Mode or Supabase Cloud Sync.</p>
@@ -315,16 +320,6 @@
       </div>
     </section>
 
-    <!-- About Section -->
-    <section id="about" class="section-wrapper">
-      <div class="section-header">
-        <h2 class="section-title">Local-First Software Architecture</h2>
-        <p class="section-desc">
-          PocketDesk was crafted by developers who believe personal data belongs to the user. Whether you choose total offline isolation or Supabase cloud sync, you remain in complete control.
-        </p>
-      </div>
-    </section>
-
   </main>
 
   <footer class="antigravity-footer">
@@ -372,11 +367,6 @@
     </div>
   </footer>
 
-  <script>
-    const themeBtn = document.getElementById('theme-toggle');
-    themeBtn.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-    });
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>

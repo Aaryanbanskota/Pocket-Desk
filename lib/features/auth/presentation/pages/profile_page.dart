@@ -309,9 +309,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       ),
                       _InfoRow(
                         label: 'Storage Tier',
-                        value: planState.cloudPlan == CloudPlan.pro
-                            ? 'Pro (10 GB Text+Video)'
-                            : 'Free (500 MB Text)',
+                        value: planState.isProApprovalPending
+                            ? 'Pro (Pending Manual Activation)'
+                            : (planState.cloudPlan == CloudPlan.pro
+                                ? 'Pro (10 GB Text+Video+Audio)'
+                                : 'Free (500 MB Text Only)'),
                       ),
                       _InfoRow(
                           label: 'Member since',
@@ -320,6 +322,33 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         _InfoRow(
                             label: 'Last login',
                             value: _formatDate(user.lastLoginAt!)),
+                      if (planState.accountType == AccountType.cloud ||
+                          planState.isProApprovalPending) ...[
+                        const Divider(height: 24),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () async {
+                              await ref
+                                  .read(accountPlanProvider.notifier)
+                                  .resetToLocalAccount();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Account state reset to Local Account! You can now test account conversion flow again.'),
+                                    backgroundColor: Colors.teal,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.refresh_rounded, color: Colors.orange),
+                            label: const Text(
+                              'Reset Account to Local Mode (Test Flow)',
+                              style: TextStyle(color: Colors.orange),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -330,11 +359,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   Widget _buildCloudProBanner(BuildContext context, AccountPlanState planState) {
     final theme = Theme.of(context);
+    final isPending = planState.isProApprovalPending;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.indigo.shade800, Colors.purple.shade900],
+          colors: isPending
+              ? [Colors.orange.shade900, Colors.deepOrange.shade800]
+              : [Colors.indigo.shade800, Colors.purple.shade900],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
@@ -346,12 +379,17 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         children: [
           Row(
             children: [
-              const Icon(Icons.workspace_premium_rounded,
-                  color: Colors.amber, size: 28),
+              Icon(
+                isPending ? Icons.pending_actions_rounded : Icons.workspace_premium_rounded,
+                color: Colors.amber,
+                size: 28,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Upgrade to Cloud Pro (\$5/mo)',
+                  isPending
+                      ? 'Pro Upgrade Request Pending ⏳'
+                      : 'Upgrade to Cloud Pro (\$5/mo)',
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -361,9 +399,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Unlock 10GB cloud storage, video attachments, and multi-device Supabase automatic syncing.',
-            style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.3),
+          Text(
+            isPending
+                ? 'Your Pro request is recorded! Text storage is active. You will receive a payment link via email; once paid, Pro (Images + Audio buckets) will be manually activated by admin.'
+                : 'Unlock 10GB cloud storage, image attachments bucket, audio attachments bucket, and multi-device Supabase automatic syncing.',
+            style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.3),
           ),
           const SizedBox(height: 12),
           ElevatedButton.icon(
@@ -373,8 +413,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               foregroundColor: Colors.black,
             ),
             icon: const Icon(Icons.star_rounded, size: 18),
-            label: const Text('View Cloud Pro Features',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            label: Text(
+              isPending ? 'View Pending Plan Status' : 'View Cloud Pro Features',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

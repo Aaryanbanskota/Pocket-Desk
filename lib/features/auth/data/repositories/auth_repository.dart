@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:isar/isar.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../features/calendar/data/models/calendar_event_model.dart';
@@ -15,6 +16,7 @@ import '../../../../features/tasks/data/models/task_model.dart';
 import '../../../../features/trash/data/models/trash_item_model.dart';
 import '../../../../core/error/app_failure.dart';
 import '../../../../core/logging/app_logger.dart';
+import '../../../../core/services/supabase_auth_service.dart';
 import '../models/user_model.dart';
 import '../services/password_hasher.dart';
 import '../services/secure_auth_storage.dart';
@@ -165,11 +167,21 @@ class AuthRepository {
 
   Future<AppFailure?> deleteAccount(int userId) async {
     try {
+      // 1. Fetch cloud email if stored to delete pro_requests & cloud metadata
+      const rawStorage = FlutterSecureStorage();
+      final cloudEmail = await rawStorage.read(key: 'cloud_email');
+      if (cloudEmail != null && cloudEmail.isNotEmpty) {
+        await SupabaseAuthService.deleteUserData(email: cloudEmail);
+      }
+
+      // 2. Clear all local database records (Isar tables: notes, tasks, events, expenses, posts, settings, trash)
       await _isar.writeTxn(() async {
         await _isar.clear();
       });
+
+      // 3. Clear all secure storage credentials and state keys
       await _secureStorage.clearAll();
-      AppLogger.i('Account and all database records wiped completely',
+      AppLogger.i('Account and all database records, image/audio/text metadata wiped completely',
           tag: 'AuthRepository');
       return null;
     } catch (e, st) {

@@ -80,6 +80,31 @@ class AccountPlanNotifier extends StateNotifier<AccountPlanState> {
     state = state.copyWith(cloudPlan: plan, isProApprovalPending: isPending);
   }
 
+  Future<void> convertToCloudAccount({required String email, required CloudPlan plan}) async {
+    await _storage.write(key: 'account_type', value: 'cloud');
+    await _storage.write(key: 'cloud_plan', value: plan.name);
+    final isPending = plan == CloudPlan.pro;
+    await _storage.write(key: 'pro_pending', value: isPending.toString());
+    await _storage.write(key: 'cloud_email', value: email);
+    state = state.copyWith(
+      accountType: AccountType.cloud,
+      cloudPlan: plan,
+      isProApprovalPending: isPending,
+    );
+  }
+
+  Future<void> resetToLocalAccount() async {
+    await _storage.delete(key: 'account_type');
+    await _storage.delete(key: 'cloud_plan');
+    await _storage.delete(key: 'pro_pending');
+    await _storage.delete(key: 'cloud_email');
+    state = const AccountPlanState(
+      accountType: AccountType.local,
+      cloudPlan: CloudPlan.free,
+      isProApprovalPending: false,
+    );
+  }
+
   Future<void> updateBlacklistStatus(bool blacklisted) async {
     await _storage.write(key: 'blacklisted', value: blacklisted.toString());
     state = state.copyWith(isBlacklisted: blacklisted);

@@ -6,6 +6,9 @@ import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../data/models/calendar_event_model.dart';
 import '../../data/repositories/calendar_repository.dart';
+import '../../../notes/presentation/providers/notes_notifier.dart';
+import '../../../tasks/data/models/task_model.dart';
+import '../../../tasks/presentation/providers/tasks_notifier.dart';
 import '../../../trash/data/models/trash_item_model.dart';
 import '../../../trash/presentation/providers/trash_notifier.dart';
 
@@ -34,7 +37,56 @@ class CalendarEventsNotifier extends AutoDisposeAsyncNotifier<List<CalendarEvent
     if (authState is! AuthAuthenticated) return [];
 
     final repo = await ref.read(calendarRepositoryProvider.future);
-    return repo.getEventsForUser(authState.user.id);
+    final realEvents = await repo.getEventsForUser(authState.user.id);
+
+    final syntheticEvents = <CalendarEventModel>[];
+
+    // 1. Interconnect Tasks with due dates into Calendar
+    final tasksState = ref.read(tasksProvider).valueOrNull;
+    if (tasksState != null) {
+      for (final task in tasksState.tasks) {
+        if (task.dueDate != null) {
+          final due = task.dueDate!;
+          final isDone = task.status == TaskStatus.done;
+          syntheticEvents.add(
+            CalendarEventModel()
+              ..id = 9000000 + (task.id.hashCode.abs() % 900000)
+              ..userId = authState.user.id
+              ..title = '${isDone ? "✓ " : "📋 Task Due: "}${task.title}'
+              ..startTime = due
+              ..endTime = due.add(const Duration(hours: 1))
+              ..description = task.description ?? 'Task due date'
+              ..category = 'Task'
+              ..colorHex = isDone ? '#4CAF50' : '#FF9800'
+              ..isAllDay = false,
+          );
+        }
+      }
+    }
+
+    // 2. Interconnect Notes creation date into Calendar
+    final notesState = ref.read(notesProvider).valueOrNull;
+    if (notesState != null) {
+      for (final note in notesState.notes) {
+        final created = note.createdAt;
+        syntheticEvents.add(
+          CalendarEventModel()
+            ..id = 8000000 + (note.id.hashCode.abs() % 900000)
+            ..userId = authState.user.id
+            ..title = '📝 Note Created: ${note.title}'
+            ..startTime = created
+            ..endTime = created.add(const Duration(hours: 1))
+            ..description = note.content.length > 150
+                ? '${note.content.substring(0, 150)}...'
+                : note.content
+            ..category = 'Note'
+            ..colorHex = '#2196F3'
+            ..isAllDay = false,
+        );
+      }
+    }
+
+    return [...realEvents, ...syntheticEvents];
   }
 
   Future<void> addOrUpdateEvent({

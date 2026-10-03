@@ -231,8 +231,8 @@ GoRouter appRouter(Ref ref) {
             : AppRoutes.dashboard;
       }
 
-      // 3. Authenticated users submitting login or register forms
-      if (onAuthPage) {
+      // 3. Authenticated users submitting login or register forms (subscriptionPlan is allowed for logged-in users)
+      if (onAuthPage && location != AppRoutes.subscriptionPlan) {
         return isNewRegistration
             ? AppRoutes.setupOnboarding
             : AppRoutes.dashboard;

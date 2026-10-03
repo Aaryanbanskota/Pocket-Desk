@@ -263,6 +263,10 @@ class AuthRepository {
       throw StateError('The stored account no longer exists.');
     }
 
+    if (account.email != null && account.email!.isNotEmpty) {
+      await SupabaseAuthService.deleteUserData(email: account.email!);
+    }
+
     await _isar.writeTxn(() async {
       await _isar.calendarEventModels
           .filter()

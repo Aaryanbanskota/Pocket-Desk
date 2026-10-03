@@ -171,7 +171,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           : ListView(
               padding: const EdgeInsets.all(AppSpacing.lg),
               children: [
-                _AvatarSection(user: user, onPickAvatar: _pickAvatar),
+                _AvatarSection(
+                  user: user,
+                  planState: planState,
+                  onPickAvatar: _pickAvatar,
+                ),
                 const SizedBox(height: AppSpacing.xl),
 
                 // Cloud Pro Plan Upgrade Card for Local / Free Tier Users
@@ -431,14 +435,45 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 }
 
 class _AvatarSection extends StatelessWidget {
-  const _AvatarSection({required this.user, required this.onPickAvatar});
+  const _AvatarSection({
+    required this.user,
+    required this.planState,
+    required this.onPickAvatar,
+  });
+
   final UserModel user;
+  final AccountPlanState planState;
   final VoidCallback onPickAvatar;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final avatarB64 = user.avatarBase64;
+
+    // Determine exact badge status
+    String badgeLabel;
+    IconData badgeIcon;
+    Color badgeColor;
+
+    if (planState.isProApprovalPending) {
+      badgeLabel = 'Pending Pro User';
+      badgeIcon = Icons.hourglass_top_rounded;
+      badgeColor = Colors.orange.shade800;
+    } else if (planState.accountType == AccountType.cloud) {
+      if (planState.cloudPlan == CloudPlan.pro || planState.isProActive) {
+        badgeLabel = 'Cloud Pro';
+        badgeIcon = Icons.workspace_premium_rounded;
+        badgeColor = Colors.amber.shade900;
+      } else {
+        badgeLabel = 'Cloud Free';
+        badgeIcon = Icons.cloud_done_rounded;
+        badgeColor = Colors.blue.shade700;
+      }
+    } else {
+      badgeLabel = 'Local User';
+      badgeIcon = Icons.sd_storage_rounded;
+      badgeColor = Colors.green.shade700;
+    }
 
     return Center(
       child: Column(
@@ -487,6 +522,30 @@ class _AvatarSection extends StatelessWidget {
             '@${user.username}',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: badgeColor.withAlpha(25),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: badgeColor.withAlpha(80), width: 1.5),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(badgeIcon, size: 16, color: badgeColor),
+                const SizedBox(width: 6),
+                Text(
+                  badgeLabel,
+                  style: TextStyle(
+                    color: badgeColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

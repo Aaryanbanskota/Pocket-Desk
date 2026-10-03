@@ -366,53 +366,147 @@ class _PrivacySettingsWidgetState extends ConsumerState<PrivacySettingsWidget> {
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Stored Accounts'),
+          title: Row(
+            children: [
+              const Icon(Icons.storage_rounded, color: Colors.blue),
+              const SizedBox(width: 8),
+              Text('Stored Accounts (${accounts.length})'),
+            ],
+          ),
           content: SizedBox(
-            width: 420,
-            child: accounts.length <= 1
-                ? Text(
-                    '${accounts.length} account${accounts.length == 1 ? '' : 's'} stored on this device.',
-                  )
+            width: 460,
+            child: accounts.isEmpty
+                ? const Text('No user accounts stored on this device.')
                 : ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 400),
-                    child: ListView(
-                      shrinkWrap: true,
-                      children: [
-                        Text(
-                          '${accounts.length} accounts are stored on this device. '
-                          'Secondary accounts can be permanently removed without their password.',
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        for (final account in accounts)
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(
-                              account.displayName?.isNotEmpty == true
-                                  ? account.displayName!
-                                  : account.username,
-                            ),
-                            subtitle: Text(account.username),
-                            trailing: _isCurrentAccount(account.id)
-                                ? const Chip(label: Text('Current'))
-                                : IconButton(
-                                    tooltip: 'Permanently delete account',
-                                    onPressed: () =>
-                                        _confirmStoredAccountDeletion(
+                    constraints: const BoxConstraints(maxHeight: 450),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Below is the complete list of ${accounts.length} account${accounts.length == 1 ? '' : 's'} registered on this device\'s storage:',
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                          const SizedBox(height: 12),
+                          for (final account in accounts) ...[
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerLow,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: _isCurrentAccount(account.id)
+                                      ? Colors.blue.withAlpha(150)
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .outlineVariant,
+                                  width: _isCurrentAccount(account.id) ? 2 : 1,
+                                ),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 18,
+                                    backgroundColor:
+                                        account.email != null && account.email!.isNotEmpty
+                                            ? Colors.blue.withAlpha(30)
+                                            : Colors.green.withAlpha(30),
+                                    child: Icon(
+                                      account.email != null && account.email!.isNotEmpty
+                                          ? Icons.cloud_done_rounded
+                                          : Icons.sd_storage_rounded,
+                                      size: 20,
+                                      color: account.email != null && account.email!.isNotEmpty
+                                          ? Colors.blue
+                                          : Colors.green,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                account.displayName?.isNotEmpty == true
+                                                    ? account.displayName!
+                                                    : account.username,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ),
+                                            if (_isCurrentAccount(account.id))
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 8, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.blue.withAlpha(30),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: const Text(
+                                                  'Active Now',
+                                                  style: TextStyle(
+                                                    color: Colors.blue,
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text('Username: @${account.username}',
+                                            style: const TextStyle(fontSize: 12)),
+                                        if (account.email != null && account.email!.isNotEmpty)
+                                          Text('Gmail: ${account.email}',
+                                              style: const TextStyle(
+                                                  fontSize: 12, color: Colors.blue)),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          account.email != null && account.email!.isNotEmpty
+                                              ? 'Mode: Cloud Account (Supabase Sync)'
+                                              : 'Mode: Local Account (Offline Device)',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    tooltip: _isCurrentAccount(account.id)
+                                        ? 'Delete current active account'
+                                        : 'Delete this stored account',
+                                    onPressed: () => _confirmStoredAccountDeletion(
                                       account,
                                       dialogContext,
                                     ),
-                                    icon: const Icon(Icons.delete_forever),
-                                    color: Theme.of(context).colorScheme.error,
+                                    icon: const Icon(Icons.delete_forever_rounded),
+                                    color: Colors.red,
                                   ),
-                          ),
-                      ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Done'),
+              child: const Text('Close'),
             ),
           ],
         ),

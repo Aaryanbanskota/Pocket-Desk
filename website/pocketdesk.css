@@ -214,14 +214,40 @@ body.dark-mode .navbar {
   cursor: pointer;
   transition: var(--transition);
   z-index: 1001;
+  position: relative;
 }
 
 .hamburger-btn:hover {
   background: var(--border-color);
 }
 
+.hamburger-icon, .close-icon {
+  position: absolute;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hamburger-icon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+.close-icon {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.5);
+}
+
+.hamburger-btn.active .hamburger-icon {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.5);
+}
+
+.hamburger-btn.active .close-icon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
 .mobile-menu-drawer {
-  display: none;
+  display: flex;
   position: fixed;
   top: 72px;
   left: 0;
@@ -235,15 +261,18 @@ body.dark-mode .navbar {
   z-index: 999;
   overflow-y: auto;
   border-top: 1px solid var(--border-subtle);
-  transform: translateY(-10px);
+  transform: translateY(-20px);
   opacity: 0;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s ease;
 }
 
 .mobile-menu-drawer.active {
-  display: flex;
   transform: translateY(0);
   opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .mobile-nav-links {

@@ -124,9 +124,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const isActive = mobileDrawer.classList.contains('active');
       if (isActive) {
         mobileDrawer.classList.remove('active');
+        hamburgerBtn.classList.remove('active');
         hamburgerBtn.setAttribute('aria-expanded', 'false');
       } else {
         mobileDrawer.classList.add('active');
+        hamburgerBtn.classList.add('active');
         hamburgerBtn.setAttribute('aria-expanded', 'true');
       }
     });
@@ -136,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     drawerLinks.forEach(link => {
       link.addEventListener('click', () => {
         mobileDrawer.classList.remove('active');
+        hamburgerBtn.classList.remove('active');
         if (hamburgerBtn) hamburgerBtn.setAttribute('aria-expanded', 'false');
       });
     });

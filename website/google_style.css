@@ -51,7 +51,7 @@
   --transition: all 0.24s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-body.dark-mode {
+html.dark-mode, body.dark-mode {
   --bg-color: #121212;
   --surface-color: #1e1e1e;
   --surface-low: #181818;
@@ -76,6 +76,8 @@ body.dark-mode {
   --shadow-sm: 0 1px 3px 0 rgba(0,0,0,0.5);
   --shadow-md: 0 4px 12px 0 rgba(0,0,0,0.5);
   --shadow-lg: 0 8px 32px 0 rgba(0,0,0,0.6);
+  background-color: #121212 !important;
+  color: #e8eaed !important;
 }
 
 * {
@@ -165,16 +167,11 @@ body.dark-mode .navbar {
   letter-spacing: -0.3px;
 }
 
-.logo-badge {
-  width: 36px;
-  height: 36px;
-  background: var(--google-blue);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  box-shadow: 0 4px 10px rgba(26, 115, 232, 0.25);
+.logo-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
 .nav-links {

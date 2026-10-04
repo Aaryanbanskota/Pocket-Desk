@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Frequently Asked Questions — PocketDesk</title>
   <meta name="description" content="Frequently asked questions about PocketDesk features, local privacy, cloud sync, AI mascot, and account plans.">
-  <link rel="icon" type="image/png" href="assets/logo.png">
-  <link rel="apple-touch-icon" href="assets/logo.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="128x128" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="favicon.png">
   <script>
     (function() {
       const savedTheme = localStorage.getItem('theme');
@@ -15,7 +18,7 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="google_style.css">
+  <link rel="stylesheet" href="pocketdesk.css">
 </head>
 <body>
 
@@ -55,9 +58,41 @@
             <line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
         </a>
+        <button id="hamburger-btn" class="hamburger-btn" aria-label="Toggle navigation menu" aria-expanded="false">
+          <svg class="hamburger-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+          <svg class="close-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
     </div>
   </header>
+
+  <!-- Mobile Drawer Menu -->
+  <div id="mobile-menu-drawer" class="mobile-menu-drawer">
+    <nav class="mobile-nav-links">
+      <a href="features.html" class="mobile-nav-link">Products</a>
+      <a href="docs.html" class="mobile-nav-link ">Docs</a>
+      <a href="index.html#plans" class="mobile-nav-link">Pricing</a>
+      <a href="logs.html" class="mobile-nav-link ">Release Logs</a>
+      <a href="faq.html" class="mobile-nav-link active">FAQ</a>
+    </nav>
+    <div class="mobile-menu-actions">
+      <a href="download.html" class="btn-pill btn-dark" style="width: 100%; justify-content: center; gap: 8px; padding: 14px 20px;">
+        <span>Download App</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+      </a>
+    </div>
+  </div>
 
   <main class="section-wrapper" style="padding-top: 60px; max-width: 860px;">
     <div class="section-header" style="text-align: center; margin-bottom: 48px;">

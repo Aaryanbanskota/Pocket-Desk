@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PocketDesk — AI-Powered Productivity Hub & Local Privacy Workspace</title>
   <meta name="description" content="Manage calendars, tasks, rich notes, financial tracking, P2P file sharing, and Pocket AI Assistant — with zero-cloud local privacy or optional Supabase cloud backup.">
-  <link rel="icon" type="image/png" href="assets/logo.png">
-  <link rel="apple-touch-icon" href="assets/logo.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="128x128" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="favicon.png">
   <script>
     (function() {
       const savedTheme = localStorage.getItem('theme');
@@ -15,7 +18,7 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="google_style.css">
+  <link rel="stylesheet" href="pocketdesk.css">
 </head>
 <body>
 
@@ -55,27 +58,77 @@
             <line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
         </a>
+        <button id="hamburger-btn" class="hamburger-btn" aria-label="Toggle navigation menu" aria-expanded="false">
+          <svg class="hamburger-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+          <svg class="close-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
     </div>
   </header>
 
+  <!-- Mobile Drawer Menu -->
+  <div id="mobile-menu-drawer" class="mobile-menu-drawer">
+    <nav class="mobile-nav-links">
+      <a href="features.html" class="mobile-nav-link">Products</a>
+      <a href="docs.html" class="mobile-nav-link">Docs</a>
+      <a href="#plans" class="mobile-nav-link">Pricing</a>
+      <a href="logs.html" class="mobile-nav-link">Release Logs</a>
+      <a href="faq.html" class="mobile-nav-link">FAQ</a>
+    </nav>
+    <div class="mobile-menu-actions">
+      <a href="download.html" class="btn-pill btn-dark" style="width: 100%; justify-content: center; gap: 8px; padding: 14px 20px;">
+        <span>Download App</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+      </a>
+    </div>
+  </div>
+
   <main>
-    <!-- Antigravity Hero Section (Full Viewport) -->
+    <!-- Antigravity Premium Hero Section (Full Viewport) -->
     <section class="hero-section full-section">
-      <h1 class="hero-title" style="font-size: clamp(42px, 6vw, 72px); font-weight: 700; letter-spacing: -1.6px; line-height: 1.1; margin-bottom: 24px;">
-        Experience liftoff with the<br>next-gen local-first platform
+      <!-- Scattered Particle Accents Canvas matching Antigravity -->
+      <svg class="hero-bg-accent" viewBox="0 0 1200 800" fill="none">
+        <circle cx="950" cy="180" r="3.5" fill="#ea4335" opacity="0.7"/>
+        <circle cx="1020" cy="240" r="4" fill="#1a73e8" opacity="0.8"/>
+        <circle cx="890" cy="310" r="3" fill="#fbbc04" opacity="0.7"/>
+        <circle cx="1060" cy="380" r="4.5" fill="#34a853" opacity="0.85"/>
+        <circle cx="980" cy="450" r="3" fill="#ea4335" opacity="0.6"/>
+        <circle cx="1110" cy="510" r="5" fill="#1a73e8" opacity="0.7"/>
+        <circle cx="870" cy="210" r="2.5" fill="#34a853" opacity="0.6"/>
+        <circle cx="150" cy="220" r="3.5" fill="#1a73e8" opacity="0.7"/>
+        <circle cx="210" cy="340" r="4" fill="#34a853" opacity="0.6"/>
+        <circle cx="120" cy="460" r="3" fill="#fbbc04" opacity="0.7"/>
+        <circle cx="260" cy="530" r="4.5" fill="#ea4335" opacity="0.8"/>
+      </svg>
+
+      <!-- Brand Badge above headline -->
+      <div class="hero-brand-badge">
+        <img src="assets/logo.png" alt="PocketDesk" class="hero-badge-img">
+        <span class="hero-badge-text">PocketDesk</span>
+      </div>
+
+      <h1 class="hero-title">
+        Organize Life & Work.<br>Smart, Local & Private.
       </h1>
-      <p class="hero-subtitle" style="max-width: 640px; margin: 0 auto 36px; font-size: 19px; color: var(--text-secondary);">
-        PocketDesk combines Tasks, Smart Calendar, Rich Notes, Expense Tracker, P2P File Sync, and an AI Mascot Assistant — with 100% local privacy or optional Supabase cloud.
+
+      <p class="hero-subtitle" style="max-width: 680px; margin: 0 auto 36px; font-size: clamp(16px, 2.2vw, 20px); color: var(--text-secondary); line-height: 1.5; font-weight: 400; z-index: 1;">
+        PocketDesk combines tasks, smart calendar, rich notes, expenses, and Pocket AI — with zero-cloud local privacy or seamless cloud backup.
       </p>
-      <div class="hero-buttons" style="justify-content: center;">
-        <a href="download.html" class="btn-pill btn-dark" style="padding: 14px 36px; font-size: 16px;">
-          <span>Download</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
+
+      <div class="hero-buttons">
+        <a href="download.html" class="btn-hero-dark">
+          Download App
         </a>
       </div>
     </section>

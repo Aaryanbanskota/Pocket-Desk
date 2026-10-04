@@ -115,4 +115,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // ─── Mobile Hamburger Drawer Toggle Logic ─────────────────────────────────
+  const hamburgerBtn = document.getElementById('hamburger-btn');
+  const mobileDrawer = document.getElementById('mobile-menu-drawer');
+
+  if (hamburgerBtn && mobileDrawer) {
+    hamburgerBtn.addEventListener('click', () => {
+      const isActive = mobileDrawer.classList.contains('active');
+      if (isActive) {
+        mobileDrawer.classList.remove('active');
+        hamburgerBtn.classList.remove('active');
+        hamburgerBtn.setAttribute('aria-expanded', 'false');
+      } else {
+        mobileDrawer.classList.add('active');
+        hamburgerBtn.classList.add('active');
+        hamburgerBtn.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    // Close mobile drawer when clicking any link inside it
+    const drawerLinks = mobileDrawer.querySelectorAll('a');
+    drawerLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        mobileDrawer.classList.remove('active');
+        hamburgerBtn.classList.remove('active');
+        if (hamburgerBtn) hamburgerBtn.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+
 });

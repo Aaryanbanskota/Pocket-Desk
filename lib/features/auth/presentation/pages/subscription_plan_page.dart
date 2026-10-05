@@ -409,6 +409,7 @@ class _SubscriptionPlanPageState extends ConsumerState<SubscriptionPlanPage> {
           children: [
             Row(
               children: [
+                // ignore: deprecated_member_use
                 Radio<CloudPlan>(
                   value: plan,
                   groupValue: _selectedPlan,

@@ -341,7 +341,7 @@ class _DrawerCustomizerSheet extends ConsumerWidget {
           Expanded(
             child: ReorderableListView.builder(
               itemCount: state.itemOrder.length,
-              onReorder: (oldIndex, newIndex) => notifier.reorderItems(oldIndex, newIndex),
+              onReorderItem: (oldIndex, newIndex) => notifier.reorderItems(oldIndex, newIndex),
               itemBuilder: (context, index) {
                 final key = state.itemOrder[index];
                 final config = kDrawerItemsMap[key];

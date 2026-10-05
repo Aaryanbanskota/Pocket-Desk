@@ -547,6 +547,8 @@ class _PostsPageState extends ConsumerState<PostsPage> {
       recorder = null;
     }
 
+    if (!mounted) return;
+
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -2221,7 +2223,7 @@ class _InstantCameraModalState extends State<_InstantCameraModal> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.5),
+                            color: Colors.black.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
@@ -2295,7 +2297,7 @@ class _InstantCameraModalState extends State<_InstantCameraModal> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                          color: Colors.white.withOpacity(0.6), width: 5),
+                          color: Colors.white.withValues(alpha: 0.6), width: 5),
                     ),
                     child: Center(
                       child: Container(

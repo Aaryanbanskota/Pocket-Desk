@@ -189,7 +189,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: layoutState.widgetOrder.length,
-                  onReorder: (oldIndex, newIndex) => layoutNotifier.reorderWidgets(oldIndex, newIndex),
+                  onReorderItem: (oldIndex, newIndex) => layoutNotifier.reorderWidgets(oldIndex, newIndex),
                   itemBuilder: (context, index) {
                     final key = layoutState.widgetOrder[index];
                     final isHidden = layoutState.hiddenWidgets.contains(key);

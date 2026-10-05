@@ -501,6 +501,7 @@ class _AISettingsWidgetState extends ConsumerState<AISettingsWidget> {
               ),
               child: Column(
                 children: [
+                  // ignore: deprecated_member_use
                   RadioListTile<String>(
                     title: const Text('Boxed Card Style', style: TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: const Text('Speech text inside a rounded box card container with top mascot avatar'),
@@ -513,6 +514,7 @@ class _AISettingsWidgetState extends ConsumerState<AISettingsWidget> {
                     },
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
+                  // ignore: deprecated_member_use
                   RadioListTile<String>(
                     title: const Text('Minimalist Floating Style', style: TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: const Text('Plain floating speech text beside mascot avatar with "Type here" box'),

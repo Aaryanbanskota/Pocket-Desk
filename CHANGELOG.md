@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.2.2] — 2026-10-05 — Release Maintenance & Code Quality
+ 
+### Added & Updated
+- **Version Channel Badges & Guidance**:
+  - Distinguishes release channels (`-t` trial, `-rev` review, `-offi` official) with security guidance in update dialogs.
+- **Interactive "What's New" Feature Onboarding**:
+  - Walkthrough dialog with PageView controls, navigation chips, and skip options.
+- **Codebase Refactoring & Deprecation Cleanup**:
+  - Updated `ReorderableListView` callbacks from `onReorder` to `onReorderItem`.
+  - Converted deprecated `.withOpacity(...)` calls to `.withValues(...)`.
+  - Added async context safety (`mounted`) checks prior to modal dialog triggers.
+  - Silenced framework-level `Radio` deprecations pending Flutter SDK updates.
+
 ## [v1.2.0] — 2026-09-27 — Production Release
 
 ### Added

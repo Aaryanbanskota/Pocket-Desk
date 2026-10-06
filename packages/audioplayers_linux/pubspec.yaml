@@ -1,0 +1,19 @@
+name: audioplayers_linux
+description: Linux implementation of audioplayers with optional GStreamer fallback
+version: 4.3.0
+
+flutter:
+  plugin:
+    implements: audioplayers
+    platforms:
+      linux:
+        pluginClass: AudioplayersLinuxPlugin
+
+dependencies:
+  audioplayers_platform_interface: ^7.2.0
+  flutter:
+    sdk: flutter
+
+environment:
+  sdk: ^3.6.0
+  flutter: ">=3.44.0"

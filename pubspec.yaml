@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.2.1+4
+version: 1.2.2+6
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -64,13 +64,26 @@ dependencies:
   qr_flutter: ^4.1.0
   mobile_scanner: ^5.1.1
   camera: ^0.11.0
-  flutter_local_notifications: ^17.0.0
+  flutter_local_notifications: ^17.2.3
   http: ^1.2.2
   geolocator: ^13.0.2
   file_picker: ^8.0.0
+  image: ^4.1.7
   package_info_plus: ^8.0.0
   url_launcher: ^6.3.1
   record: ^7.1.1
+  shadcn_flutter: ^0.0.47
+  lucide_icons_flutter: ^4.0.0
+  drift: ^2.35.2
+  sqlite3_flutter_libs: ^0.6.0+eol
+  nepali_date_picker: ^6.0.2
+  nepali_utils: ^3.0.7
+  fl_chart: ^1.2.0
+  stop_watch_timer: ^3.2.2
+  shared_preferences: ^2.5.6
+  supabase_flutter: ^2.18.3
+  image_picker: ^1.2.4
+  socket_io_client: ^3.1.6
   audioplayers: ^6.8.1
 
 dev_dependencies:
@@ -88,10 +101,16 @@ dev_dependencies:
   json_annotation: ^4.9.0
   flutter_launcher_icons: ^0.13.1
 
+dependency_overrides:
+  audioplayers_linux:
+    path: packages/audioplayers_linux
+
 flutter_launcher_icons:
   android: true
   image_path: "assets/logo.png"
   min_sdk_android: 24
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/logo_foreground.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -106,8 +125,14 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/logo.png
     - assets/
+    - assets/logo.jpeg
+    - assets/logo.png
+    - assets/manifest.bin
+    - assets/AssetManifest.bin
+    - assets/sound/
+    - assets/sounds/
+    - assets/sounds/dtmf/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

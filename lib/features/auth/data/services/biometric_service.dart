@@ -12,11 +12,20 @@ class BiometricService {
   final LocalAuthentication _auth;
 
   static const _tag = 'BiometricService';
+  static bool isAuthenticating = false;
+  static DateTime? lastSuccessfulAuthTime;
 
   Future<bool> isBiometricAvailable() async {
     if (Platform.isLinux) return false;
     try {
-      return (await _auth.getAvailableBiometrics()).isNotEmpty;
+      final canCheck = await _auth.canCheckBiometrics;
+      if (canCheck) return true;
+      final isDeviceSupported = await _auth.isDeviceSupported();
+      if (isDeviceSupported) {
+        final enrolled = await _auth.getAvailableBiometrics();
+        return enrolled.isNotEmpty;
+      }
+      return false;
     } catch (e) {
       AppLogger.w('Biometric availability check failed: $e', tag: _tag);
       return false;
@@ -24,21 +33,28 @@ class BiometricService {
   }
 
   Future<bool> authenticate({
-    String localizedReason = 'Authenticate to access PocketDesk',
+    String localizedReason = 'Authenticate to access MyDay',
   }) async {
     if (Platform.isLinux) {
       throw const BiometricAuthenticationException(
         'Biometric authentication is not supported on Linux.',
       );
     }
+    isAuthenticating = true;
     try {
-      return await _auth.authenticate(
+      final result = await _auth.authenticate(
         localizedReason: localizedReason,
         options: const AuthenticationOptions(
           biometricOnly: false,
           stickyAuth: true,
+          useErrorDialogs: true,
+          sensitiveTransaction: false,
         ),
       );
+      if (result) {
+        lastSuccessfulAuthTime = DateTime.now();
+      }
+      return result;
     } on PlatformException catch (e) {
       final message = switch (e.code) {
         auth_error.notAvailable =>
@@ -55,6 +71,10 @@ class BiometricService {
       };
       AppLogger.e('Biometric auth error: ${e.code}', tag: _tag, error: e);
       throw BiometricAuthenticationException(message);
+    } finally {
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        isAuthenticating = false;
+      });
     }
   }
 }

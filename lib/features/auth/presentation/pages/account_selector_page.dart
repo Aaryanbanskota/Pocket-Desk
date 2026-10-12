@@ -48,7 +48,7 @@ class AccountSelectorPage extends ConsumerWidget {
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     Text(
-                      'How would you like to use PocketDesk?',
+                      'How would you like to use MyDay?',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,

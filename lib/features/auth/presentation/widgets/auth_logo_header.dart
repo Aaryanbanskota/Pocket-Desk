@@ -33,7 +33,7 @@ class AuthLogoHeader extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
             child: Image.asset(
-              'assets/logo.png',
+              'assets/logo.jpeg',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 // Fallback if image doesn't load
@@ -58,7 +58,7 @@ class AuthLogoHeader extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.lg),
         Text(
-          'PocketDesk',
+          'MyDay',
           style: theme.textTheme.headlineLarge?.copyWith(
             fontWeight: FontWeight.w800,
             color: colorScheme.onSurface,

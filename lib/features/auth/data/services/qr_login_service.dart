@@ -130,7 +130,7 @@ class QrLoginService {
     _key = await secretKey.extractBytes();
     _sessionId = const Uuid().v4();
     _deviceName =
-        deviceName.trim().isEmpty ? 'PocketDesk device' : deviceName.trim();
+        deviceName.trim().isEmpty ? 'MyDay device' : deviceName.trim();
     _pin = _random.nextInt(10000).toString().padLeft(4, '0');
     _isar = isar;
     _user = user;

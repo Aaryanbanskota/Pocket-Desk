@@ -59,12 +59,6 @@ class _LoginPageState extends ConsumerState<LoginPage>
         _userCtrl.text = lastUser;
       }
     });
-
-    // Auto-trigger biometric login if enabled
-    if (available && enabled && lastUser != null) {
-      await Future<void>.delayed(const Duration(milliseconds: 400));
-      if (mounted) await _biometricLogin();
-    }
   }
 
   @override

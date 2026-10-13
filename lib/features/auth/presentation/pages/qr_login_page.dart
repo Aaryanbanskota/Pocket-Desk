@@ -57,7 +57,7 @@ class _QrLoginPageState extends ConsumerState<QrLoginPage> {
     final qr = QrLoginQr.parse(value);
     if (qr == null) {
       _handlingScan = false;
-      setState(() => _error = 'This is not a valid PocketDesk login QR code.');
+      setState(() => _error = 'This is not a valid MyDay login QR code.');
       return;
     }
     await _scannerController.stop();

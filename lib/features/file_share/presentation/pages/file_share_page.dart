@@ -183,7 +183,7 @@ class _FileSharePageState extends ConsumerState<FileSharePage> {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PocketDesk Wi-Fi File Transfer</title>
+  <title>MyDay Wi-Fi File Transfer</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; display: flex; justify-content: center; }
     .card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
@@ -203,8 +203,8 @@ class _FileSharePageState extends ConsumerState<FileSharePage> {
 </head>
 <body>
   <div class="card">
-    <h2>🚀 PocketDesk File Portal</h2>
-    <p>Enter the 4-digit PIN shown in PocketDesk to view and download files on the same local network.</p>
+    <h2>🚀 MyDay File Portal</h2>
+    <p>Enter the 4-digit PIN shown in MyDay to view and download files on the same local network.</p>
     <div id="login-sec">
       <input type="password" id="pin" maxlength="4" inputmode="numeric" placeholder="••••">
       <button onclick="unlock()">Access Files</button>
@@ -212,7 +212,7 @@ class _FileSharePageState extends ConsumerState<FileSharePage> {
     </div>
     <div id="files-sec" style="display:none;">
       <h3>Shared Files <small id="file-count"></small></h3>
-      <p id="empty" style="color:#94a3b8; display:none;">No files yet. This list updates automatically when files are added in PocketDesk.</p>
+      <p id="empty" style="color:#94a3b8; display:none;">No files yet. This list updates automatically when files are added in MyDay.</p>
       <div id="file-list"></div>
     </div>
   </div>
@@ -422,7 +422,7 @@ class _FileSharePageState extends ConsumerState<FileSharePage> {
                       child: Text(
                         _serverReady
                             ? Platform.isAndroid
-                                ? 'Connect devices to the same non-guest Wi-Fi. Keep PocketDesk open on this screen while other devices connect.'
+                                ? 'Connect devices to the same non-guest Wi-Fi. Keep MyDay open on this screen while other devices connect.'
                                 : 'Open this address on a device connected to the same Wi-Fi. Keep this page open while sharing. If it cannot connect, allow TCP port $_port through the computer firewall.'
                             : 'Starting local share server…',
                         style: tt.bodySmall?.copyWith(

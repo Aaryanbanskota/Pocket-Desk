@@ -1012,7 +1012,7 @@ class _ClockPageState extends ConsumerState<ClockPage>
                             0,
                           ),
                           child: Text(
-                            'Keep PocketDesk running for alarms to fire on Linux.',
+                            'Keep MyDay running for alarms to fire on Linux.',
                             style: theme.textTheme.bodySmall
                                 ?.copyWith(color: colorScheme.onSurfaceVariant),
                           ),
@@ -1034,7 +1034,7 @@ class _ClockPageState extends ConsumerState<ClockPage>
                                       const SizedBox(height: AppSpacing.xs),
                                       Text(
                                         Platform.isLinux
-                                            ? 'Add an alarm. PocketDesk must remain running for it to fire.'
+                                            ? 'Add an alarm. MyDay must remain running for it to fire.'
                                             : 'Add an alarm to schedule a local notification.',
                                         textAlign: TextAlign.center,
                                         style: theme.textTheme.bodyMedium

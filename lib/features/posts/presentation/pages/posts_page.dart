@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:audioplayers/audioplayers.dart';
+import '../../../../core/shims/audioplayers_shim.dart';
 import 'package:camera/camera.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -1520,7 +1520,7 @@ class _PostsPageState extends ConsumerState<PostsPage> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (author.contains('Pocketdesk AI') || author.contains('AI'))
+                                if (author.contains('MyDay AI') || author.contains('Pocketdesk AI') || author.contains('AI'))
                                   const AiChefMascotWidget(size: 32)
                                 else
                                   CircleAvatar(

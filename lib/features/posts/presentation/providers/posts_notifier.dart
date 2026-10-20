@@ -139,7 +139,7 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
 
     // AI evaluates only text content (ignoring images/videos)
     final prompt = 'User posted text on their private personal feed: "${post.content}"';
-    const systemPrompt = 'You are Pocketdesk AI replying warmly to a user post in their offline personal feed. You evaluate only the text content provided. Respond naturally as a helpful friend in 1-2 friendly sentences. Do not mention that you are an AI model.';
+    const systemPrompt = 'You are MyDay AI replying warmly to a user post in their offline personal feed. You evaluate only the text content provided. Respond naturally as a helpful friend in 1-2 friendly sentences. Do not mention that you are an AI model.';
 
     final reactionText = await ref.read(aiSettingsProvider.notifier).generateCompletion(
       prompt: prompt,
@@ -148,7 +148,7 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
 
     if (reactionText != null && reactionText.isNotEmpty) {
       post.comments.add(reactionText);
-      post.commentAuthors.add('Pocketdesk AI 🤖');
+      post.commentAuthors.add('MyDay AI 🤖');
       post.commentDates.add(DateTime.now());
 
       await repo.savePost(post);
@@ -207,7 +207,7 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
     }
 
     final prompt = 'User commented in post thread: "${post.comments.last}". Context post: "${post.content}"';
-    const systemPrompt = 'You are Pocketdesk AI chatting warmly in the comments section of a user post. Keep responses short, friendly (1-2 sentences), and casual like a real friend on Instagram.';
+    const systemPrompt = 'You are MyDay AI chatting warmly in the comments section of a user post. Keep responses short, friendly (1-2 sentences), and casual like a real friend on Instagram.';
 
     final reply = await ref.read(aiSettingsProvider.notifier).generateCompletion(
       prompt: prompt,
@@ -219,7 +219,7 @@ class PostsNotifier extends AutoDisposeAsyncNotifier<List<PostModel>> {
       final currentPost = await freshRepo.getPostById(post.id) ?? post;
 
       currentPost.comments = List.from(currentPost.comments)..add(reply);
-      currentPost.commentAuthors = List.from(currentPost.commentAuthors)..add('Pocketdesk AI 🤖');
+      currentPost.commentAuthors = List.from(currentPost.commentAuthors)..add('MyDay AI 🤖');
       currentPost.commentDates = List.from(currentPost.commentDates)..add(DateTime.now());
 
       await freshRepo.savePost(currentPost);

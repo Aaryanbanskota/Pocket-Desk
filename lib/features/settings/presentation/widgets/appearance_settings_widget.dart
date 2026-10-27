@@ -27,7 +27,7 @@ class AppearanceSettingsWidget extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Customize how PocketDesk looks and feels.',
+              'Customize how MyDay looks and feels.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -199,7 +199,7 @@ class AppearanceSettingsWidget extends ConsumerWidget {
 
             // About App Section
             Text(
-              'About PocketDesk',
+              'About MyDay',
               style: theme.textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -366,7 +366,7 @@ class _AboutAppTileState extends ConsumerState<_AboutAppTile> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'PocketDesk App',
+                  'MyDay App',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -394,7 +394,7 @@ class _AboutAppTileState extends ConsumerState<_AboutAppTile> {
                     }
                   },
                   child: Text(
-                    isUnlocked ? 'Version v1.2.0 (Share Unlocked)' : 'Version v1.2.0',
+                    isUnlocked ? 'Version v1.2.2 (Share Unlocked)' : 'Version v1.2.2',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: isUnlocked ? colorScheme.primary : colorScheme.onSurfaceVariant,
                       fontWeight: isUnlocked ? FontWeight.bold : FontWeight.normal,

@@ -99,7 +99,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ),
       const _SettingSearchItem(
         title: 'App Software Updates',
-        subtitle: 'Check for PocketDesk app updates, channel releases, and version info',
+        subtitle: 'Check for MyDay app updates, channel releases, and version info',
         tabName: 'Devices',
         icon: Icons.system_update_rounded,
       ),

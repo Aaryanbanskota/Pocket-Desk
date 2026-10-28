@@ -5,6 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../logging/app_logger.dart';
@@ -36,6 +39,7 @@ class AppUpdateInfo {
     required this.required,
     required this.releaseNotes,
     this.newFeatures = const [],
+    this.isUpdateAvailableFlag = true,
   });
 
   final String version;
@@ -44,16 +48,18 @@ class AppUpdateInfo {
   final bool required;
   final String releaseNotes;
   final List<String> newFeatures;
+  final bool isUpdateAvailableFlag;
 
   ReleaseChannel get channel => ReleaseChannel.fromVersion(version);
 
   factory AppUpdateInfo.fromJson(Map<String, dynamic> json) {
     final version = json['version'];
-    final buildNumber = json['buildNumber'];
-    final url = json['url'];
-    final required = json['required'] ?? false;
-    final releaseNotes = json['releaseNotes'] ?? 'New version available.';
-    final newFeaturesRaw = json['newFeatures'];
+    final buildNumber = json['buildNumber'] ?? json['build_number'] ?? 1;
+    final url = json['url'] ?? json['download_url'];
+    final required = json['required'] ?? json['is_mandatory'] ?? false;
+    final releaseNotes = json['releaseNotes'] ?? json['release_notes'] ?? 'New version available.';
+    final newFeaturesRaw = json['newFeatures'] ?? json['new_features'];
+    final isAvailable = json['is_update_available'] ?? true;
     final downloadUri = url is String ? Uri.tryParse(url) : null;
 
     final List<String> newFeatures = newFeaturesRaw is List
@@ -79,6 +85,40 @@ class AppUpdateInfo {
       required: required,
       releaseNotes: releaseNotes,
       newFeatures: newFeatures,
+      isUpdateAvailableFlag: isAvailable is bool ? isAvailable : true,
+    );
+  }
+
+  factory AppUpdateInfo.fromSupabase(Map<String, dynamic> map) {
+    final version = (map['version'] ?? '1.0.0').toString().trim();
+    final downloadUrl = (map['download_url'] ?? '').toString().trim();
+    final isAvailable = map['is_update_available'] == true;
+    final isMandatory = map['is_mandatory'] == true;
+    final releaseNotes = (map['release_notes'] ?? 'New version available.').toString();
+
+    int buildNumber = 0;
+    if (map['build_number'] is int) {
+      buildNumber = map['build_number'] as int;
+    } else if (version.contains('+')) {
+      buildNumber = int.tryParse(version.split('+').last) ?? 0;
+    }
+
+    final newFeaturesRaw = map['new_features'];
+    final List<String> features = [];
+    if (newFeaturesRaw is List) {
+      for (final item in newFeaturesRaw) {
+        features.add(item.toString());
+      }
+    }
+
+    return AppUpdateInfo(
+      version: version,
+      buildNumber: buildNumber,
+      url: downloadUrl,
+      required: isMandatory,
+      releaseNotes: releaseNotes,
+      newFeatures: features,
+      isUpdateAvailableFlag: isAvailable,
     );
   }
 
@@ -91,10 +131,13 @@ class AppUpdateService {
       'https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/main/update.json';
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
   static const String _lastSeenVersionKey = 'last_seen_app_version';
+  static const String _lastCheckTimestampKey = 'last_update_check_timestamp';
+  static const Duration minCheckInterval = Duration(hours: 6);
 
   static Future<void> checkForUpdates(
     BuildContext context, {
     bool showStatus = false,
+    bool manual = false,
   }) async {
     // First, check if user just updated and has unseen new features
     await checkAndShowWhatIsNew(context);
@@ -106,28 +149,68 @@ class AppUpdateService {
       return;
     }
 
+    final prefs = await SharedPreferences.getInstance();
+    if (!manual) {
+      final lastCheckMillis = prefs.getInt(_lastCheckTimestampKey) ?? 0;
+      final lastCheckTime = DateTime.fromMillisecondsSinceEpoch(lastCheckMillis);
+      if (DateTime.now().difference(lastCheckTime) < minCheckInterval) {
+        // Throttled to minimize Supabase reads and prevent egress spikes
+        return;
+      }
+    }
+
     try {
-      final response = await http
-          .get(Uri.parse(updateJsonUrl))
-          .timeout(const Duration(seconds: 10));
-      if (response.statusCode != HttpStatus.ok) {
-        throw HttpException(
-            'Update check failed (HTTP ${response.statusCode}).');
+      AppUpdateInfo? updateInfo;
+
+      // 1. Fetch update info from Supabase table 'app_updates'
+      try {
+        final client = Supabase.instance.client;
+        final response = await client
+            .from('app_updates')
+            .select()
+            .eq('id', 'latest')
+            .maybeSingle()
+            .timeout(const Duration(seconds: 6));
+
+        if (response != null) {
+          updateInfo = AppUpdateInfo.fromSupabase(response);
+          await prefs.setInt(_lastCheckTimestampKey, DateTime.now().millisecondsSinceEpoch);
+        }
+      } catch (sbError, sbSt) {
+        AppLogger.w(
+          'Supabase app_updates query failed, checking GitHub fallback: $sbError',
+          tag: 'AppUpdateService',
+          error: sbError,
+          st: sbSt,
+        );
       }
-      final decoded = jsonDecode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        throw const FormatException('Invalid update manifest.');
+
+      // 2. Fallback to GitHub update.json manifest if Supabase didn't respond
+      if (updateInfo == null) {
+        try {
+          final response = await http
+              .get(Uri.parse(updateJsonUrl))
+              .timeout(const Duration(seconds: 6));
+          if (response.statusCode == HttpStatus.ok) {
+            final decoded = jsonDecode(response.body);
+            if (decoded is Map<String, dynamic>) {
+              updateInfo = AppUpdateInfo.fromJson(decoded);
+              await prefs.setInt(_lastCheckTimestampKey, DateTime.now().millisecondsSinceEpoch);
+            }
+          }
+        } catch (_) {}
       }
-      final jsonMap = decoded;
-      final updateInfo = AppUpdateInfo.fromJson(jsonMap);
+
+      if (updateInfo == null) {
+        if (showStatus && context.mounted) {
+          _showMessage(context, 'Unable to check for updates. Please check your connection.');
+        }
+        return;
+      }
 
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
-      final currentBuildNumber = int.tryParse(packageInfo.buildNumber);
-      if (currentBuildNumber == null) {
-        throw const FormatException(
-            'The installed app has an invalid build number.');
-      }
+      final currentBuildNumber = int.tryParse(packageInfo.buildNumber) ?? 1;
 
       if (isUpdateAvailable(
         currentVersion: currentVersion,
@@ -138,7 +221,7 @@ class AppUpdateService {
           _showUpdateDialog(context, updateInfo, currentVersion);
         }
       } else if (showStatus && context.mounted) {
-        _showMessage(context, 'PocketDesk is up to date.');
+        _showMessage(context, 'MyDay is up to date (v$currentVersion).');
       }
     } catch (e, st) {
       AppLogger.w('Update check failed: $e',
@@ -154,7 +237,14 @@ class AppUpdateService {
     required int currentBuildNumber,
     required AppUpdateInfo update,
   }) {
-    if (update.buildNumber > currentBuildNumber) {
+    if (!update.isUpdateAvailableFlag) {
+      return false;
+    }
+    if (update.url.trim().isEmpty) {
+      return false;
+    }
+
+    if (update.buildNumber > 0 && update.buildNumber > currentBuildNumber) {
       return true;
     }
     
@@ -185,16 +275,31 @@ class AppUpdateService {
   }
 
   static String _cleanVersion(String version) {
-    final dashIndex = version.indexOf('-');
-    if (dashIndex != -1) {
-      return version.substring(0, dashIndex);
+    var v = version.trim();
+    final plusIndex = v.indexOf('+');
+    if (plusIndex != -1) {
+      v = v.substring(0, plusIndex);
     }
-    return version;
+    final dashIndex = v.indexOf('-');
+    if (dashIndex != -1) {
+      v = v.substring(0, dashIndex);
+    }
+    return v;
   }
 
   static List<int>? _versionParts(String version) {
-    if (!RegExp(r'^\d+\.\d+\.\d+$').hasMatch(version)) return null;
-    return version.split('.').map(int.parse).toList();
+    final parts = version.split('.');
+    if (parts.isEmpty || parts.length > 4) return null;
+    final ints = <int>[];
+    for (final p in parts) {
+      final val = int.tryParse(p);
+      if (val == null) return null;
+      ints.add(val);
+    }
+    while (ints.length < 3) {
+      ints.add(0);
+    }
+    return ints;
   }
 
   static Future<void> checkAndShowWhatIsNew(BuildContext context) async {
@@ -275,6 +380,32 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
   String? _statusText;
 
   Future<void> _startDownloadAndInstall() async {
+    final rawUrl = widget.updateInfo.url.trim();
+    final uri = Uri.tryParse(rawUrl);
+    if (uri == null || (!rawUrl.startsWith('https://') && !rawUrl.startsWith('http://'))) {
+      setState(() {
+        _statusText = 'Invalid download link: $rawUrl';
+      });
+      return;
+    }
+
+    // If the URL is a GitHub releases page or web link rather than a direct binary APK:
+    if (!rawUrl.toLowerCase().endsWith('.apk') &&
+        rawUrl.contains('github.com') &&
+        !rawUrl.contains('/download/')) {
+      try {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (mounted) Navigator.of(context).pop();
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _statusText = 'Could not open browser: $e';
+          });
+        }
+      }
+      return;
+    }
+
     setState(() {
       _isDownloading = true;
       _downloadProgress = 0.0;
@@ -284,14 +415,21 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
     final client = http.Client();
     File? apkFile;
     try {
-      final request = http.Request('GET', Uri.parse(widget.updateInfo.url));
+      final request = http.Request('GET', uri);
       final response =
-          await client.send(request).timeout(const Duration(seconds: 30));
+          await client.send(request).timeout(const Duration(seconds: 40));
 
-      if (response.statusCode != HttpStatus.ok ||
-          response.request?.url.scheme != 'https') {
+      final contentType = response.headers['content-type'] ?? '';
+      if (contentType.contains('text/html')) {
+        // Response is an HTML webpage; open in external browser
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (mounted) Navigator.of(context).pop();
+        return;
+      }
+
+      if (response.statusCode != HttpStatus.ok) {
         throw HttpException(
-          'APK download failed (HTTP ${response.statusCode}) or was not secure.',
+          'APK download failed (HTTP ${response.statusCode}).',
         );
       }
 
@@ -304,7 +442,7 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
       int downloaded = 0;
       try {
         await for (final chunk
-            in response.stream.timeout(const Duration(seconds: 30))) {
+            in response.stream.timeout(const Duration(seconds: 40))) {
           sink.add(chunk);
           downloaded += chunk.length;
           if (contentLength > 0 && mounted) {
@@ -465,6 +603,17 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Later'),
+          ),
+        if (_statusText != null && !_isDownloading)
+          TextButton.icon(
+            onPressed: () {
+              final uri = Uri.tryParse(widget.updateInfo.url);
+              if (uri != null) {
+                launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+            icon: const Icon(Icons.open_in_browser_rounded, size: 16),
+            label: const Text('Open in Browser'),
           ),
         FilledButton.icon(
           onPressed: _isDownloading ? null : _startDownloadAndInstall,

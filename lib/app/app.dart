@@ -17,7 +17,7 @@ class PocketDeskApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
-      title: 'PocketDesk',
+      title: 'MyDay',
       debugShowCheckedModeBanner: config.isDevelopment,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

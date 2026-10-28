@@ -5,32 +5,48 @@ class TermsAndConditionsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const _LegalDocumentPage(
-        title: 'Terms and Conditions',
+        title: 'Terms of Service',
         sections: [
           (
-            heading: 'Offline-first data ownership',
+            heading: '1. Acceptance of Terms',
             body:
-                'Your calendars, tasks, notes, wallets, AI API keys, and settings are stored locally on your device. PocketDesk does not host your personal data on cloud servers. You are responsible for preserving your data and credentials. Account deletion permanently removes local app data.',
+                'By creating an account (Local or Cloud) or using MyDay (v1.2.2), you agree to these Terms of Service. If you do not agree with any part of these terms, you may not use the application.',
           ),
           (
-            heading: 'Device sync and local sharing',
+            heading: '2. Offline-First Data & User Ownership',
             body:
-                'Device-to-device synchronization uses encrypted connections over your local network. File sharing may start a temporary local network server; protect any PIN codes used to access shared files.',
+                'MyDay is designed offline-first. Your personal calendars, tasks, notes, documents, voice memos, and settings are saved securely on your local device. In Cloud Mode, your account credentials and encrypted data are synced using Supabase. You maintain full ownership of all data you create.',
           ),
           (
-            heading: 'AI services and API keys',
+            heading: '3. System Permissions & Device Access',
             body:
-                'Optional AI features send prompts directly from your device to the AI provider you configure, such as OpenRouter. You are responsible for following that provider’s terms. API keys are stored locally; PocketDesk does not proxy AI conversations.',
+                'MyDay requests device permissions strictly to power specific user features:\n'
+                '• Microphone: Used for recording Voice to Notes, voice memos, and live calling features. Spoken audio is never recorded in the background.\n'
+                '• Camera: Used for scanning login/pairing QR codes and capturing photos to attach to notes and feeds.\n'
+                '• Storage & Photos: Used for selecting and attaching documents, images, and audio files to your notes and tasks.\n'
+                '• Location: Used solely for retrieving local weather information and location tagging if chosen by the user.\n'
+                '• Notifications & Alarms: Used for timely alerts, reminders, calendar notifications, and incoming call rings.\n'
+                'Permissions are requested explicitly and can be revoked at any time in your system settings.',
           ),
           (
-            heading: 'Software license and updates',
+            heading: '4. Voice-to-Note & Speech Recognition',
             body:
-                'PocketDesk is distributed under the MIT License. In-app update checks retrieve public release information and binaries from GitHub.',
+                'The Voice to Note tool transcribes spoken words directly into text. It operates without requiring third-party AI LLMs. Transcription audio is processed ephemerally and is not permanently stored or monetized on any external servers.',
           ),
           (
-            heading: 'Support',
+            heading: '5. Calling & Messaging Services',
             body:
-                'For questions or issue reporting, visit github.com/Aaryanbanskota/Pocket-Desk.',
+                'MyDay offers real-time calling and messaging capabilities powered by Socket.io and Supabase signaling. Communication signals are transmitted ephemerally to connect peer calls. MyDay does not wiretap, record, or store private phone conversations.',
+          ),
+          (
+            heading: '6. Account Security & Responsibilities',
+            body:
+                'You are responsible for safeguarding your 4-digit PIN, passwords, and biometric credentials. Resetting or deleting your local account permanently erases the local cryptographic keys and databases from your device.',
+          ),
+          (
+            heading: '7. Software License & Support',
+            body:
+                'MyDay is open-source productivity software distributed under the MIT License. For updates, support, or bug reports, please visit github.com/Aaryanbanskota/Pocket-Desk.',
           ),
         ],
       );
@@ -44,29 +60,39 @@ class PrivacyPolicyPage extends StatelessWidget {
         title: 'Privacy Policy',
         sections: [
           (
-            heading: 'Information collection',
+            heading: '1. No Personal Data Selling or Tracking',
             body:
-                'PocketDesk does not collect, track, or sell personal data or usage analytics. Passwords and security recovery answers are hashed locally using Argon2id; plaintext passwords are not stored.',
+                'MyDay is built with privacy as a foundational principle. We do not track user behavior, run analytics, build advertising profiles, or sell any personal data.',
           ),
           (
-            heading: 'Network communication',
+            heading: '2. Local-First Storage & Encryption',
             body:
-                'Update checks request public release information without sending personal identification data. Device synchronization takes place over your local network using encrypted connections.',
+                'Your notes, tasks, finances, and voice memos are stored on your local device storage. Sensitive authentication credentials like local PINs and passwords are protected using industry-standard Argon2id hashing and PBKDF2 cryptography; plaintext passwords are never stored.',
           ),
           (
-            heading: 'AI and external services',
+            heading: '3. Audio & Voice Data Privacy',
             body:
-                'AI assistance is optional. When used, your prompt is sent directly from your device to the AI provider configured in the app. PocketDesk does not intercept or proxy those conversations.',
+                'Microphone access is active only while you are explicitly recording a voice memo or during an active voice call. Voice audio is not sent to AI models for profiling or training. When Voice to Note converts speech to text, audio transmission is ephemeral solely for the transcription request.',
           ),
           (
-            heading: 'Account deletion',
+            heading: '4. Location & Sensor Privacy',
             body:
-                'Settings → Privacy → Delete Account starts a two-step deletion process that removes local database data, encryption keys, and secure storage items.',
+                'Location coordinates are queried only upon request (e.g. for fetching weather reports or user-initiated post tags). Location data is never broadcast, logged in background trackers, or sold to third parties.',
           ),
           (
-            heading: 'Policy updates and contact',
+            heading: '5. Real-Time Calling & Socket Signals',
             body:
-                'This policy may change with future releases. Questions and issues can be raised at github.com/Aaryanbanskota/Pocket-Desk.',
+                'When you place or receive a call in MyDay, call signaling messages (such as ring invites and end-call signals) are transmitted over secure WebSockets. No audio streams are recorded or stored on any server.',
+          ),
+          (
+            heading: '6. Data Deletion & Export',
+            body:
+                'You have the complete right to delete your data at any time. Under Settings → Privacy, you can reset your local database, remove all cached audio, or delete your account with immediate and irreversible effect.',
+          ),
+          (
+            heading: '7. Privacy Inquiries & Policy Changes',
+            body:
+                'We may update this policy to reflect new capabilities. Transparent change logs and source code remain publicly available at github.com/Aaryanbanskota/Pocket-Desk.',
           ),
         ],
       );
@@ -77,8 +103,8 @@ class PocketDeskLicensesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const LicensePage(
-        applicationName: 'PocketDesk',
-        applicationVersion: '1.2.0',
+        applicationName: 'MyDay',
+        applicationVersion: '1.2.2',
       );
 }
 
@@ -91,29 +117,56 @@ class _LegalDocumentPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(
-            'Last updated: September 27, 2026',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 20),
-          for (final section in sections) ...[
-            Text(
-              section.heading,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+      appBar: AppBar(
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+        elevation: 0,
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.verified_user_outlined, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    'MyDay v1.2.2 • Last updated: October 2026',
+                    style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 6),
-            Text(section.body, style: theme.textTheme.bodyMedium),
             const SizedBox(height: 20),
+            for (final section in sections) ...[
+              Text(
+                section.heading,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                section.body,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  height: 1.5,
+                  color: isDark ? Colors.white70 : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 }
+

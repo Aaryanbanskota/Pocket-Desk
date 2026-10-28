@@ -59,6 +59,26 @@ void main() {
         throwsFormatException,
       );
     });
+
+    test('parses Supabase app_updates table rows correctly', () {
+      final supabaseUpdate = AppUpdateInfo.fromSupabase({
+        'id': 'latest',
+        'is_update_available': true,
+        'version': '1.3.0+7',
+        'download_url': 'https://github.com/Aaryanbanskota/Pocket-Desk/releases/download/v1.3.0/pocketdesk.apk',
+        'release_notes': 'Full Supabase update checker integration with throttled minimal calls',
+        'is_mandatory': true,
+        'new_features': ['Auto update check on login', 'Manual check in About App'],
+      });
+
+      expect(supabaseUpdate.version, '1.3.0+7');
+      expect(supabaseUpdate.buildNumber, 7);
+      expect(supabaseUpdate.isUpdateAvailableFlag, isTrue);
+      expect(supabaseUpdate.required, isTrue);
+      expect(supabaseUpdate.url, 'https://github.com/Aaryanbanskota/Pocket-Desk/releases/download/v1.3.0/pocketdesk.apk');
+      expect(supabaseUpdate.releaseNotes, contains('Supabase update checker'));
+      expect(supabaseUpdate.newFeatures.length, 2);
+    });
   });
 
   group('AppUpdateService Update Detection Rules', () {
@@ -152,6 +172,69 @@ void main() {
         ),
         isFalse,
       );
+    });
+
+    test('honors is_update_available boolean flag from Supabase', () {
+      // When is_update_available is false, even a higher version must NOT prompt an update
+      const disabledUpdate = AppUpdateInfo(
+        version: '2.0.0',
+        buildNumber: 10,
+        url: 'https://github.com/Aaryanbanskota/Pocket-Desk/releases/latest',
+        required: false,
+        releaseNotes: 'Draft update',
+        isUpdateAvailableFlag: false,
+      );
+
+      expect(
+        AppUpdateService.isUpdateAvailable(
+          currentVersion: '1.2.2',
+          currentBuildNumber: 6,
+          update: disabledUpdate,
+        ),
+        isFalse,
+      );
+
+      // When is_update_available is true and version is newer, prompts update
+      const enabledUpdate = AppUpdateInfo(
+        version: '2.0.0',
+        buildNumber: 10,
+        url: 'https://github.com/Aaryanbanskota/Pocket-Desk/releases/latest',
+        required: false,
+        releaseNotes: 'Production update',
+        isUpdateAvailableFlag: true,
+      );
+
+      expect(
+        AppUpdateService.isUpdateAvailable(
+          currentVersion: '1.2.2',
+          currentBuildNumber: 6,
+          update: enabledUpdate,
+        ),
+        isTrue,
+      );
+
+      // When is_update_available is true but version is already installed (or older), does not prompt
+      const olderUpdate = AppUpdateInfo(
+        version: '1.0.0',
+        buildNumber: 1,
+        url: 'https://github.com/Aaryanbanskota/Pocket-Desk/releases/latest',
+        required: false,
+        releaseNotes: 'Legacy version',
+        isUpdateAvailableFlag: true,
+      );
+
+      expect(
+        AppUpdateService.isUpdateAvailable(
+          currentVersion: '1.2.2',
+          currentBuildNumber: 6,
+          update: olderUpdate,
+        ),
+        isFalse,
+      );
+    });
+
+    test('verifies minimal database call throttling interval', () {
+      expect(AppUpdateService.minCheckInterval, const Duration(hours: 6));
     });
   });
 

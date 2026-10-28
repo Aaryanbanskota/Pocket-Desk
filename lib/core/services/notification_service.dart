@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../logging/app_logger.dart';
+import '../notifications/local_notification_service.dart';
 import '../../features/calendar/data/models/calendar_event_model.dart';
 import '../../features/tasks/data/models/task_model.dart';
 
@@ -54,7 +55,7 @@ class NotificationService {
 
       // 2. Setup initialization settings
       const AndroidInitializationSettings initializationSettingsAndroid =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+          AndroidInitializationSettings('ic_notification');
 
       const InitializationSettings initializationSettings =
           InitializationSettings(
@@ -137,7 +138,7 @@ class NotificationService {
         );
         return AndroidScheduleMode.inexactAllowWhileIdle;
       }
-      return AndroidScheduleMode.exactAllowWhileIdle;
+      return AndroidScheduleMode.alarmClock;
     } catch (e, st) {
       AppLogger.w(
         'Exact alarm permission check failed: $e',
@@ -198,7 +199,7 @@ class NotificationService {
       final mode = await _scheduleMode(requestExactAlarmAccess: true);
       await _requestFullScreenAlarmAccess();
       final now = DateTime.now();
-      final occurrences = days == 'Weekdays'
+      final List<int?> occurrences = days == 'Weekdays'
           ? [
               DateTime.monday,
               DateTime.tuesday,
@@ -210,7 +211,14 @@ class NotificationService {
               ? [DateTime.saturday, DateTime.sunday]
               : days == 'Daily'
                   ? [null]
-                  : [0];
+                  : days.startsWith('Days:')
+                      ? days
+                          .replaceFirst('Days:', '')
+                          .split(',')
+                          .map((s) => int.tryParse(s.trim()))
+                          .whereType<int>()
+                          .toList()
+                      : [0];
       for (final weekday in occurrences) {
         var next = DateTime(now.year, now.month, now.day, hour, minute);
         while (next.isBefore(now) ||
@@ -233,6 +241,9 @@ class NotificationService {
               playSound: true,
               enableVibration: true,
               fullScreenIntent: true,
+              category: AndroidNotificationCategory.alarm,
+              audioAttributesUsage: AudioAttributesUsage.alarm,
+              visibility: NotificationVisibility.public,
               actions: [
                 AndroidNotificationAction(
                   'snooze_alarm',
@@ -287,7 +298,14 @@ class NotificationService {
           DateTime.friday,
         },
       'Weekends' => {DateTime.saturday, DateTime.sunday},
-      _ => <int>{},
+      _ => days.startsWith('Days:')
+          ? days
+              .replaceFirst('Days:', '')
+              .split(',')
+              .map((s) => int.tryParse(s.trim()))
+              .whereType<int>()
+              .toSet()
+          : <int>{},
     };
     final repeats = days != 'Once';
     DateTime? occurrence;
@@ -536,6 +554,9 @@ class NotificationService {
       return;
     }
     try {
+      if (Platform.isLinux) {
+        unawaited(LocalNotificationService.playNotificationSound());
+      }
       const AndroidNotificationDetails androidDetails =
           AndroidNotificationDetails(
         'pocketdesk_alarms_channel',
@@ -544,6 +565,7 @@ class NotificationService {
         importance: Importance.max,
         priority: Priority.high,
         playSound: true,
+        sound: RawResourceAndroidNotificationSound('notification_sound'),
         enableVibration: true,
       );
 
@@ -569,6 +591,9 @@ class NotificationService {
     if (!Platform.isLinux && !Platform.isAndroid) return;
     if (!await requestNotificationPermission()) return;
     try {
+      if (Platform.isLinux) {
+        unawaited(LocalNotificationService.playNotificationSound());
+      }
       await _notificationsPlugin.show(
         _alarmNotificationId(id, null),
         title,
@@ -583,6 +608,7 @@ class NotificationService {
                   importance: Importance.max,
                   priority: Priority.high,
                   playSound: true,
+                  sound: const RawResourceAndroidNotificationSound('notification_sound'),
                   enableVibration: true,
                   fullScreenIntent: true,
                   actions: [

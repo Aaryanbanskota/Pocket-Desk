@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MyDay</string>
+    <string name="widget_quick_actions_title">MyDay Quick Capture</string>
+    <string name="widget_quick_actions_desc">Quickly capture tasks, notes, and search right from your home screen.</string>
+    <string name="widget_agenda_title">MyDay Dual Date &amp; Agenda</string>
+    <string name="widget_agenda_desc">View today\'s AD &amp; BS date and upcoming agenda items.</string>
+    <string name="widget_tasks_title">MyDay Task Tracker</string>
+    <string name="widget_tasks_desc">Track your daily tasks and productivity progress.</string>
+    <string name="widget_clock_pie_title">MyDay Day Dial &amp; Clock Pie</string>
+    <string name="widget_clock_pie_desc">12-hour circular clock face with real-time hands and colored task pie sectors.</string>
+    <string name="widget_calendar_month_title">MyDay Monthly Calendar Grid</string>
+    <string name="widget_calendar_month_desc">Interactive month calendar grid with event indicators and today\'s schedule.</string>
+    <string name="widget_notes_title">MyDay Quick Notes &amp; Voice Memo</string>
+    <string name="widget_notes_desc">Quick access to recent notes and 1-tap note &amp; voice memo recording.</string>
+    <string name="widget_budget_title">MyDay Spendee Financial Glance</string>
+    <string name="widget_budget_desc">Total net balance, today spend vs limit, and 1-tap expense logging.</string>
+    
+    <string name="shortcut_widgets">Widgets</string>
+    <string name="shortcut_widgets_long">MyDay Widgets</string>
+    <string name="shortcut_new_task">New Task</string>
+    <string name="shortcut_new_note">New Note</string>
+    <string name="shortcut_today">Today</string>
+</resources>

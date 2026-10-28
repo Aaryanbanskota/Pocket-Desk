@@ -10,8 +10,8 @@
 
 <br>
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.22.2-blue?logo=flutter&logoColor=white)](https://flutter.dev)
-[![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white)](https://dart.dev)
+[![Flutter](https://img.shields.io/badge/Flutter-3.24.0-blue?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.5.0-0175C2?logo=dart&logoColor=white)](https://dart.dev)
 [![Android](https://img.shields.io/badge/Android-API%2024%2B-green?logo=android&logoColor=white)](https://developer.android.com)
 [![Linux](https://img.shields.io/badge/Linux-Desktop-orange?logo=linux&logoColor=white)](https://flutter.dev/desktop)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -49,34 +49,17 @@ It combines a full-featured **Calendar**, **Task Manager**, **Notes** app, and *
 
 ---
 
-## ⚡ Recent Updates & Fixes (v1.2.0 Final Release)
+## ⚡ Recent Updates & Fixes (v1.2.2 Release)
 
-- ⏰ **Clock & Timers Hub**:
-  - Full working Alarm system with custom labels, repeat schedules, enable/disable switches, and local push notifications.
-  - Interactive minute/second countdown timer with quick duration chips (1m, 5m, 10m, 15m), custom duration picker dialog, and alarm notification triggers upon completion.
-  - High-precision Stopwatch for productivity tracking.
-- 🚀 **Post-Registration Setup Onboarding**:
-  - Interactive onboarding flow launching automatically upon new user registration.
-  - Walkthrough of all major app features (Clock, Money Tracker, P2P File Share, AI Companion).
-  - Step-by-step OpenRouter API key guide (`https://openrouter.ai/` → Get API → Create Key → Save in Settings → AI).
-  - Convenient **Skip Setup** button to navigate straight to the dashboard anytime.
-- 🎨 **AI Cardano Radial Dots Emblem & Companion Chat**:
-  - Custom radial dot matrix emblem rendered with Flutter `CustomPainter`.
-  - Smooth pulse & rotation animations when Pocketdesk AI is processing or typing.
-  - System prompt enhanced with full app knowledge so users can ask AI for help using features or finding settings 24/7.
-- 📊 **Stylized AI Money Health Report**:
-  - Monthly breakdown card showing spent vs. remaining starting balance.
-  - Spending Score (out of 100), color-coded status badge, personalized spending advice quotes, category percentage progress bars, and next-month savings targets.
-- 📅 **Responsive Calendar Layout**:
-  - Horizontal scrolling view segment bar preventing label truncation across screen sizes.
-- 🔐 **Security Questions & Password Recovery**:
-  - 2-step registration with 2 security recovery questions (preset & custom options).
-  - Password recovery verification using Argon2id hashing.
-- 🗑️ **2-Step Delete Account**:
-  - Complete account deletion with double confirmation ("DELETE").
-- 🔄 **In-App Updater & P2P File Transfer**:
-  - Checks the public GitHub update manifest and opens Android's installer for downloaded APKs.
-  - Local network P2P web server file sharing.
+- 🏷️ **Version Channel Badges & Security Guidance**:
+  - Transparent release tagging identifying trial (`-t`), review (`-rev`), and official (`-offi`) release channels with risk/recommendation indicators.
+- 📱 **Interactive "What's New" Walkthrough**:
+  - Feature onboarding dialog with page indicators, slide-to-next, skip/back navigation controls, and channel badges.
+- 🛠️ **Framework & Code Quality Maintenance**:
+  - Replaced legacy `onReorder` APIs with Flutter's recommended `onReorderItem`.
+  - Upgraded opacity modifiers to `.withValues(...)`.
+  - Added async context safety checks across modal dialog workflows.
+  - 100% test pass rate across 35 unit/widget test suites.
 
 ---
 

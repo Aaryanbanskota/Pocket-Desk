@@ -171,7 +171,7 @@ class _SecuritySettingsWidgetState
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
-                          'When enabled, PocketDesk will automatically prompt '
+                          'When enabled, MyDay will automatically prompt '
                           'for your fingerprint or face ID each time you open '
                           'the app. Your password credentials are stored '
                           'securely on-device — biometrics just unlock them.',

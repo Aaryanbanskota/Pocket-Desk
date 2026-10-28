@@ -281,6 +281,7 @@ class _DeviceSettingsWidgetState extends ConsumerState<DeviceSettingsWidget> {
                         onPressed: () => AppUpdateService.checkForUpdates(
                           context,
                           showStatus: true,
+                          manual: true,
                         ),
                         child: const Text('Check Now'),
                       ),

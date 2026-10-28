@@ -3,13 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/database/myday_database.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/services/app_update_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_mode_notifier.dart';
+import '../../../auth/data/auth_repository.dart';
 import '../../../dashboard/presentation/widgets/app_hamburger_drawer.dart';
+import '../developer_mode_screen.dart';
 
 class AboutAppPage extends ConsumerStatefulWidget {
   const AboutAppPage({super.key});
@@ -22,6 +27,7 @@ class _AboutAppPageState extends ConsumerState<AboutAppPage> {
   bool _isOnline = false;
   bool _checkingOnline = true;
   int _versionClickCount = 0;
+  bool _isDevUnlocked = false;
 
   static const String _logsUrl =
       'https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/refs/heads/main/website/logs.html?token=GHSAT0AAAAAAEIYBMYEOAP22DFD5JVV4HIE2VYUQBA';
@@ -29,6 +35,16 @@ class _AboutAppPageState extends ConsumerState<AboutAppPage> {
   void initState() {
     super.initState();
     _checkOnlineStatus();
+    _checkDevMode();
+  }
+
+  Future<void> _checkDevMode() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() => _isDevUnlocked = prefs.getBool('developer_mode_unlocked') ?? false);
+      }
+    } catch (_) {}
   }
 
   Future<void> _checkOnlineStatus() async {
@@ -78,7 +94,7 @@ class _AboutAppPageState extends ConsumerState<AboutAppPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('About PocketDesk'),
+        title: const Text('About MyDay'),
         elevation: 0,
       ),
       drawer: const AppHamburgerDrawer(),
@@ -114,7 +130,7 @@ class _AboutAppPageState extends ConsumerState<AboutAppPage> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
                       child: Image.asset(
-                        'assets/logo.png',
+                        'assets/logo.jpeg',
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
                           decoration: BoxDecoration(
@@ -138,7 +154,7 @@ class _AboutAppPageState extends ConsumerState<AboutAppPage> {
 
                   // App Title
                   Text(
-                    'PocketDesk',
+                    'MyDay',
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.5,
@@ -148,13 +164,16 @@ class _AboutAppPageState extends ConsumerState<AboutAppPage> {
                   const SizedBox(height: AppSpacing.xs),
                   GestureDetector(
                     onTap: () {
-                      if (isUnlocked) return;
                       setState(() => _versionClickCount++);
                       if (_versionClickCount >= 10) {
                         ref.read(shareTabUnlockedProvider.notifier).unlockShareTab();
+                        SharedPreferences.getInstance().then((p) {
+                          p.setBool('developer_mode_unlocked', true);
+                          if (mounted) setState(() => _isDevUnlocked = true);
+                        });
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('🎉 Share & Transfer Settings Unlocked!'),
+                            content: Text('🎉 Developer Mode & Share Settings Unlocked!'),
                             backgroundColor: Colors.green,
                           ),
                         );
@@ -162,7 +181,7 @@ class _AboutAppPageState extends ConsumerState<AboutAppPage> {
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Tap ${10 - _versionClickCount} more times to unlock Share features.'),
+                            content: Text('Tap ${10 - _versionClickCount} more times to unlock Developer Mode.'),
                             duration: const Duration(milliseconds: 1000),
                           ),
                         );
@@ -176,8 +195,8 @@ class _AboutAppPageState extends ConsumerState<AboutAppPage> {
                       ),
                       child: Text(
                         isUnlocked
-                            ? 'v1.2.0 • Offline-First Ecosystem (Share Unlocked)'
-                            : 'v1.2.0 • Offline-First Ecosystem',
+                            ? 'v1.2.2 • Offline-First Ecosystem (Share Unlocked)'
+                            : 'v1.2.2 • Offline-First Ecosystem',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,
@@ -191,7 +210,7 @@ class _AboutAppPageState extends ConsumerState<AboutAppPage> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
-                      'PocketDesk is a privacy-first, offline-first productivity hub made for people who want to plan, track, and organize their life online or offline.',
+                      'MyDay is a privacy-first, offline-first productivity hub made for people who want to plan, track, and organize their life online or offline.',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurfaceVariant,
@@ -199,6 +218,35 @@ class _AboutAppPageState extends ConsumerState<AboutAppPage> {
                       ),
                     ),
                   ),
+                  if (_isDevUnlocked) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      icon: const Icon(Icons.code_rounded, size: 18),
+                      label: const Text('Open Developer Mode & Inspector'),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => DeveloperModeScreen(
+                              session: const UserSession(
+                                accountId: 'default_account',
+                                name: 'Developer User',
+                                handle: 'developer',
+                                bio: 'Dev Sandbox',
+                                isCloud: false,
+                                isBioEnabled: false,
+                              ),
+                              db: MyDayDatabase.create(),
+                              isDarkMode: theme.brightness == Brightness.dark,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                   const SizedBox(height: AppSpacing.xl),
 
                   // Policy section header
@@ -247,6 +295,19 @@ class _AboutAppPageState extends ConsumerState<AboutAppPage> {
                           trailingIcon: Icons.arrow_forward_ios_rounded,
                           onTap: () => context.push(AppRoutes.licenses),
                         ),
+                        Divider(height: 1, color: colorScheme.outlineVariant.withAlpha(80)),
+                        _buildPolicyTile(
+                          context,
+                          '4',
+                          'Check for Updates',
+                          icon: Icons.system_update_rounded,
+                          trailingIcon: Icons.refresh_rounded,
+                          onTap: () => AppUpdateService.checkForUpdates(
+                            context,
+                            showStatus: true,
+                            manual: true,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -276,7 +337,7 @@ class _AboutAppPageState extends ConsumerState<AboutAppPage> {
                   const SizedBox(height: AppSpacing.xl),
 
                   Text(
-                    '© 2026 PocketDesk — All Data Stored Locally',
+                    '© 2026 MyDay — All Data Stored Locally',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),

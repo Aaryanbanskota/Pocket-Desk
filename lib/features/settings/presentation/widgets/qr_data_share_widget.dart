@@ -103,7 +103,7 @@ class _QrDataShareWidgetState extends ConsumerState<QrDataShareWidget> {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Generate a QR code to share your data with another PocketDesk device. No internet or cloud storage needed - pure peer-to-peer sync.',
+              'Generate a QR code to share your data with another MyDay device. No internet or cloud storage needed - pure peer-to-peer sync.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -378,7 +378,7 @@ class _QrDataShareWidgetState extends ConsumerState<QrDataShareWidget> {
                     theme,
                     colorScheme,
                     '2',
-                    'Open PocketDesk on another device',
+                    'Open MyDay on another device',
                   ),
                   _buildInfoStep(
                     theme,

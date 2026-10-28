@@ -21,7 +21,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: TermsAndConditionsPage()),
     );
-    expect(find.text('Terms and Conditions'), findsOneWidget);
+    expect(find.text('Terms of Service'), findsOneWidget);
 
     await tester.pumpWidget(
       const MaterialApp(home: PrivacyPolicyPage()),

@@ -1,12 +1,14 @@
 {
   "version": "1.2.2-offi",
-  "buildNumber": 5,
+  "buildNumber": 6,
   "url": "https://raw.githubusercontent.com/Aaryanbanskota/Pocket-Desk/main/all-apk/app-release.apk",
   "required": false,
-  "releaseNotes": "- Added version channel separation (-t trial, -rev review, -offi official)\n- Added channel risk tags and user recommendation guidance\n- Added interactive 'What's New' feature onboarding flow with skip/back navigation",
+  "releaseNotes": "- Dual Calendar Hub: Gregorian (AD) and Bikram Sambat (BS) bi-directional converter & festival engine\n- VoIP Calling: Full-duplex raw 16-bit PCM streaming with dynamic jitter buffering & DTMF dialpad\n- Android Home Screen Widgets: Interactive Agenda, Tasks, Budget & Quick Action launchers\n- Offline-First Architecture: High-performance SQLite 3 with Drift ORM reactive persistence\n- Hardware Biometric Shield: Fingerprint / Face Unlock & background App Lock Overlay\n- Developer Diagnostics: Secret 10-tap unlock with database inspector & memory monitors",
   "newFeatures": [
-    "Version Channel Separation: Instant awareness of -t (Trial), -rev (Review), and -offi (Official) updates.",
-    "Smart Safety Recommendations: Clear risk badges helping you decide whether to install or wait.",
-    "Interactive Feature Setup: Step-by-step 'What's New' walkthrough after updating, with skip and swipe options."
+    "Dual Calendar System: Seamless AD & BS calendar converter with Nepali holidays and Tithi astronomical calculations.",
+    "VoIP Voice Calling & Audio Pipeline: Low-latency peer-to-peer calling with soft limiting, ringtones, and DTMF dialer.",
+    "Interactive Android Home Widgets: Glance widgets for Agenda, Tasks, Budget, and fast action launchers.",
+    "Hardware Biometrics & App Lock: Secure app content with fingerprint/face biometric protection and background lock overlay.",
+    "SQLite 3 + Drift Persistence: Reactive, offline-first local database caching for blazing fast performance."
   ]
 }

@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="./assets/repobanner.png" alt="PocketDesk Banner" width="100%" />
+<img src="./assets/repobanner.png" alt="MyDay Banner" width="100%" />
 
-# PocketDesk
+# MyDay (Pocketdesk v2)
 
-**Your offline-first, privacy-respecting productivity ecosystem.**
+**Your offline-first, privacy-respecting productivity, communication & life ecosystem.**
 
-*Plan • Track • Focus*
+*Plan • Track • Communicate • Focus*
 
 <br>
 
@@ -14,14 +14,14 @@
 [![Dart](https://img.shields.io/badge/Dart-3.5.0-0175C2?logo=dart&logoColor=white)](https://dart.dev)
 [![Android](https://img.shields.io/badge/Android-API%2024%2B-green?logo=android&logoColor=white)](https://developer.android.com)
 [![Linux](https://img.shields.io/badge/Linux-Desktop-orange?logo=linux&logoColor=white)](https://flutter.dev/desktop)
+[![Database](https://img.shields.io/badge/Database-SQLite%203%20%7C%20Drift-003B57?logo=sqlite&logoColor=white)](https://drift.simonbinder.eu/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/Aaryanbanskota/Pocket-Desk)](https://github.com/Aaryanbanskota/Pocket-Desk/releases)
-[![Stars](https://img.shields.io/github/stars/Aaryanbanskota/Pocket-Desk?style=social)](https://github.com/Aaryanbanskota/Pocket-Desk/stargazers)
 
 <br>
 
-[📥 Android](#-android-downloads) ·
-[🐧 Linux](#-linux-desktop-downloads) ·
+[📥 Android Downloads](#-android-downloads) ·
+[🐧 Linux Desktop](#-linux-desktop-downloads) ·
 [✨ Features](#-features) ·
 [🏗 Architecture](#-architecture) ·
 [🚀 Quick Start](#-quick-start-development) ·
@@ -33,33 +33,47 @@
 
 ## 📖 About
 
-**PocketDesk** is a production-quality, offline-first productivity hub built with Flutter.  
-It combines a full-featured **Calendar**, **Task Manager**, **Notes** app, and **Schedule Planner** into a single, beautifully designed application — without requiring a cloud account or internet connection.
+**MyDay (Pocketdesk v2)** is an offline-first productivity and communication ecosystem built with Flutter.  
+It combines a dual-calendar engine (**Gregorian AD & Bikram Sambat BS**), full-featured **Task Manager**, **Rich Notes**, **Money Health / Wallet Tracker**, **VoIP Voice Calling**, **P2P Messaging**, **Interactive Android Home Widgets**, and a **Hardware Biometric Shield** into a unified, secure experience — without requiring persistent cloud connections.
 
-> **You own your data. Everything works offline. Internet is only used for device-to-device synchronization.**
+> **Privacy Manifesto:** You own your data. Everything works 100% offline through local SQLite/Drift caching. Network access is strictly used for peer-to-peer encrypted sync, Supabase-signaled VoIP calling, and verified in-app update checks.
 
 ### Platform Support
 
 | Platform | Status |
 |:---------|:-------|
-| <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/android/android-original.svg" width="18" height="18" alt="Android"/> **Android** (API 24+) | ✅ Supported |
-| <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/linux/linux-original.svg" width="18" height="18" alt="Linux"/> **Linux / Ubuntu** | ✅ Supported |
-| <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/windows8/windows8-original.svg" width="18" height="18" alt="Windows"/> **Windows** | 🔜 Planned |
-| <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/apple/apple-original.svg" width="18" height="18" alt="macOS"/> **macOS** | 🔜 Planned |
+| <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/android/android-original.svg" width="18" height="18" alt="Android"/> **Android** (API 24+) | ✅ Full Support (Home Widgets, Biometrics, CallKit/Notifications) |
+| <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/linux/linux-original.svg" width="18" height="18" alt="Linux"/> **Linux / Ubuntu** | ✅ Full Desktop Client |
+| <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/windows8/windows8-original.svg" width="18" height="18" alt="Windows"/> **Windows** | 🔜 In Development |
+| <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/apple/apple-original.svg" width="18" height="18" alt="macOS"/> **macOS** | 🔜 In Development |
 
 ---
 
-## ⚡ Recent Updates & Fixes (v1.2.2 Release)
+## ⚡ What's New in v1.2.2 Release
 
-- 🏷️ **Version Channel Badges & Security Guidance**:
-  - Transparent release tagging identifying trial (`-t`), review (`-rev`), and official (`-offi`) release channels with risk/recommendation indicators.
-- 📱 **Interactive "What's New" Walkthrough**:
-  - Feature onboarding dialog with page indicators, slide-to-next, skip/back navigation controls, and channel badges.
-- 🛠️ **Framework & Code Quality Maintenance**:
-  - Replaced legacy `onReorder` APIs with Flutter's recommended `onReorderItem`.
-  - Upgraded opacity modifiers to `.withValues(...)`.
-  - Added async context safety checks across modal dialog workflows.
-  - 100% test pass rate across 35 unit/widget test suites.
+- 📅 **Dual Calendar Engine (Gregorian AD & Bikram Sambat BS)**:
+  - 4-Stream Calendar Hub featuring seamless bi-directional BS/AD date conversion.
+  - Native Nepali festival detection, Tithi astronomical lunar calculations, and holiday schedules.
+  - Multi-stream views: Day, Week, Month, Year, and Agenda timelines.
+- 📞 **Voice Calling (VoIP) & Low-Latency Audio Streaming**:
+  - Full-duplex raw 16-bit PCM audio pipeline with dynamic jitter buffer and soft-limiter clipping prevention.
+  - Supabase/P2P signaling engine with custom DTMF dialer, ringtones, and lock-screen incoming call display.
+- 💬 **Enhanced Real-time Messaging**:
+  - Peer-to-peer real-time delivery with accurate state tracking (`sending` $\rightarrow$ `sent` double-check indicator).
+  - Silent sender audio feedback and reliable cross-region delivery.
+- 📱 **Android Home Screen Widgets**:
+  - Interactive Glance/HomeWidget integration: Agenda, Tasks, Budget, Clock, Notes, and Quick Action launchers directly on your home screen.
+- 🛡️ **Hardware Biometric Shield & App Lock**:
+  - Hardware biometric security (Fingerprint / Face Unlock) paired with SHA-256 PIN authentication.
+  - Immediate App Lock Overlay shielding sensitive screen content during lifecycle background pauses.
+- 🔄 **Supabase Throttled In-App Update Engine**:
+  - Automated 6-hour database throttled update checks (or manual check from About screen) minimizing network overhead.
+  - Direct release APK downloader with native Android `PackageInstaller` integration.
+- 🛠️ **Developer Mode & System Diagnostics**:
+  - Secret 10-tap unlock on app version in Settings > About App.
+  - Real-time diagnostic monitors: hardware memory, standby database encryption, runtime environment metrics, and decrypted local database inspector.
+- 🗄️ **SQLite 3 & Drift ORM Migration**:
+  - High-performance, strongly-typed relational persistence layer providing offline-first reactive stream queries.
 
 ---
 
@@ -71,14 +85,12 @@ It combines a full-featured **Calendar**, **Task Manager**, **Notes** app, and *
   <img src="./assets/apk-banner.png" alt="Android APK Banner" width="100%" />
 </div>
 
-| Build Type | Download | Size |
-|:-----------|:---------|:-----|
-| **Release APK** | [📥 Download APK](https://github.com/Aaryanbanskota/Pocket-Desk/raw/main/all-apk/app-release.apk) | ~78 MB |
-| **App Bundle (AAB)** | [📦 Download AAB](https://github.com/Aaryanbanskota/Pocket-Desk/raw/main/all-apk/app-release.apk)) | ~36 MB |
+| Build Type | Download | Recommended For |
+|:-----------|:---------|:----------------|
+| **Release APK** | [📥 Download app-release.apk](https://github.com/Aaryanbanskota/Pocket-Desk/raw/main/all-apk/app-release.apk) | Direct sideloading on all Android devices (API 24+) |
+| **Release APK (v1.2.2)** | [📥 Download MyDay-v1.2.2-release.apk](https://github.com/Aaryanbanskota/Pocket-Desk/raw/main/all-apk/MyDay-v1.2.2-release.apk) | Version-pinned archive |
 
-> **Tip:** Prefer the AAB for Google Play / modern installers. Use the APK for sideloading.
-
-To publish an in-app Android update, increment the app version and build number in `pubspec.yaml`, build a release APK signed with the same key as the installed app, replace `all-apk/app-release.apk`, and update `update.json` with that version, build number, download URL, and release notes. The repository must be public so installed apps can retrieve the manifest and APK.
+> **Installation Note:** Allow "Install unknown apps" in Android settings when installing downloaded APKs.
 
 ### 🐧 Linux Desktop Downloads
 
@@ -86,26 +98,16 @@ To publish an in-app Android update, increment the app version and build number 
   <img src="./assets/1linux-banner.png" alt="Linux Desktop Banner" width="100%" />
 </div>
 
-| Platform | Download | Size |
-|:---------|:---------|:-----|
-| **Linux x64** | [🐧 Download tar.gz](https://github.com/Aaryanbanskota/Pocket-Desk/blob/main/pocketdesk-linux-x64.tar.gz) | ~15 MB |
+| Platform | Download | Architecture |
+|:---------|:---------|:-------------|
+| **Linux Desktop** | [🐧 Download tar.gz](https://github.com/Aaryanbanskota/Pocket-Desk/blob/main/pocketdesk-linux-x64.tar.gz) | x86_64 / Ubuntu 20.04+ |
 
-#### Linux Installation
+#### Linux Quick Run
 
 ```bash
-# 1. Download & extract
+# Extract and launch
 tar -xzf pocketdesk-linux-x64.tar.gz
 cd bundle
-
-# 2. Install system dependencies
-# Ubuntu / Debian
-sudo apt-get update && sudo apt-get install -y \
-  clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev
-
-# Fedora
-sudo dnf install clang cmake ninja-build pkgconfig gtk3-devel libsecret-devel
-
-# 3. Run
 ./pocketdesk
 ```
 
@@ -117,128 +119,145 @@ sudo dnf install clang cmake ninja-build pkgconfig gtk3-devel libsecret-devel
 <tr>
 <td width="50%" valign="top">
 
-### 📅 Calendar & Events
-- Day / Week / Month / Year / Agenda views
-- Recurring events (full RFC 5545 support)
-- Event Previews & Quick Edit / Delete
-- Multiple color-coded calendars & reminders
-- ICS Import & Export, fully offline
+### 📅 Dual Calendar Hub (AD & BS)
+- Dual Gregorian (AD) and Bikram Sambat (BS) calendar engine
+- Bi-directional instant conversion algorithm
+- Full Nepali holiday schedules, Tithi calculations, and festivals
+- Multi-view display: Day, Week, Month, Year, and Agenda
+- Full RFC 5545 recurrence rules and offline ICS export/import
 
 </td>
 <td width="50%" valign="top">
 
-### ✅ Task Manager
-- Task Preview modal & compact edit sheet
-- Subtask checklists & progress tracking
-- Priority levels (Urgent → Low)
-- Quick edit/delete icons on dashboard
-- Swipe actions & Archive history
+### 📞 VoIP Voice Calling & Messaging
+- Low-latency 16-bit raw PCM streaming over P2P/WebSockets
+- Soft limiter, AGC, and dynamic jitter buffer for crystal audio
+- Supabase-signaled calling with custom ringtones & DTMF dialer
+- Full lock-screen and heads-up incoming call notifications
+- P2P messaging with live `"sending"` / `"sent"` delivery indicators
 
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
 
-### 📝 Note Ecosystem
-- Note Preview on click with Edit & Delete actions
-- Auto-save on edit with complete state preservation
-- Checklist formatting, code blocks, headings
-- Attachments: Images, files/PDFs, audio notes, drawings
-- Organization: Folders, colors, tag/title search, duplicate note
+### ✅ Task & Project Management
+- Subtasks checklists with real-time completion progress
+- Priority tags (Urgent, High, Medium, Low) and due dates
+- Compact modal task preview and quick-edit sheets
+- Swipe-to-archive workflows and history logs
 
 </td>
+<td width="50%" valign="top">
+
+### 📝 Rich Note Ecosystem
+- Markdown formatting: code blocks, checklists, headings
+- Media attachments: Images, audio memos, PDF files, drawings
+- Organization by tags, color-coding, folders, and full-text search
+- Live auto-save and transactional state preservation
+
+</td>
+</tr>
+<tr>
 <td width="50%" valign="top">
 
 ### 💰 Money Health & Wallet
-- Starting & current wallet balance tracker
-- Expense recording with categories & dates
-- Complete spending history & category filters
-- **AI Spending Score (0–100)** with personalized financial advice
+- Multi-account balance tracker and categorized expenses
+- Spending analytics, monthly burn rate, and category breakdowns
+- **AI Spending Score (0–100)** with personalized budgeting advice
+- Transaction search, date filters, and export capabilities
+
+</td>
+<td width="50%" valign="top">
+
+### 📱 Android Home Screen Widgets
+- Interactive widgets for your Android home screen
+- **Agenda Widget**: Upcoming events at a glance
+- **Tasks Widget**: Quick checkbox completion without opening the app
+- **Budget Widget**: Daily spend and wallet balance
+- **Quick Action Launcher**: One-tap note, event, or expense entry
 
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
 
-### 🤖 Smart AI Integration
-- Companion Chatbot (`"yo {username}"`)
-- Password-secured OpenRouter API Key storage (Argon2id)
-- Universal AI across Money Health, Note Formatting, Feed Comments
-- Direct Isar DB lookup for persistent state
+### 🔐 Hardware Biometric Shield & Security
+- Fingerprint and Face Unlock via Android BiometricPrompt
+- Secure PIN with salted SHA-256 fallback protection
+- Instant App Lock Overlay shielding app screen on task switch
+- Zero cloud telemetry, zero remote tracking, 100% data sovereignty
 
 </td>
 <td width="50%" valign="top">
 
-### 🔄 P2P Sync & Network Share
-- In-App Self-Hosted Update System via raw GitHub hosting
-- Local Wi-Fi network file server with PIN access
-- Encrypted WebSocket sync (AES-GCM-128) & zero cloud servers
-- Personal social feed with post media, likes, and AI responses
-- Clean, responsive hamburger navigation drawer
+### 🛠️ Developer Mode & Diagnostics
+- Secret 10-tap version unlock in Settings > About App
+- Standby database encryption and decrypted data inspector
+- Live memory footprint, frame rendering stats, and OS metrics
+- Throttled in-app update checker powered by Supabase
 
 </td>
 </tr>
 </table>
 
-### 🔐 Privacy & Security
-
-- Local authentication with **Argon2id** (OWASP parameters)
-- All data stored on-device in **Isar** database
-- **Argon2id Password Protection** for sensitive Settings (AI API Key edit/delete)
-- **Zero** telemetry, tracking, or cloud lock-in
-- You fully own your data
-
 ---
 
 ## 🏗 Architecture
 
-PocketDesk follows **Clean Architecture** with a feature-first layout:
+MyDay follows **Clean Architecture** with a modular, feature-first structure:
 
 ```text
 lib/
-├── app/                      # App root & routing entry
+├── app/                      # App root, multi-provider bindings, router setup
 ├── core/
-│   ├── database/             # Isar provider (singleton)
-│   ├── error/                # AppFailure, GlobalErrorBoundary
-│   ├── logging/              # AppLogger
-│   ├── router/               # GoRouter configuration
-│   ├── sync/                 # WebSocket, encryption, delta engine
-│   ├── theme/                # Design tokens (colors, type, spacing)
-│   └── utils/                # Date, string, file, validators
+│   ├── database/             # SQLite 3 / Drift ORM database & migrations
+│   ├── error/                # AppFailure types & GlobalErrorBoundary
+│   ├── logging/              # AppLogger structured logging
+│   ├── router/               # GoRouter declarative navigation
+│   ├── security/             # Biometric shield, PIN auth & app lock overlay
+│   ├── sync/                 # P2P delta sync, encryption & signaling
+│   ├── theme/                # Design tokens, dark/light modes & typography
+│   ├── update/               # Throttled Supabase update checker & installer
+│   └── utils/                # Date converters (BS/AD), validators & formatters
 └── features/
-    ├── ai/                   # AI Settings, direct Isar repository, security lock
-    ├── auth/                 # Argon2id auth, profile, password validation
-    ├── calendar/             # Events, recurrence, event preview
-    ├── chat/                 # P2P chat & AI companion buddy ("yo {username}")
-    ├── dashboard/            # Home widgets, quick action icons
-    ├── feed/                 # Personal social feed & AI post comments
-    ├── money/                # Wallet balance, expenses, Money Health AI
-    ├── notes/                # Rich editor, checklists, attachments, AI format
-    └── tasks/                # Task lists, subtasks, task preview modal
+    ├── about/                # About App, version tap trigger & Developer Mode
+    ├── calendar/             # 4-Stream AD/BS calendar hub & festival engine
+    ├── call/                 # VoIP calling, PCM audio pipeline & DTMF dialer
+    ├── chat/                 # P2P messaging, status indicators & attachments
+    ├── dashboard/            # Home hub, overview cards & quick actions
+    ├── developer/            # Developer mode diagnostics & database inspector
+    ├── money/                # Wallet balances, expense tracking & AI score
+    ├── notes/                # Rich text notes, attachments & organization
+    ├── tasks/                # Tasks, subtasks checklists & priority queues
+    └── widgets/              # Android HomeWidget synchronization service
 ```
 
 ### Tech Stack
 
-| Layer              | Technology                                 |
-|--------------------|--------------------------------------------|
-| State Management   | Riverpod (code-generated providers)        |
-| Navigation         | GoRouter                                   |
-| Database           | Isar (embedded, fully offline NoSQL)       |
-| Code Generation    | build_runner + freezed + json_serializable |
-| Cryptography       | cryptography / crypto (AES-GCM-128)        |
-| Sync Transport     | web_socket_channel                         |
+| Layer | Technology |
+|:------|:-----------|
+| **Framework** | [Flutter 3.24](https://flutter.dev) (Dart 3.5) |
+| **State Management** | [Flutter Riverpod](https://riverpod.dev) (code-generated providers) |
+| **Routing** | [GoRouter](https://pub.dev/packages/go_router) |
+| **Primary Database** | [Drift ORM](https://drift.simonbinder.eu/) + [SQLite 3](https://sqlite.org) |
+| **Legacy / Standby DB** | [Isar Database](https://isar.dev) |
+| **Dual Calendar** | `nepali_utils`, `nepali_date_picker`, custom BS/AD algorithms |
+| **VoIP & Audio** | Raw 16-bit PCM streaming, `audioplayers`, WebRTC/Socket signaling |
+| **Home Widgets** | Android AppWidget Provider via `home_widget` |
+| **Security** | `local_auth` (Biometrics), `crypto` (SHA-256), `flutter_secure_storage` |
+| **In-App Updates** | Throttled Supabase Client + Android `PackageInstaller` |
 
 ---
 
 ## 🚀 Quick Start (Development)
 
-### Prerequisites & Flutter SDK Pinning
+### Prerequisites
 
-PocketDesk uses **[FVM (Flutter Version Management)](https://fvm.app/)** to pin Flutter **3.24.0** (Dart 3.5.0) for reproducible builds across developer environments and CI/CD pipelines.
-
-- **Pinned Flutter SDK**: `3.24.0` (managed via `.fvmrc`)
+- **Flutter SDK**: `3.24.0` (managed via [FVM](https://fvm.app/) or standard Flutter install)
 - **Dart SDK**: `^3.5.0`
-- [FVM CLI](https://fvm.app/docs/getting_started/installation) (`dart pub global activate fvm`)
+- **Android SDK**: API 34 target (API 24 minimum)
+- **Java / JDK**: 17+
 
 ### Setup
 
@@ -247,27 +266,29 @@ PocketDesk uses **[FVM (Flutter Version Management)](https://fvm.app/)** to pin 
 git clone https://github.com/Aaryanbanskota/Pocket-Desk.git
 cd Pocket-Desk
 
-# 2. Install pinned Flutter SDK version via FVM
-fvm install
-fvm use 3.24.0
+# 2. Install dependencies
+flutter pub get
 
-# 3. Install dependencies using pinned Flutter
-fvm flutter pub get
+# 3. Generate Drift database & Riverpod code
+dart run build_runner build --delete-conflicting-outputs
 
-# 4. Generate code
-fvm dart run build_runner build --delete-conflicting-outputs
+# 4. Run test suite (132+ passing unit & widget tests)
+flutter test
 
-# 5. Run (development)
-fvm flutter run -t lib/main_dev.dart
+# 5. Launch debug session
+flutter run
 ```
 
 ### Build Releases
 
 ```bash
-# Android APK
+# Android Universal Release APK
 flutter build apk --release
 
-# Linux Desktop
+# Android App Bundle (AAB for Play Store)
+flutter build appbundle --release
+
+# Linux Desktop Release
 flutter build linux --release
 ```
 
@@ -275,22 +296,19 @@ flutter build linux --release
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome!
+Contributions, bug reports, and suggestions are welcome!
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+3. Commit your changes (`git commit -m 'feat: Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License**.  
-See the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -298,12 +316,8 @@ See the [LICENSE](LICENSE) file for details.
 
 **Made with ❤️ using Flutter**
 
-*Plan • Track • Focus*
+*Plan • Track • Communicate • Focus*
 
-<br>
-
-⭐ [Star this repo](https://github.com/Aaryanbanskota/Pocket-Desk) ·
-🐛 [Report Bug](https://github.com/Aaryanbanskota/Pocket-Desk/issues) ·
-💡 [Request Feature](https://github.com/Aaryanbanskota/Pocket-Desk/issues)
+⭐ [Star this repo](https://github.com/Aaryanbanskota/Pocket-Desk) · 🐛 [Report Issue](https://github.com/Aaryanbanskota/Pocket-Desk/issues)
 
 </div>
